@@ -1,2 +1,3 @@
-# mobile aplication (health_monitor application)
- Integrated Digital Health Monitoring Platform
+# health_monitor
+
+A new Flutter project.
