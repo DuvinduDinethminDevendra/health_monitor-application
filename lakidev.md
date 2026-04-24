@@ -43,8 +43,24 @@
 
 ### 1. Database & Schema
 - [x] Initial SQLite schema setup (`database_helper.dart`).
-- [ ] **TODO:** Update Schema (Change IDs from `INTEGER` to `TEXT` for UID compatibility).
+- [/] **IN PROGRESS:** Update Schema (Change IDs from `INTEGER` to `TEXT` for UID compatibility).
 - [ ] **TODO:** Add `sync_status` flag to tables.
+
+---
+
+### 🔑 Phase 1: Firebase Connectivity & Setup
+The connection between Flutter and Firebase was established by synchronizing the development environment and Android build configurations:
+
+| Component | File Modified | Purpose |
+| :--- | :--- | :--- |
+| **Credentials** | `android/app/google-services.json` | Moved to app module so Gradle can pick up the Firebase project keys. |
+| **Namespace** | `android/app/build.gradle.kts` | Updated `applicationId` to `com.descenders.healthtracker` to match the Firebase app ID. |
+| **Plugin Registry** | `android/settings.gradle.kts` | Registered the `com.google.gms.google-services` plugin. |
+| **Native Entry** | `MainActivity.kt` | Refactored package name and folder structure to match the new App ID. |
+| **Dependencies** | `pubspec.yaml` | Integrated `firebase_core`, `firebase_auth`, and `cloud_firestore`. |
+| **Initialization** | `lib/main.dart` | Added `Firebase.initializeApp()` in `main()` to boot the Firebase engine. |
+
+---
 
 ### 2. Repository Pattern
 - [x] Basic Repositories created.
@@ -52,9 +68,10 @@
 - [ ] **TODO:** Implement "Predictive Logic" in `GoalRepository`.
 
 ### 3. Firebase Integration
-- [ ] Add `firebase_auth` & `cloud_firestore` dependencies.
-- [ ] Implement `AuthService` (Firebase).
-- [ ] Implement `SyncService` (Firestore).
+- [x] Environment Configuration & Plugin Setup.
+- [ ] Implement `AuthService` using `firebase_auth`.
+- [ ] Implement `SyncService` using `cloud_firestore`.
+
 
 ---
 
