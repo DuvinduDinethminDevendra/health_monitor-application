@@ -74,6 +74,38 @@ class HealthMonitorApp extends StatelessWidget {
             elevation: 4,
           ),
         ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF1A73E8),
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFF121212),
+          appBarTheme: const AppBarTheme(
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: Color(0xFF1F1F1F),
+            foregroundColor: Colors.white,
+          ),
+          cardTheme: CardThemeData(
+            elevation: 2,
+            color: const Color(0xFF1E1E1E),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            elevation: 4,
+          ),
+        ),
+        themeMode: ThemeMode.system,
         initialRoute: '/',
         onGenerateRoute: (settings) {
           final authService = Provider.of<AuthService>(context, listen: false);

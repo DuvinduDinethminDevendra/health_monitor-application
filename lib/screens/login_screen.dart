@@ -85,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A73E8),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -93,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Sign in to your account',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),
                         const SizedBox(height: 32),

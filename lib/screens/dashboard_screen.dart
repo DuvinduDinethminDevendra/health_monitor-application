@@ -202,14 +202,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final userName = Provider.of<AuthService>(context).currentUser?.name ?? 'User';
 
-    return RefreshIndicator(
-      onRefresh: _loadDashboardData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth > 600;
+
+        return RefreshIndicator(
+          onRefresh: _loadDashboardData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // Welcome section
             Container(
               width: double.infinity,
@@ -258,49 +262,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'Activities',
-                    _totalActivities.toString(),
-                    Icons.directions_run,
-                    const Color(0xFF1A73E8),
+            if (isDesktop)
+              Row(
+                children: [
+                  Expanded(child: _buildStatCard('Activities', _totalActivities.toString(), Icons.directions_run, const Color(0xFF1A73E8))),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatCard('Active Goals', _activeGoals.toString(), Icons.flag, const Color(0xFFFB8C00))),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatCard('BMI', _latestBmi > 0 ? _latestBmi.toString() : 'N/A', Icons.monitor_weight, const Color(0xFF00BFA5))),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildStatCard('Status', _bmiCategory, Icons.health_and_safety, const Color(0xFFE53935))),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'Activities',
+                          _totalActivities.toString(),
+                          Icons.directions_run,
+                          const Color(0xFF1A73E8),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Active Goals',
+                          _activeGoals.toString(),
+                          Icons.flag,
+                          const Color(0xFFFB8C00),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    'Active Goals',
-                    _activeGoals.toString(),
-                    Icons.flag,
-                    const Color(0xFFFB8C00),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'BMI',
+                          _latestBmi > 0 ? _latestBmi.toString() : 'N/A',
+                          Icons.monitor_weight,
+                          const Color(0xFF00BFA5),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Status',
+                          _bmiCategory,
+                          Icons.health_and_safety,
+                          const Color(0xFFE53935),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'BMI',
-                    _latestBmi > 0 ? _latestBmi.toString() : 'N/A',
-                    Icons.monitor_weight,
-                    const Color(0xFF00BFA5),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    'Status',
-                    _bmiCategory,
-                    Icons.health_and_safety,
-                    const Color(0xFFE53935),
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
             const SizedBox(height: 24),
 
             // Quick actions
@@ -309,46 +330,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            _buildActionTile(
-              'Health Tips',
-              'Get expert health advice',
-              Icons.lightbulb_outline,
-              const Color(0xFFFFA726),
-              () => Navigator.of(context, rootNavigator: true).pushNamed('/health-tips'),
-            ),
-            _buildActionTile(
-              'Progress Charts',
-              'View your health trends',
-              Icons.bar_chart,
-              const Color(0xFF42A5F5),
-              () => Navigator.of(context, rootNavigator: true).pushNamed('/charts'),
-            ),
-            _buildActionTile(
-              'Reminders',
-              'Set health reminders',
-              Icons.notifications_active,
-              const Color(0xFFAB47BC),
-              () => Navigator.of(context, rootNavigator: true).pushNamed('/reminders'),
-            ),
+            if (isDesktop)
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                children: [
+                  _buildActionTile('Health Tips', 'Expert advice', Icons.lightbulb_outline, const Color(0xFFFFA726), () => Navigator.of(context, rootNavigator: true).pushNamed('/health-tips')),
+                  _buildActionTile('Charts', 'Health trends', Icons.bar_chart, const Color(0xFF42A5F5), () => Navigator.of(context, rootNavigator: true).pushNamed('/charts')),
+                  _buildActionTile('Reminders', 'Set reminders', Icons.notifications_active, const Color(0xFFAB47BC), () => Navigator.of(context, rootNavigator: true).pushNamed('/reminders')),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  _buildActionTile(
+                    'Health Tips',
+                    'Get expert health advice',
+                    Icons.lightbulb_outline,
+                    const Color(0xFFFFA726),
+                    () => Navigator.of(context, rootNavigator: true).pushNamed('/health-tips'),
+                  ),
+                  _buildActionTile(
+                    'Progress Charts',
+                    'View your health trends',
+                    Icons.bar_chart,
+                    const Color(0xFF42A5F5),
+                    () => Navigator.of(context, rootNavigator: true).pushNamed('/charts'),
+                  ),
+                  _buildActionTile(
+                    'Reminders',
+                    'Set health reminders',
+                    Icons.notifications_active,
+                    const Color(0xFFAB47BC),
+                    () => Navigator.of(context, rootNavigator: true).pushNamed('/reminders'),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
     );
+  });
   }
 
   Widget _buildStatCard(
       String title, String value, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withAlpha(30),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+          if (!isDark)
+            BoxShadow(
+              color: Colors.grey.withAlpha(30),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
         ],
       ),
       child: Column(
@@ -367,7 +410,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color),
           ),
         ],
       ),

@@ -91,7 +91,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF00BFA5),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -99,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           'Start your health journey',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),
                         const SizedBox(height: 32),
