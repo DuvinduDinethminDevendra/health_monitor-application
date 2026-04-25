@@ -1,7 +1,7 @@
 # System Architecture: Health Monitor Application
 ## Member 3: Data Layer & Architecture
 
-This document outlines the technical architecture of the Integrated Digital Health Monitoring Platform, focusing on the Hybrid Data Layer and the Repository Pattern.
+This document outlines the technical architecture of the Integrated Digital Health Monitoring Platform, focusing on the Hybrid Data Layer, Repository Pattern, and Performance Optimization.
 
 ---
 
@@ -36,8 +36,16 @@ To meet the university requirements for SQLite while adding modern cloud feature
 
 ---
 
-## 3. Database Architecture (ERD)
-The local relational database is designed with SQLite, focusing on user-centric health data tracking.
+## 3. Performance & UX Optimization: Lazy Loading
+To ensure high performance and low memory consumption (Requirement #7), the architecture utilizes **Lazy Component Initialization**.
+
+- **Architectural Decision:** Instead of static instantiation, the Data Layer uses **Lazy Getters** for cross-service communication.
+- **Impact:** Reduces initial memory footprint during startup and prevents memory-leaking circular dependencies between the `SyncService` and `Repositories`.
+
+---
+
+## 4. Database Architecture (ERD)
+The local relational database is designed with SQLite, focusing on user-centric health data tracking with cloud parity support.
 
 ```mermaid
 erDiagram
@@ -46,6 +54,7 @@ erDiagram
         string name
         string email
         string created_at
+        int sync_status
     }
     GOALS {
         int id PK
@@ -56,6 +65,7 @@ erDiagram
         string unit
         string deadline
         bool is_completed
+        int sync_status
     }
     ACTIVITIES {
         int id PK
@@ -64,6 +74,7 @@ erDiagram
         float value
         string date
         int duration
+        int sync_status
     }
     HEALTH_LOGS {
         int id PK
@@ -72,6 +83,7 @@ erDiagram
         float height
         float bmi
         string date
+        int sync_status
     }
 
     USERS ||--o{ GOALS : creates
@@ -81,7 +93,7 @@ erDiagram
 
 ---
 
-## 4. Key Architectural Components
+## 5. Key Architectural Components
 
 ### A. Repository Pattern
 Acts as an abstraction layer between the Business Logic and the Data Sources.

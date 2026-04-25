@@ -4,15 +4,16 @@ import '../services/sync_service.dart';
 
 class ActivityRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  final SyncService _syncService = SyncService();
+  SyncService get _syncService => SyncService();
 
-  Future<int> insertActivity(Activity activity) async {
+  Future<int> insertActivity(Activity activity, {bool skipSync = false}) async {
     final db = await _dbHelper.database;
     final id = await db.insert('activities', activity.toMap());
     
-    // Sync to Cloud
-    final newActivity = activity.copyWith(id: id);
-    _syncService.syncActivity(newActivity);
+    if (!skipSync) {
+      final newActivity = activity.copyWith(id: id);
+      _syncService.syncActivity(newActivity);
+    }
     
     return id;
   }

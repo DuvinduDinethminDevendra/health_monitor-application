@@ -4,19 +4,22 @@ import '../services/sync_service.dart';
 
 class GoalRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  final SyncService _syncService = SyncService();
+  
+  // Use a lazy getter to break the circular dependency loop
+  SyncService get _syncService => SyncService();
 
-  Future<int> insertGoal(Goal goal) async {
+  Future<int> insertGoal(Goal goal, {bool skipSync = false}) async {
     final db = await _dbHelper.database;
     final id = await db.insert('goals', goal.toMap());
     
-    // Trigger Async Sync
-    final newGoal = goal.copyWith(id: id);
-    _syncService.syncGoal(newGoal);
+    // Only sync if skipSync is false (to prevent rehydration loops)
+    if (!skipSync) {
+      final newGoal = goal.copyWith(id: id);
+      _syncService.syncGoal(newGoal);
+    }
     
     return id;
   }
-
 
   Future<List<Goal>> getGoalsByUser(String userId) async {
     final db = await _dbHelper.database;
@@ -124,4 +127,3 @@ class GoalRepository {
     return DateTime.now().add(Duration(days: daysToFinish));
   }
 }
-

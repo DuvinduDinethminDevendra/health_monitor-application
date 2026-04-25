@@ -9,9 +9,10 @@ import '../repositories/health_log_repository.dart';
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
-  final GoalRepository _goalRepo = GoalRepository();
-  final ActivityRepository _activityRepo = ActivityRepository();
-  final HealthLogRepository _healthLogRepo = HealthLogRepository();
+  // We remove the immediate creation of repositories to break the infinite loop
+  GoalRepository get _goalRepo => GoalRepository();
+  ActivityRepository get _activityRepo => ActivityRepository();
+  HealthLogRepository get _healthLogRepo => HealthLogRepository();
 
   // --- GOAL SYNC ---
   Future<void> syncGoal(Goal goal) async {
@@ -67,7 +68,7 @@ class SyncService {
       
       for (var doc in goalSnapshot.docs) {
         final goal = Goal.fromMap(doc.data());
-        await _goalRepo.insertGoal(goal);
+        await _goalRepo.insertGoal(goal, skipSync: true); // Added skipSync to prevent loops
       }
 
       // 2. Rehydrate Activities
@@ -79,7 +80,7 @@ class SyncService {
       
       for (var doc in activitySnapshot.docs) {
         final activity = Activity.fromMap(doc.data());
-        await _activityRepo.insertActivity(activity);
+        await _activityRepo.insertActivity(activity, skipSync: true);
       }
 
       // 3. Rehydrate Health Logs
@@ -91,7 +92,7 @@ class SyncService {
       
       for (var doc in healthLogSnapshot.docs) {
         final log = HealthLog.fromMap(doc.data());
-        await _healthLogRepo.insertHealthLog(log);
+        await _healthLogRepo.insertHealthLog(log, skipSync: true);
       }
     } catch (e) {
       print('Error rehydrating data: $e');

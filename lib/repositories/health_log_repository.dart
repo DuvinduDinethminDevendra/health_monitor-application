@@ -4,15 +4,16 @@ import '../services/sync_service.dart';
 
 class HealthLogRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  final SyncService _syncService = SyncService();
+  SyncService get _syncService => SyncService();
 
-  Future<int> insertHealthLog(HealthLog log) async {
+  Future<int> insertHealthLog(HealthLog log, {bool skipSync = false}) async {
     final db = await _dbHelper.database;
     final id = await db.insert('health_logs', log.toMap());
     
-    // Sync to Cloud
-    final newLog = HealthLog.fromMap({...log.toMap(), 'id': id});
-    _syncService.syncHealthLog(newLog);
+    if (!skipSync) {
+      final newLog = HealthLog.fromMap({...log.toMap(), 'id': id});
+      _syncService.syncHealthLog(newLog);
+    }
     
     return id;
   }
