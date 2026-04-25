@@ -58,8 +58,10 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
     final heightController = TextEditingController();
     double? previewBmi;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           void updateBmiPreview() {
@@ -73,110 +75,139 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
             }
           }
 
-          return AlertDialog(
-            title: const Text('Log Health Data'),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
-            content: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: weightController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Weight (kg)',
-                        prefixIcon: const Icon(Icons.monitor_weight),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onChanged: (_) => updateBmiPreview(),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Required';
-                        final val = double.tryParse(v);
-                        if (val == null || val <= 0) return 'Enter valid weight';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: heightController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Height (cm)',
-                        prefixIcon: const Icon(Icons.height),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onChanged: (_) => updateBmiPreview(),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Required';
-                        final val = double.tryParse(v);
-                        if (val == null || val <= 0) return 'Enter valid height';
-                        return null;
-                      },
-                    ),
-                    if (previewBmi != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00BFA5).withAlpha(20),
-                          borderRadius: BorderRadius.circular(12),
+          return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[400],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.calculate,
-                                color: Color(0xFF00BFA5)),
-                            const SizedBox(width: 8),
-                            Text(
-                              'BMI: $previewBmi',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF00BFA5),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Log Health Data',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: weightController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Weight (kg)',
+                          prefixIcon: const Icon(Icons.monitor_weight),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onChanged: (_) => updateBmiPreview(),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Required';
+                          final val = double.tryParse(v);
+                          if (val == null || val <= 0) return 'Enter valid weight';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: heightController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Height (cm)',
+                          prefixIcon: const Icon(Icons.height),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onChanged: (_) => updateBmiPreview(),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Required';
+                          final val = double.tryParse(v);
+                          if (val == null || val <= 0) return 'Enter valid height';
+                          return null;
+                        },
+                      ),
+                      if (previewBmi != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00BFA5).withAlpha(20),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.calculate,
+                                  color: Color(0xFF00BFA5)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'BMI: $previewBmi',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF00BFA5),
+                                ),
                               ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              final userId =
+                                  Provider.of<AuthService>(context, listen: false)
+                                      .currentUser!
+                                      .id!;
+                              final log = HealthLog(
+                                userId: userId,
+                                weight: double.parse(weightController.text),
+                                height: double.parse(heightController.text),
+                              );
+                              await _healthRepo.insertHealthLog(log);
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              _loadLogs();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00BFA5),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
+                          ),
+                          child: const Text('Save Health Data', style: TextStyle(fontSize: 16)),
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    final userId =
-                        Provider.of<AuthService>(context, listen: false)
-                            .currentUser!
-                            .id!;
-                    final log = HealthLog(
-                      userId: userId,
-                      weight: double.parse(weightController.text),
-                      height: double.parse(heightController.text),
-                    );
-                    await _healthRepo.insertHealthLog(log);
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    _loadLogs();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00BFA5),
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Save'),
-              ),
-            ],
           );
         },
       ),
@@ -211,16 +242,27 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.monitor_weight, size: 80, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00BFA5).withAlpha(20),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.monitor_weight, size: 80, color: Color(0xFF00BFA5)),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     'No health data logged yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 20, 
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tap + to log your weight & height',
-                    style: TextStyle(color: Colors.grey[400]),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ],
               ),

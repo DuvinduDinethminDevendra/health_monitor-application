@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
+import 'widgets/custom_snackbar.dart';
+import 'widgets/shake_widget.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,6 +14,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _shakeKey = GlobalKey<ShakeWidgetState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -30,7 +33,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _shakeKey.currentState?.shake();
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -46,11 +52,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
+      CustomSnackBar.show(context, message: error, isError: true);
     } else {
-      Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+      CustomSnackBar.show(context, message: 'Successfully registered!', isError: false);
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+        }
+      });
     }
   }
 
@@ -76,10 +85,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Form(
-                    key: _formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    child: Column(
+                  child: ShakeWidget(
+                    key: _shakeKey,
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
@@ -206,6 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
