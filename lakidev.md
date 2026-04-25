@@ -16,14 +16,55 @@ This section separates your project into your **Viva Requirements** and your **F
 | **Data Models** | `lib/models/user.dart`<br>`lib/models/goal.dart`<br>`lib/models/activity.dart`<br>`lib/models/health_log.dart` | Defines what a "User" or "Goal" looks like in Dart. These are the blueprints for your data. |
 | **Repositories** | `lib/repositories/user_repository.dart`<br>`lib/repositories/goal_repository.dart`<br>`lib/repositories/activity_repository.dart`<br>`lib/repositories/health_log_repository.dart` | The "Gatekeepers." They contain the actual SQL commands to Save, Load, and Delete data locally. |
 
-### 🚀 Area 2: The Features (Implementation Task)
-*These files handle the advanced features: Secure Auth, Cloud Sync, and Smart Goals.*
+---
 
-| Category | File Path | Purpose |
+## 📱 Device Feature Integration (Member 3 Contributions)
+Although your primary role is the Data Layer, your logic powers two critical device features.
+
+### 1. Push Notifications (The "Nudge" System)
+**Concept:** Using Data Analysis to trigger local notifications.
+
+| Code Reference | Exact Location | Logic Explained |
 | :--- | :--- | :--- |
-| **Security (Auth)** | `lib/services/auth_service.dart` | Handles Login/Register via Firebase. It also ensures the user is "Remembered" when the app restarts. |
-| **Cloud Sync** | `lib/services/sync_service.dart` | The "Mirror." It sends your SQLite data to Firebase Firestore so it's never lost. |
-| **Android Config** | `android/app/google-services.json`<br>`android/app/build.gradle.kts` | The "Bridge" that allows your Android app to talk to Google's Firebase servers. |
+| **Primary File** | `lib/repositories/goal_repository.dart` | The Repository contains the logic to decide when a user needs a nudge. |
+| **Method** | `markCompleted()` | When a goal is finished, it triggers a notification to congratulate the user. |
+| **Helper Service** | `lib/services/notification_service.dart` | The standard utility used to show the physical alert on the phone. |
+
+**Real-Life Scenario:** A user finishes their "10km Run" goal. The `markCompleted` method in your Repository detects the status change and immediately tells the `NotificationService` to show a "Goal Achieved! 🎉" message.
+
+```mermaid
+sequenceDiagram
+    participant D as GoalRepository (Member 3)
+    participant N as NotificationService
+    participant U as User Phone
+    D->>D: Update is_completed = 1
+    D->>N: showNotification(title: "Goal Achieved!")
+    N->>U: Display Alert on Screen
+```
+
+---
+
+### 2. Background Tasks (The "Shadow Sync")
+**Concept:** Running data synchronization in the background without freezing the UI.
+
+| Code Reference | Exact Location | Logic Explained |
+| :--- | :--- | :--- |
+| **Primary File** | `lib/services/sync_service.dart` | This service runs the background logic for Firestore mirroring. |
+| **Methods** | `syncGoal()`, `syncActivity()` | These methods send data to Firebase in the background using `async` calls. |
+| **Triggers** | `insert...()` in all Repositories | Every time data is saved to SQLite, it triggers the background sync automatically. |
+
+**Real-Life Scenario:** A user logs a workout while hiking (Offline). The `ActivityRepository` saves it to SQLite. As soon as signal returns, the `SyncService` background task automatically mirrors that record to **Cloud Firestore**.
+
+```mermaid
+graph LR
+    A[User Inputs Data] --> B[(SQLite DB)]
+    B --> C{Background Sync Task}
+    C -->|Async| D[Firebase Firestore]
+    
+    subgraph "lib/services/sync_service.dart"
+    C
+    end
+```
 
 ---
 
@@ -54,24 +95,6 @@ graph TD
 
 ---
 
-## 💡 How connectivity works in your Dart files:
-1.  **Imports:** At the top of each file, you see `import '...'`. This is how one file "grabs" the tools from another. For example, `goal_repository.dart` imports `sync_service.dart` so it can mirror data to the cloud.
-2.  **Asynchronous (Future):** You will see `async` and `await` everywhere. This means "wait for the database/internet to finish." Since talking to SQLite or Firebase takes a split second, Dart uses these keywords to keep the app from freezing.
-3.  **The Flow:**
-    - User clicks "Save Goal" -> **UI** calls **Repository**.
-    - **Repository** saves to **SQLite**.
-    - **Repository** then asks **SyncService** to backup to **Firebase**.
-
----
-
-## 🚦 Implementation Status (Summary)
-- [x] **SQLite Schema:** Relational tables (User -> Goals/Activities) are ready.
-- [x] **Auth:** Firebase Login/Register is fully functional.
-- [x] **Sync:** Automatic SQLite-to-Firestore mirroring is active.
-- [x] **Smart Logic:** Predictive goal completion calculation is implemented in `GoalRepository`.
-
----
-
 ## 📝 Developer Notes (Viva Prep)
-- **Primary vs Secondary:** "SQLite is our **Primary** database for speed and offline use. Firebase is our **Secondary** database for cloud backup and multi-device sync."
-- **Separation of Concerns:** "By using a **SyncService**, we keep the Firebase logic out of our Repositories, making the code easier to test and maintain."
+- **Primary vs Secondary:** "SQLite is our **Primary** database for speed and offline use. Firebase is our **Secondary** database for cloud backup."
+- **Predictive Analytics:** "I implemented a linear regression logic in `GoalRepository` to estimate goal completion dates based on current user velocity."
