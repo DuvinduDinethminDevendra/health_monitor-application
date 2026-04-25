@@ -7,6 +7,8 @@ import '../repositories/health_log_repository.dart';
 import 'activity_screen.dart';
 import 'health_log_screen.dart';
 import 'goals_screen.dart';
+import 'widgets/error_widget.dart';
+import 'widgets/shimmer_loading.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,6 +23,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _activeGoals = 0;
   double _latestBmi = 0;
   String _bmiCategory = 'N/A';
+
+  bool _isLoading = true;
+  String? _errorMessage;
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
     GlobalKey<NavigatorState>(),
@@ -40,21 +45,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    final activities =
-        await ActivityRepository().getActivitiesByUser(userId);
-    final goals = await GoalRepository().getActiveGoals(userId);
-    final latestLog = await HealthLogRepository().getLatestLog(userId);
-
     if (!mounted) return;
-
     setState(() {
-      _totalActivities = activities.length;
-      _activeGoals = goals.length;
-      if (latestLog != null) {
-        _latestBmi = latestLog.bmi;
-        _bmiCategory = latestLog.bmiCategory;
-      }
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final activities =
+          await ActivityRepository().getActivitiesByUser(userId);
+      final goals = await GoalRepository().getActiveGoals(userId);
+      final latestLog = await HealthLogRepository().getLatestLog(userId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _totalActivities = activities.length;
+        _activeGoals = goals.length;
+        if (latestLog != null) {
+          _latestBmi = latestLog.bmi;
+          _bmiCategory = latestLog.bmiCategory;
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load dashboard data. Please try again.';
+      });
+    }
   }
 
   Future<bool> _systemBackButtonPressed() async {
@@ -172,6 +192,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboardHome(BuildContext context) {
+    if (_isLoading) return const ShimmerLoading(itemCount: 4);
+    if (_errorMessage != null) {
+      return AppErrorWidget(
+        message: _errorMessage!,
+        onRetry: _loadDashboardData,
+      );
+    }
+
     final userName = Provider.of<AuthService>(context).currentUser?.name ?? 'User';
 
     return RefreshIndicator(

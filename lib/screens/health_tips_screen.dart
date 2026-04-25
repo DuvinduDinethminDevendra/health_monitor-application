@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/health_tips_service.dart';
+import 'widgets/error_widget.dart';
+import 'widgets/shimmer_loading.dart';
 
 class HealthTipsScreen extends StatefulWidget {
   const HealthTipsScreen({super.key});
@@ -12,6 +14,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
   final HealthTipsService _tipsService = HealthTipsService();
   List<HealthTip> _tips = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -20,13 +23,25 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
   }
 
   Future<void> _loadTips() async {
-    setState(() => _isLoading = true);
-    final tips = await _tipsService.fetchHealthTips();
     if (!mounted) return;
     setState(() {
-      _tips = tips;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+    try {
+      final tips = await _tipsService.fetchHealthTips();
+      if (!mounted) return;
+      setState(() {
+        _tips = tips;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load health tips. Please check your connection.';
+      });
+    }
   }
 
   final List<Color> _cardColors = const [
@@ -61,8 +76,13 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          ? const ShimmerLoading(itemCount: 5)
+          : _errorMessage != null
+              ? AppErrorWidget(
+                  message: _errorMessage!,
+                  onRetry: _loadTips,
+                )
+              : RefreshIndicator(
               onRefresh: _loadTips,
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),

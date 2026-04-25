@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/goal.dart';
 import '../repositories/goal_repository.dart';
 import '../services/auth_service.dart';
+import 'widgets/error_widget.dart';
+import 'widgets/shimmer_loading.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -16,6 +18,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
   final GoalRepository _goalRepo = GoalRepository();
   List<Goal> _goals = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -28,12 +31,26 @@ class _GoalsScreenState extends State<GoalsScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    final goals = await _goalRepo.getGoalsByUser(userId);
     if (!mounted) return;
     setState(() {
-      _goals = goals;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final goals = await _goalRepo.getGoalsByUser(userId);
+      if (!mounted) return;
+      setState(() {
+        _goals = goals;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load goals. Please try again.';
+      });
+    }
   }
 
   void _showAddEditDialog({Goal? existingGoal}) {
@@ -196,7 +213,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const ShimmerLoading(itemCount: 3);
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: AppErrorWidget(
+          message: _errorMessage!,
+          onRetry: _loadGoals,
+        ),
+      );
     }
 
     return Scaffold(

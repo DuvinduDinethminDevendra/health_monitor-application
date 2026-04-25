@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/activity.dart';
 import '../repositories/activity_repository.dart';
 import '../services/auth_service.dart';
+import 'widgets/error_widget.dart';
+import 'widgets/shimmer_loading.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -16,6 +18,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   final ActivityRepository _activityRepo = ActivityRepository();
   List<Activity> _activities = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -28,12 +31,26 @@ class _ActivityScreenState extends State<ActivityScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    final activities = await _activityRepo.getActivitiesByUser(userId);
     if (!mounted) return;
     setState(() {
-      _activities = activities;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final activities = await _activityRepo.getActivitiesByUser(userId);
+      if (!mounted) return;
+      setState(() {
+        _activities = activities;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load activities. Please try again.';
+      });
+    }
   }
 
   void _showAddDialog() {
@@ -181,7 +198,16 @@ class _ActivityScreenState extends State<ActivityScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const ShimmerLoading(itemCount: 5);
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: AppErrorWidget(
+          message: _errorMessage!,
+          onRetry: _loadActivities,
+        ),
+      );
     }
 
     return Scaffold(

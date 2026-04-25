@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/health_log.dart';
 import '../repositories/health_log_repository.dart';
 import '../services/auth_service.dart';
+import 'widgets/error_widget.dart';
+import 'widgets/shimmer_loading.dart';
 
 class HealthLogScreen extends StatefulWidget {
   const HealthLogScreen({super.key});
@@ -15,6 +17,7 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
   final HealthLogRepository _healthRepo = HealthLogRepository();
   List<HealthLog> _logs = [];
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -27,12 +30,26 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    final logs = await _healthRepo.getHealthLogsByUser(userId);
     if (!mounted) return;
     setState(() {
-      _logs = logs;
-      _isLoading = false;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      final logs = await _healthRepo.getHealthLogsByUser(userId);
+      if (!mounted) return;
+      setState(() {
+        _logs = logs;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load health logs. Please try again.';
+      });
+    }
   }
 
   void _showAddDialog() {
@@ -176,7 +193,16 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const ShimmerLoading(itemCount: 4);
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: AppErrorWidget(
+          message: _errorMessage!,
+          onRetry: _loadLogs,
+        ),
+      );
     }
 
     return Scaffold(
