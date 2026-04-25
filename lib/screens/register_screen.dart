@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import 'dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -50,11 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SnackBar(content: Text(error), backgroundColor: Colors.red),
       );
     } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
     }
   }
 

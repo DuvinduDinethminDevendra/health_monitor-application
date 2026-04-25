@@ -7,10 +7,6 @@ import '../repositories/health_log_repository.dart';
 import 'activity_screen.dart';
 import 'health_log_screen.dart';
 import 'goals_screen.dart';
-import 'health_tips_screen.dart';
-import 'charts_screen.dart';
-import 'reminders_screen.dart';
-import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,6 +21,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _activeGoals = 0;
   double _latestBmi = 0;
   String _bmiCategory = 'N/A';
+
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
 
   @override
   void initState() {
@@ -54,77 +57,123 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  Future<bool> _systemBackButtonPressed() async {
+    final currentNavigator = _navigatorKeys[_currentIndex].currentState;
+    if (currentNavigator != null && currentNavigator.canPop()) {
+      currentNavigator.pop();
+      return false; // Handled internally
+    }
+    if (_currentIndex != 0) {
+      setState(() => _currentIndex = 0);
+      return false; // Go back to first tab
+    }
+    return true; // Let system handle (exit app)
+  }
+
+  Widget _buildTabNavigator(int index) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) {
+            if (index == 0) return _buildDashboardHome(context);
+            if (index == 1) return const ActivityScreen();
+            if (index == 2) return const HealthLogScreen();
+            if (index == 3) return const GoalsScreen();
+            return Container();
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    final userName = authService.currentUser?.name ?? 'User';
 
-    final screens = [
-      _buildDashboardHome(userName),
-      const ActivityScreen(),
-      const HealthLogScreen(),
-      const GoalsScreen(),
-    ];
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentIndex == 0
-            ? 'Dashboard'
-            : _currentIndex == 1
-                ? 'Activities'
-                : _currentIndex == 2
-                    ? 'Health Log'
-                    : 'Goals'),
-        backgroundColor: const Color(0xFF1A73E8),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              authService.logout();
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
-      body: screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-          if (index == 0) _loadDashboardData();
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF1A73E8),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_run),
-            label: 'Activities',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.monitor_weight),
-            label: 'Health',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.flag),
-            label: 'Goals',
-          ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _systemBackButtonPressed();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_currentIndex == 0
+              ? 'Dashboard'
+              : _currentIndex == 1
+                  ? 'Activities'
+                  : _currentIndex == 2
+                      ? 'Health Log'
+                      : 'Goals'),
+          backgroundColor: const Color(0xFF1A73E8),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                authService.logout();
+                Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                  '/login',
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        ),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: [
+            _buildTabNavigator(0),
+            _buildTabNavigator(1),
+            _buildTabNavigator(2),
+            _buildTabNavigator(3),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            if (_currentIndex == index) {
+              // Pop to root of current tab if re-selected
+              _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+            } else {
+              setState(() => _currentIndex = index);
+              if (index == 0) _loadDashboardData();
+            }
+          },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF1A73E8),
+          unselectedItemColor: Colors.grey,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.directions_run),
+              label: 'Activities',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.monitor_weight),
+              label: 'Health',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.flag),
+              label: 'Goals',
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDashboardHome(String userName) {
+  Widget _buildDashboardHome(BuildContext context) {
+    final userName = Provider.of<AuthService>(context).currentUser?.name ?? 'User';
+
     return RefreshIndicator(
       onRefresh: _loadDashboardData,
       child: SingleChildScrollView(
@@ -237,24 +286,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Get expert health advice',
               Icons.lightbulb_outline,
               const Color(0xFFFFA726),
-              () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const HealthTipsScreen())),
+              () => Navigator.of(context, rootNavigator: true).pushNamed('/health-tips'),
             ),
             _buildActionTile(
               'Progress Charts',
               'View your health trends',
               Icons.bar_chart,
               const Color(0xFF42A5F5),
-              () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ChartsScreen())),
+              () => Navigator.of(context, rootNavigator: true).pushNamed('/charts'),
             ),
             _buildActionTile(
               'Reminders',
               'Set health reminders',
               Icons.notifications_active,
               const Color(0xFFAB47BC),
-              () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const RemindersScreen())),
+              () => Navigator.of(context, rootNavigator: true).pushNamed('/reminders'),
             ),
           ],
         ),

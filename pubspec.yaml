@@ -10,6 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   sqflite: any
+  sqflite_common_ffi: any
+  sqlite3_flutter_libs: any
   path: any
   fl_chart: any
   http: any
@@ -17,6 +19,7 @@ dependencies:
   provider: any
   intl: any
   crypto: any
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
