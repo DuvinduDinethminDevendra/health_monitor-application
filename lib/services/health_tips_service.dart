@@ -6,32 +6,30 @@ class HealthTipsService {
       'https://health.gov/myhealthfinder/api/v3/topicsearch.json';
 
   Future<List<HealthTip>> fetchHealthTips({String? keyword}) async {
-    try {
-      final uri = keyword != null && keyword.isNotEmpty
-          ? Uri.parse('$_baseUrl?keyword=$keyword')
-          : Uri.parse(_baseUrl);
+    final uri = keyword != null && keyword.isNotEmpty
+        ? Uri.parse('$_baseUrl?keyword=$keyword')
+        : Uri.parse(_baseUrl);
 
-      final response = await http.get(uri);
+    final response = await http.get(uri);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final resources = data['Result']?['Resources']?['Resource'] as List?;
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final resources = data['Result']?['Resources']?['Resource'] as List?;
 
-        if (resources == null) return _getFallbackTips();
-
-        return resources.take(15).map((item) {
-          return HealthTip(
-            title: item['Title'] ?? 'Health Tip',
-            description: _stripHtml(item['Categories'] ?? ''),
-            content: _stripHtml(item['Sections']?['section']?[0]?['Content'] ?? ''),
-            url: item['AccessibleVersion'] ?? '',
-          );
-        }).toList();
+      if (resources == null) {
+        throw Exception('No health tips found.');
       }
 
-      return _getFallbackTips();
-    } catch (e) {
-      return _getFallbackTips();
+      return resources.take(15).map((item) {
+        return HealthTip(
+          title: item['Title'] ?? 'Health Tip',
+          description: _stripHtml(item['Categories'] ?? ''),
+          content: _stripHtml(item['Sections']?['section']?[0]?['Content'] ?? ''),
+          url: item['AccessibleVersion'] ?? '',
+        );
+      }).toList();
+    } else {
+      throw Exception('Failed to load health tips');
     }
   }
 
@@ -39,7 +37,7 @@ class HealthTipsService {
     return html.replaceAll(RegExp(r'<[^>]*>'), '').trim();
   }
 
-  List<HealthTip> _getFallbackTips() {
+  List<HealthTip> getFallbackTips() {
     return [
       HealthTip(
         title: 'Stay Hydrated',

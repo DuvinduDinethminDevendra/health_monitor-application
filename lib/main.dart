@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
+import 'providers/health_tips_provider.dart';
+import 'providers/reminders_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 
@@ -13,8 +15,12 @@ class HealthMonitorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthService(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => HealthTipsProvider()),
+        ChangeNotifierProvider(create: (_) => RemindersProvider()),
+      ],
       child: MaterialApp(
         title: 'Health Monitor',
         debugShowCheckedModeBanner: false,

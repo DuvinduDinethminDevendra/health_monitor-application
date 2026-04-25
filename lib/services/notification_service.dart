@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -9,11 +13,46 @@ class NotificationService {
   factory NotificationService() => _instance;
 
   Future<void> initialize() async {
+    tz.initializeTimeZones();
+
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidSettings);
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+    const initSettings = InitializationSettings(
+        android: androidSettings, iOS: iosSettings);
 
     await _notifications.initialize(initSettings);
+  }
+
+  Future<bool> requestPermissions() async {
+    bool granted = false;
+    if (Platform.isIOS) {
+      final iosImplementation =
+          _notifications.resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
+      granted = await iosImplementation?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          ) ??
+          false;
+    } else if (Platform.isAndroid) {
+      final androidImplementation =
+          _notifications.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        // This targets Android 13+ (API level 33+)
+        final androidGranted = await androidImplementation.requestNotificationsPermission();
+        granted = androidGranted ?? false;
+      } else {
+        granted = true; // On older Android, it's granted by default
+      }
+    }
+    return granted;
   }
 
   Future<void> showNotification({
@@ -28,8 +67,10 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
     );
+    const iosDetails = DarwinNotificationDetails();
 
-    const details = NotificationDetails(android: androidDetails);
+    const details = NotificationDetails(
+        android: androidDetails, iOS: iosDetails);
     await _notifications.show(id, title, body, details);
   }
 
@@ -40,8 +81,36 @@ class NotificationService {
     required int hour,
     required int minute,
   }) async {
-    // Show an immediate reminder notification as a demo
-    await showNotification(id: id, title: title, body: body);
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate = tz.TZDateTime(
+        tz.local, now.year, now.month, now.day, hour, minute);
+
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    const androidDetails = AndroidNotificationDetails(
+      'health_monitor_channel',
+      'Health Monitor',
+      channelDescription: 'Health monitoring reminders',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    const details = NotificationDetails(
+        android: androidDetails, iOS: iosDetails);
+
+    await _notifications.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduledDate,
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
   }
 
   Future<void> cancelNotification(int id) async {
@@ -52,3 +121,4 @@ class NotificationService {
     await _notifications.cancelAll();
   }
 }
+

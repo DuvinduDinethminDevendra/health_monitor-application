@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/health_tips_provider.dart';
 import '../services/health_tips_service.dart';
 
 class HealthTipsScreen extends StatefulWidget {
@@ -9,24 +11,28 @@ class HealthTipsScreen extends StatefulWidget {
 }
 
 class _HealthTipsScreenState extends State<HealthTipsScreen> {
-  final HealthTipsService _tipsService = HealthTipsService();
-  List<HealthTip> _tips = [];
-  bool _isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadTips();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HealthTipsProvider>().fetchTips();
+    });
   }
 
-  Future<void> _loadTips() async {
-    setState(() => _isLoading = true);
-    final tips = await _tipsService.fetchHealthTips();
-    if (!mounted) return;
-    setState(() {
-      _tips = tips;
-      _isLoading = false;
-    });
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<HealthTipsProvider>().fetchTips(keyword: _searchController.text);
+  }
+
+  void _onSearch() {
+    context.read<HealthTipsProvider>().fetchTips(keyword: _searchController.text);
   }
 
   final List<Color> _cardColors = const [
@@ -60,67 +66,130 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadTips,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _tips.length,
-                itemBuilder: (context, index) {
-                  final tip = _tips[index];
-                  final color = _cardColors[index % _cardColors.length];
-                  final icon = _tipIcons[index % _tipIcons.length];
-
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    elevation: 2,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () => _showTipDetail(tip, color),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search health tips...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearch();
+                  },
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onSubmitted: (_) => _onSearch(),
+            ),
+          ),
+          Expanded(
+            child: Consumer<HealthTipsProvider>(
+              builder: (context, provider, child) {
+                switch (provider.state) {
+                  case HealthTipsState.loading:
+                    return const Center(child: CircularProgressIndicator());
+                  case HealthTipsState.error:
+                    return Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: color.withAlpha(30),
-                              child: Icon(icon, color: color, size: 24),
+                            const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+                            const SizedBox(height: 16),
+                            Text(
+                              provider.errorMessage,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 16),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    tip.title,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    tip.description,
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600]),
-                                  ),
-                                ],
-                              ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: provider.loadFallbackTips,
+                              icon: const Icon(Icons.offline_bolt),
+                              label: const Text('Load Offline Tips'),
                             ),
-                            Icon(Icons.arrow_forward_ios,
-                                size: 16, color: Colors.grey[400]),
                           ],
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  case HealthTipsState.empty:
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text('No health tips found for that keyword.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                        ],
+                      ),
+                    );
+                  case HealthTipsState.loaded:
+                  case HealthTipsState.initial:
+                    return RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: provider.tips.length,
+                        itemBuilder: (context, index) {
+                          final tip = provider.tips[index];
+                          final color = _cardColors[index % _cardColors.length];
+                          final icon = _tipIcons[index % _tipIcons.length];
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 2,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () => _showTipDetail(tip, color),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: color.withAlpha(30),
+                                      child: Icon(icon, color: color, size: 24),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            tip.title,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            tip.description,
+                                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                }
+              },
             ),
+          ),
+        ],
+      ),
     );
   }
 
