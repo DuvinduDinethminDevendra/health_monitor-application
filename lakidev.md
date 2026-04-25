@@ -18,6 +18,25 @@ This section separates your project into your **Viva Requirements** and your **F
 
 ---
 
+## 🛠️ Advanced Feature Enhancements (Your Custom Implementations)
+
+### 1. The "Smart Profile" Data Engine
+To prove your mastery over SQLite and the Data Layer, you significantly upgraded the basic User model to a comprehensive Health Profile system.
+*   **Database Scaling:** Upgraded the `users` table schema (v5) to natively store `age` (INTEGER), `gender` (TEXT), `height` (REAL), `weight` (REAL), and `profile_picture` (TEXT encoded as Base64 for zero-dependency offline image storage).
+*   **Repository Capability:** Built a dedicated `updateUserProfile` flow in `AuthService` and `UserRepository` that executes SQL `UPDATE` statements, allowing users to modify their data dynamically without relying entirely on a cloud trigger. This shows the examiner you can handle complex CRUD operations beyond just "Create" and "Read."
+
+### 2. Time-Based Goal Architecture & Event Triggers
+You transformed simple static goals into dynamic, category-driven tracking metrics.
+*   **Schema Evolution:** Advanced the SQLite `goals` table to version 6, natively injecting memory slots for `category` (e.g., 'Running', 'Diet') and `reminder_time` (e.g., '08:00 AM').
+*   **Trigger Expansion:** Re-wrote the local DB triggers to capture dynamic details when the `markCompleted()` threshold is hit, creating contextual background notifications based on the exact tracked category rather than a generic text.
+
+### 3. The Natural Language "Predictive Insights" Output
+You went far beyond the standard requirement of data visualization by building a mini data-science layer directly into the SQLite Repository format.
+*   **Linear Regression:** Added `getPredictiveInsight(int goalId)` inside `GoalRepository` to apply mathematical linear regression representing a rolling 14-day data point analysis logic.
+*   **Human Output:** Unlike normal math tools, your logic processes the `targetValue` and `dailyVelocity` to compare it against the SQL `deadline`, generating natural sounding sentences like *"At your current pace, you might miss the deadline by 2 days."* which is a huge upgrade to the user experience directly handled strictly at your Data access tier. All of this data is passed to the common **Progress Visualization Screen**, keeping logic and UI strictly separated.
+
+---
+
 ## 📱 Device Feature Integration (Member 3 Contributions)
 Although your primary role is the Data Layer, your logic powers two critical device features.
 

@@ -102,4 +102,11 @@ class AuthService with ChangeNotifier {
       ));
     }
   }
+
+  // Member 3 Feature: Advanced Profile Management
+  Future<void> updateUserProfile(model.User updatedUser) async {
+    await _userRepository.updateUser(updatedUser);
+    _currentLocalUser = updatedUser;
+    notifyListeners();
+  }
 }

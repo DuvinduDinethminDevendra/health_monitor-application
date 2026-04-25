@@ -104,7 +104,8 @@ class GoalRepository {
       await notificationService.showNotification(
         id: goalId,
         title: "Goal Achieved! 🎉",
-        body: "Congratulations! You have completed your goal: ${goal.title}",
+        body:
+            "Congratulations! You have completed your ${goal.category} goal: ${goal.title}",
       );
     }
 
@@ -137,6 +138,38 @@ class GoalRepository {
     int daysToCompletion = (remainingValue / dailyVelocity).ceil();
 
     return DateTime.now().add(Duration(days: daysToCompletion));
+  }
+
+  /// Advanced Predictive Insights (Member 3 Advanced Feature)
+  /// Returns a human-readable English analysis generated directly from the Data Layer.
+  Future<String> getPredictiveInsight(int goalId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query('goals', where: 'id = ?', whereArgs: [goalId]);
+    if (maps.isEmpty) return "Goal not found.";
+
+    final goal = Goal.fromMap(maps.first);
+    if (goal.isCompleted)
+      return "Amazing job! You have already conquered this goal.";
+    if (goal.currentValue <= 0)
+      return "You haven't started yet! Log some activity to generate predictions.";
+
+    final DateTime? predictedDate = await estimateCompletionDate(goalId);
+    if (predictedDate == null)
+      return "Need more data to predict your velocity.";
+
+    final deadlineDate = DateTime.tryParse(goal.deadline);
+    if (deadlineDate == null) return "Invalid deadline format.";
+
+    final daysDifference = deadlineDate.difference(predictedDate).inDays;
+
+    if (daysDifference > 0) {
+      return "You're moving fast! At this velocity, you will hit your target $daysDifference days early.";
+    } else if (daysDifference < 0) {
+      final lateDays = daysDifference.abs();
+      return "At your current pace, you might miss the deadline by $lateDays days. Push a little harder!";
+    } else {
+      return "You are perfectly on track to hit your goal right on the deadline.";
+    }
   }
 
   Future<int> deleteGoal(int id) async {

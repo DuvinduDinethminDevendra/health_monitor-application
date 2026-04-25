@@ -32,7 +32,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -46,6 +46,11 @@ class DatabaseHelper {
         email TEXT,
         password TEXT,
         created_at TEXT,
+        age INTEGER,
+        gender TEXT,
+        height REAL,
+        weight REAL,
+        profile_picture TEXT,
         sync_status INTEGER DEFAULT 0
       )
     ''');
@@ -55,10 +60,12 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT,
         title TEXT,
+        category TEXT,
         target_value REAL,
         current_value REAL,
         unit TEXT,
         deadline TEXT,
+        reminder_time TEXT,
         is_completed INTEGER DEFAULT 0,
         sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
