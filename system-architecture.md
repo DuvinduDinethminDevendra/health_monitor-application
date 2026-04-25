@@ -41,6 +41,7 @@ To ensure high performance and low memory consumption (Requirement #7), the arch
 
 - **Architectural Decision:** Instead of static instantiation, the Data Layer uses **Lazy Getters** for cross-service communication.
 - **Impact:** Reduces initial memory footprint during startup and prevents memory-leaking circular dependencies between the `SyncService` and `Repositories`.
+- **Conditional Platform Initialization:** Implemented using `dart.library.html` detection to isolate platform-specific database factories, ensuring zero compilation errors across Web and Mobile environments.
 
 ---
 

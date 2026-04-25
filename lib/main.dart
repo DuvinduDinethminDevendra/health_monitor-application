@@ -13,8 +13,9 @@ void main() async {
   if (kIsWeb) {
     await Firebase.initializeApp(
       options: const FirebaseOptions(
-        apiKey: 'AIzaSyD0gt14d7BTZd0IWxwn3gIaJSiNMM5MjoI',
-        appId: '1:127072635312:web:8c3f8367c0cc3a16edae75', // Generated generic web ID
+        apiKey: 'AIzaSyCZY-5wkEEifTbIW0Fa9WgZCmgh0mDvKMY',
+        authDomain: 'health-tracker-app-deffb.firebaseapp.com',
+        appId: '1:127072635312:web:80697f9c6c45fd7eedae75',
         messagingSenderId: '127072635312',
         projectId: 'health-tracker-app-deffb',
         storageBucket: 'health-tracker-app-deffb.firebasestorage.app',

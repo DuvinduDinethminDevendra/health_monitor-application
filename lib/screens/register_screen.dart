@@ -36,9 +36,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final authService = Provider.of<AuthService>(context, listen: false);
     final error = await authService.register(
-      _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text,
+      _nameController.text.trim(),
     );
 
     setState(() => _isLoading = false);
