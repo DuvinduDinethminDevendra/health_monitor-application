@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../repositories/user_repository.dart';
 import '../models/user.dart' as model;
@@ -24,7 +23,9 @@ class AuthService with ChangeNotifier {
       if (user != null) {
         await _syncLocalUser(user);
         _currentLocalUser = await _userRepository.getUserById(user.uid);
-        _syncService.rehydrateData(user.uid);
+        // Trigger both ways: Rehydrate (Cloud -> Local) and Sync (Local -> Cloud)
+        await _syncService.rehydrateData(user.uid);
+        await _syncService.syncData(user.uid);
       } else {
         _currentLocalUser = null;
       }
@@ -44,7 +45,8 @@ class AuthService with ChangeNotifier {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser == null) return;
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,

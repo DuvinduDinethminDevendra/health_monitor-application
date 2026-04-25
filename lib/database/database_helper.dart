@@ -7,11 +7,6 @@ import 'package:sqflite/sqflite.dart';
 import 'database_helper_stub.dart'
     if (dart.library.html) 'database_helper_web.dart';
 
-import '../models/user.dart';
-import '../models/goal.dart';
-import '../models/activity.dart';
-import '../models/health_log.dart';
-
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
@@ -32,7 +27,7 @@ class DatabaseHelper {
     }
 
     String path = join(await getDatabasesPath(), 'health_monitor.db');
-    
+
     return await openDatabase(
       path,
       version: 2,

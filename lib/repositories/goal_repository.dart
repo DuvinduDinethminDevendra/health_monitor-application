@@ -4,20 +4,20 @@ import '../services/sync_service.dart';
 
 class GoalRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  
+
   // Use a lazy getter to break the circular dependency loop
   SyncService get _syncService => SyncService();
 
   Future<int> insertGoal(Goal goal, {bool skipSync = false}) async {
     final db = await _dbHelper.database;
     final id = await db.insert('goals', goal.toMap());
-    
+
     // Only sync if skipSync is false (to prevent rehydration loops)
     if (!skipSync) {
       final newGoal = goal.copyWith(id: id);
       _syncService.syncGoal(newGoal);
     }
-    
+
     return id;
   }
 
@@ -43,6 +43,15 @@ class GoalRepository {
     return maps.map((map) => Goal.fromMap(map)).toList();
   }
 
+  Future<List<Goal>> getUnsyncedGoals(String userId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'goals',
+      where: 'user_id = ? AND sync_status = 0',
+      whereArgs: [userId],
+    );
+    return maps.map((map) => Goal.fromMap(map)).toList();
+  }
 
   Future<int> updateGoal(Goal goal) async {
     final db = await _dbHelper.database;
@@ -64,13 +73,13 @@ class GoalRepository {
       where: 'id = ?',
       whereArgs: [goalId],
     );
-    
+
     // Trigger sync for the updated goal
     final maps = await db.query('goals', where: 'id = ?', whereArgs: [goalId]);
     if (maps.isNotEmpty) {
       _syncService.syncGoal(Goal.fromMap(maps.first));
     }
-    
+
     return count;
   }
 
@@ -92,11 +101,20 @@ class GoalRepository {
     return count;
   }
 
-
   Future<int> deleteGoal(int id) async {
     final db = await _dbHelper.database;
     return await db.delete(
       'goals',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> updateSyncStatus(int id, int status) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'goals',
+      {'sync_status': status},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -109,20 +127,24 @@ class GoalRepository {
     if (goal.currentValue <= 0) return null;
 
     final db = await _dbHelper.database;
-    
+
     // 1. Get user's recent activity relevant to this goal type (mocked logic for now)
     // In a full implementation, we would filter by activity type.
-    
-    final daysSinceStart = DateTime.now().difference(DateTime.parse(goal.id != null ? DateTime.now().toIso8601String() : goal.deadline)).inDays.abs();
+
+    final daysSinceStart = DateTime.now()
+        .difference(DateTime.parse(
+            goal.id != null ? DateTime.now().toIso8601String() : goal.deadline))
+        .inDays
+        .abs();
     final effectiveDays = daysSinceStart == 0 ? 1 : daysSinceStart;
-    
+
     final avgProgressPerDay = goal.currentValue / effectiveDays;
-    
+
     if (avgProgressPerDay <= 0) return null;
-    
+
     final remainingValue = goal.targetValue - goal.currentValue;
     if (remainingValue <= 0) return DateTime.now();
-    
+
     final daysToFinish = (remainingValue / avgProgressPerDay).ceil();
     return DateTime.now().add(Duration(days: daysToFinish));
   }

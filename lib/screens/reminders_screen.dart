@@ -109,8 +109,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.notifications_active,
-                    color: Colors.white, size: 32),
+                Icon(Icons.notifications_active, color: Colors.white, size: 32),
                 SizedBox(height: 12),
                 Text(
                   'Stay On Track',
@@ -171,7 +170,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
             ),
             Switch(
               value: reminder.isEnabled,
-              activeColor: reminder.color,
+              activeThumbColor: reminder.color,
               onChanged: (value) async {
                 setState(() => reminder.isEnabled = value);
                 if (value) {

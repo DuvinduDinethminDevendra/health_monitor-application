@@ -126,6 +126,7 @@ graph TD
 
 ## 📝 Developer Notes (Viva Prep)
 - **Primary vs Secondary:** "SQLite is our **Primary** database for speed and offline use; Firebase is our **Secondary** database for cloud backup."
+- **Decoupled Firebase Sync:** "I implemented a decoupled sync pattern where SQLite data is pushed to Firebase Firestore. Sync is triggered automatically on login and manually via pull-to-refresh on the Dashboard."
 - **Web-SQLite Support:** "Standard SQLite requires direct file-system access (blocked by browsers). I implemented a **Native Web Persistence** architecture using conditional imports to ensure the app remains fully functional and performant during browser-based demonstrations without external dependencies."
 - **Predictive Analytics:** "I implemented a linear regression logic in `GoalRepository` to estimate goal completion dates based on current user velocity."
 - **Lazy Loading:** "Implemented to optimize startup performance and memory management (Requirement #7)."

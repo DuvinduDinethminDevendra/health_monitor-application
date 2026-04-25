@@ -41,6 +41,9 @@ To ensure high performance and low memory consumption (Requirement #7), the arch
 
 - **Architectural Decision:** Instead of static instantiation, the Data Layer uses **Lazy Getters** for cross-service communication.
 - **Impact:** Reduces initial memory footprint during startup and prevents memory-leaking circular dependencies between the `SyncService` and `Repositories`.
+- **Decoupled Firebase Sync Pattern:** To prevent stack overflow and race conditions, the Data Layer is decoupled from the Sync Layer.
+    - **Trigger 1: Startup Sync (Automatic):** Triggered by `AuthService` on every login/launch to sync Firebase Cloud data to SQLite.
+    - **Trigger 2: Refresh Sync (Manual):** Triggered by the user via the Dashboard's pull-to-refresh to push SQLite data to Firebase Firestore.
 - **Conditional Platform Initialization:** Implemented using `dart.library.html` detection to isolate platform-specific database factories, ensuring zero compilation errors across Web and Mobile environments.
 
 ---

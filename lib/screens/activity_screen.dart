@@ -47,7 +47,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('Log Activity'),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -55,13 +56,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: type,
+                    initialValue: type,
                     items: const [
                       DropdownMenuItem(value: 'steps', child: Text('Steps')),
-                      DropdownMenuItem(value: 'workout', child: Text('Workout')),
-                      DropdownMenuItem(value: 'running', child: Text('Running')),
-                      DropdownMenuItem(value: 'cycling', child: Text('Cycling')),
-                      DropdownMenuItem(value: 'swimming', child: Text('Swimming')),
+                      DropdownMenuItem(
+                          value: 'workout', child: Text('Workout')),
+                      DropdownMenuItem(
+                          value: 'running', child: Text('Running')),
+                      DropdownMenuItem(
+                          value: 'cycling', child: Text('Cycling')),
+                      DropdownMenuItem(
+                          value: 'swimming', child: Text('Swimming')),
                       DropdownMenuItem(value: 'yoga', child: Text('Yoga')),
                     ],
                     onChanged: (val) => setDialogState(() => type = val!),
@@ -76,13 +81,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     controller: valueController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: type == 'steps' ? 'Number of Steps' : 'Distance (km)',
+                      labelText:
+                          type == 'steps' ? 'Number of Steps' : 'Distance (km)',
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (double.tryParse(v) == null) return 'Enter a valid number';
+                      if (double.tryParse(v) == null)
+                        return 'Enter a valid number';
                       return null;
                     },
                   ),
@@ -97,7 +104,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (int.tryParse(v) == null) return 'Enter a valid number';
+                      if (int.tryParse(v) == null)
+                        return 'Enter a valid number';
                       return null;
                     },
                   ),
@@ -113,9 +121,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
-                  final userId = Provider.of<AuthService>(context, listen: false)
-                      .currentUser!
-                      .id!;
+                  final userId =
+                      Provider.of<AuthService>(context, listen: false)
+                          .currentUser!
+                          .id!;
                   final activity = Activity(
                     userId: userId,
                     type: type,
@@ -190,8 +199,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.directions_run,
-                      size: 80, color: Colors.grey[300]),
+                  Icon(Icons.directions_run, size: 80, color: Colors.grey[300]),
                   const SizedBox(height: 16),
                   Text(
                     'No activities logged yet',
@@ -218,10 +226,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: color.withAlpha(30),
-                      child: Icon(_getActivityIcon(activity.type), color: color),
+                      child:
+                          Icon(_getActivityIcon(activity.type), color: color),
                     ),
                     title: Text(
-                      activity.type[0].toUpperCase() + activity.type.substring(1),
+                      activity.type[0].toUpperCase() +
+                          activity.type.substring(1),
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(

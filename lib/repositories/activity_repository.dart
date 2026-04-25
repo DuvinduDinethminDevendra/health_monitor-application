@@ -9,12 +9,12 @@ class ActivityRepository {
   Future<int> insertActivity(Activity activity, {bool skipSync = false}) async {
     final db = await _dbHelper.database;
     final id = await db.insert('activities', activity.toMap());
-    
+
     if (!skipSync) {
       final newActivity = activity.copyWith(id: id);
       _syncService.syncActivity(newActivity);
     }
-    
+
     return id;
   }
 
@@ -60,9 +60,9 @@ class ActivityRepository {
       where: 'id = ?',
       whereArgs: [activity.id],
     );
-    
+
     _syncService.syncActivity(activity);
-    
+
     return count;
   }
 
@@ -70,6 +70,26 @@ class ActivityRepository {
     final db = await _dbHelper.database;
     return await db.delete(
       'activities',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Activity>> getUnsyncedActivities(String userId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'activities',
+      where: 'user_id = ? AND sync_status = 0',
+      whereArgs: [userId],
+    );
+    return maps.map((map) => Activity.fromMap(map)).toList();
+  }
+
+  Future<void> updateSyncStatus(int id, int status) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'activities',
+      {'sync_status': status},
       where: 'id = ?',
       whereArgs: [id],
     );
