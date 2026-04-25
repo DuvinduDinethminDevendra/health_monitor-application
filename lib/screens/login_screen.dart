@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -71,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.all(32),
                   child: Form(
                     key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -106,16 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                .hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
+                          validator: Validators.validateEmail,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -135,15 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
+                          validator: Validators.validatePassword,
                         ),
                         const SizedBox(height: 24),
                         SizedBox(

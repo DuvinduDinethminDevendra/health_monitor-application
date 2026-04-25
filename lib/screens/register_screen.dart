@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
+import '../utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -77,6 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   padding: const EdgeInsets.all(32),
                   child: Form(
                     key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -111,12 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your name';
-                            }
-                            return null;
-                          },
+                          validator: Validators.validateName,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -129,16 +126,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                .hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
+                          validator: Validators.validateEmail,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -158,15 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a password';
-                            }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
+                          validator: Validators.validatePassword,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
@@ -186,12 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          validator: (value) {
-                            if (value != _passwordController.text) {
-                              return 'Passwords do not match';
-                            }
-                            return null;
-                          },
+                          validator: (value) => Validators.validateConfirmPassword(value, _passwordController.text),
                         ),
                         const SizedBox(height: 24),
                         SizedBox(
