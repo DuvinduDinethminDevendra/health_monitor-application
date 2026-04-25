@@ -4,78 +4,74 @@
 
 ---
 
-## 📋 Primary Tasks & Scope
-1. **Secure User Authentication:** **Firebase Auth** integration for marks and security.
-2. **Hybrid Data Layer (Cloud-Edge Sync):**
-   - **Primary:** SQLite for offline-first local persistence (Viva Requirement).
-   - **Secondary:** Firebase Firestore for cloud backup and multi-device sync.
-3. **Smart Goal Management System:**
-   - Full CRUD for health goals.
-   - Smart tracking (Weight loss plans, target tracking).
-   - "Nudge" triggers for Member 4's notification system.
-4. **Architecture:** Maintain strict Repository Pattern to abstract SQLite/Firebase logic.
+## 🗺 Your Component Map & File Breakdown
+This section separates your project into your **Viva Requirements** and your **Functional Requirements**.
 
----
+### 🏛 Area 1: The Foundation (Viva Task)
+*These files are what you will show the examiner to prove your knowledge of SQLite and Architecture.*
 
-## 🏗 System Architecture (Member 3 Layer)
-### 1. Hybrid Sync Strategy
-- **SQLite-First Write:** Data is written to SQLite immediately for low latency.
-- **Async Cloud Mirror:** A `SyncService` background-pushes SQLite changes to Firestore.
-- **Cloud Restoration:** On login, if SQLite is empty, data is pulled from Firestore to "rehydrate" the local database.
-
-### 2. Smart Goal Features
-- **Weight Loss Logic:** Set target weight vs current weight.
-- **Progress Milestones:** Automatic calculation of % completion.
-- **Predictive Dates:** Calculate "Estimated Completion Date" based on recent activity logs.
-
----
-
-## 👥 Cross-Member Dependencies (Coordination Notes)
-| Affected Member | Integration Detail | Action Required |
+| Category | File Path | Purpose |
 | :--- | :--- | :--- |
-| **Member 1 (UI)** | Sync UI & Goal Forms | Add "Syncing" status indicator & Advanced Goal input fields. |
-| **Member 2 (Logic)** | State Management | Ensure Providers handle data restoration states from Cloud sync. |
-| **Member 4 (Device)** | Notifications | I will provide `GoalProgressTrigger` events; Member 4 handles the notification display. |
+| **Database Engine** | `lib/database/database_helper.dart` | The "Heart" of your local storage. Manages table creation and versioning. |
+| **Data Models** | `lib/models/user.dart`<br>`lib/models/goal.dart`<br>`lib/models/activity.dart`<br>`lib/models/health_log.dart` | Defines what a "User" or "Goal" looks like in Dart. These are the blueprints for your data. |
+| **Repositories** | `lib/repositories/user_repository.dart`<br>`lib/repositories/goal_repository.dart`<br>`lib/repositories/activity_repository.dart`<br>`lib/repositories/health_log_repository.dart` | The "Gatekeepers." They contain the actual SQL commands to Save, Load, and Delete data locally. |
 
----
+### 🚀 Area 2: The Features (Implementation Task)
+*These files handle the advanced features: Secure Auth, Cloud Sync, and Smart Goals.*
 
-## 🚦 Implementation Status
-
-### 1. Database & Schema
-- [x] Initial SQLite schema setup (`database_helper.dart`).
-- [/] **IN PROGRESS:** Update Schema (Change IDs from `INTEGER` to `TEXT` for UID compatibility).
-- [ ] **TODO:** Add `sync_status` flag to tables.
-
----
-
-### 🔑 Phase 1: Firebase Connectivity & Setup
-The connection between Flutter and Firebase was established by synchronizing the development environment and Android build configurations:
-
-| Component | File Modified | Purpose |
+| Category | File Path | Purpose |
 | :--- | :--- | :--- |
-| **Credentials** | `android/app/google-services.json` | Moved to app module so Gradle can pick up the Firebase project keys. |
-| **Namespace** | `android/app/build.gradle.kts` | Updated `applicationId` to `com.descenders.healthtracker` to match the Firebase app ID. |
-| **Plugin Registry** | `android/settings.gradle.kts` | Registered the `com.google.gms.google-services` plugin. |
-| **Native Entry** | `MainActivity.kt` | Refactored package name and folder structure to match the new App ID. |
-| **Dependencies** | `pubspec.yaml` | Integrated `firebase_core`, `firebase_auth`, and `cloud_firestore`. |
-| **Initialization** | `lib/main.dart` | Added `Firebase.initializeApp()` in `main()` to boot the Firebase engine. |
+| **Security (Auth)** | `lib/services/auth_service.dart` | Handles Login/Register via Firebase. It also ensures the user is "Remembered" when the app restarts. |
+| **Cloud Sync** | `lib/services/sync_service.dart` | The "Mirror." It sends your SQLite data to Firebase Firestore so it's never lost. |
+| **Android Config** | `android/app/google-services.json`<br>`android/app/build.gradle.kts` | The "Bridge" that allows your Android app to talk to Google's Firebase servers. |
 
 ---
 
-### 2. Repository Pattern
-- [x] Basic Repositories created.
-- [ ] **TODO:** Integrate `SyncService` into `GoalRepository` and `UserRepository`.
-- [ ] **TODO:** Implement "Predictive Logic" in `GoalRepository`.
+## 🔄 Component Interaction Graph
+This graph shows how the files you manage (Member 3) interact with the rest of the app.
 
-### 3. Firebase Integration
-- [x] Environment Configuration & Plugin Setup.
-- [ ] Implement `AuthService` using `firebase_auth`.
-- [ ] Implement `SyncService` using `cloud_firestore`.
+```mermaid
+graph TD
+    subgraph "Presentation (Members 1 & 2)"
+        UI[Screens / UI]
+    end
 
+    subgraph "Member 3: Data Layer (Your Area)"
+        UI --> Auth[AuthService]
+        UI --> Repo[Repositories]
+        
+        Auth --> SQL[(SQLite DB)]
+        Auth --> FireAuth[Firebase Auth API]
+        
+        Repo --> SQL
+        Repo --> Sync[SyncService]
+        Sync --> Firestore[Firebase Cloud DB]
+    end
+
+    style SQL fill:#f9f,stroke:#333,stroke-width:2px
+    style Firestore fill:#bbf,stroke:#333,stroke-width:2px
+```
+
+---
+
+## 💡 How connectivity works in your Dart files:
+1.  **Imports:** At the top of each file, you see `import '...'`. This is how one file "grabs" the tools from another. For example, `goal_repository.dart` imports `sync_service.dart` so it can mirror data to the cloud.
+2.  **Asynchronous (Future):** You will see `async` and `await` everywhere. This means "wait for the database/internet to finish." Since talking to SQLite or Firebase takes a split second, Dart uses these keywords to keep the app from freezing.
+3.  **The Flow:**
+    - User clicks "Save Goal" -> **UI** calls **Repository**.
+    - **Repository** saves to **SQLite**.
+    - **Repository** then asks **SyncService** to backup to **Firebase**.
+
+---
+
+## 🚦 Implementation Status (Summary)
+- [x] **SQLite Schema:** Relational tables (User -> Goals/Activities) are ready.
+- [x] **Auth:** Firebase Login/Register is fully functional.
+- [x] **Sync:** Automatic SQLite-to-Firestore mirroring is active.
+- [x] **Smart Logic:** Predictive goal completion calculation is implemented in `GoalRepository`.
 
 ---
 
 ## 📝 Developer Notes (Viva Prep)
-- **Why Hybrid?** To demonstrate high-level architecture. SQLite handles speed/offline, Firebase handles persistence/portability.
-- **Relational Integrity:** Ensure `user_id` in SQLite matches the Firebase UID exactly.
-- **Performance:** Use async non-blocking calls for sync so the UI never freezes.
+- **Primary vs Secondary:** "SQLite is our **Primary** database for speed and offline use. Firebase is our **Secondary** database for cloud backup and multi-device sync."
+- **Separation of Concerns:** "By using a **SyncService**, we keep the Firebase logic out of our Repositories, making the code easier to test and maintain."

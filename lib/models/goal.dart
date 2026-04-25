@@ -1,6 +1,6 @@
 class Goal {
-  final int? id;
-  final int userId;
+  final int? id; // SQLite auto-increment ID
+  final String userId; // Firebase UID
   final String title;
   final double targetValue;
   final double currentValue;
@@ -40,7 +40,7 @@ class Goal {
   factory Goal.fromMap(Map<String, dynamic> map) {
     return Goal(
       id: map['id'] as int?,
-      userId: map['user_id'] as int,
+      userId: map['user_id'] as String,
       title: map['title'] as String,
       targetValue: (map['target_value'] as num).toDouble(),
       currentValue: (map['current_value'] as num).toDouble(),
@@ -52,7 +52,7 @@ class Goal {
 
   Goal copyWith({
     int? id,
-    int? userId,
+    String? userId,
     String? title,
     double? targetValue,
     double? currentValue,

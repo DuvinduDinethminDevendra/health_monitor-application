@@ -1,15 +1,23 @@
 import '../database/database_helper.dart';
 import '../models/health_log.dart';
+import '../services/sync_service.dart';
 
 class HealthLogRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  final SyncService _syncService = SyncService();
 
   Future<int> insertHealthLog(HealthLog log) async {
     final db = await _dbHelper.database;
-    return await db.insert('health_logs', log.toMap());
+    final id = await db.insert('health_logs', log.toMap());
+    
+    // Sync to Cloud
+    final newLog = HealthLog.fromMap({...log.toMap(), 'id': id});
+    _syncService.syncHealthLog(newLog);
+    
+    return id;
   }
 
-  Future<List<HealthLog>> getHealthLogsByUser(int userId) async {
+  Future<List<HealthLog>> getHealthLogsByUser(String userId) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'health_logs',
@@ -20,7 +28,7 @@ class HealthLogRepository {
     return maps.map((map) => HealthLog.fromMap(map)).toList();
   }
 
-  Future<HealthLog?> getLatestLog(int userId) async {
+  Future<HealthLog?> getLatestLog(String userId) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'health_logs',
@@ -34,7 +42,7 @@ class HealthLogRepository {
   }
 
   Future<List<HealthLog>> getLogsByDateRange(
-      int userId, String startDate, String endDate) async {
+      String userId, String startDate, String endDate) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'health_logs',

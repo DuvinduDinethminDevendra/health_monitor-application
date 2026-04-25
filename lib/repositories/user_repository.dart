@@ -4,9 +4,9 @@ import '../models/user.dart';
 class UserRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  Future<int> insertUser(User user) async {
+  Future<void> insertUser(User user) async {
     final db = await _dbHelper.database;
-    return await db.insert('users', user.toMap());
+    await db.insert('users', user.toMap());
   }
 
   Future<User?> getUserByEmail(String email) async {
@@ -20,7 +20,7 @@ class UserRepository {
     return User.fromMap(maps.first);
   }
 
-  Future<User?> getUserById(int id) async {
+  Future<User?> getUserById(String id) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'users',
@@ -41,7 +41,7 @@ class UserRepository {
     );
   }
 
-  Future<int> deleteUser(int id) async {
+  Future<int> deleteUser(String id) async {
     final db = await _dbHelper.database;
     return await db.delete(
       'users',

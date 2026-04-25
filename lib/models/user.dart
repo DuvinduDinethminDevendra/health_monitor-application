@@ -1,5 +1,5 @@
 class User {
-  final int? id;
+  final String? id; // Firebase UID
   final String name;
   final String email;
   final String password;
@@ -25,7 +25,7 @@ class User {
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      id: map['id'] as int?,
+      id: map['id'] as String?,
       name: map['name'] as String,
       email: map['email'] as String,
       password: map['password'] as String,
@@ -34,7 +34,7 @@ class User {
   }
 
   User copyWith({
-    int? id,
+    String? id,
     String? name,
     String? email,
     String? password,
