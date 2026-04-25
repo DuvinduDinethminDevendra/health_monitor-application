@@ -7,7 +7,9 @@ import 'sync_service.dart';
 
 class AuthService with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb ? 'dummy-client-id.apps.googleusercontent.com' : null,
+  );
   final UserRepository _userRepository = UserRepository();
   final SyncService _syncService = SyncService();
 

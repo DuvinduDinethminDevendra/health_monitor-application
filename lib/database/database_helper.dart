@@ -22,15 +22,17 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
+    String path;
     if (kIsWeb) {
       await initWebDatabase();
+      path = 'health_monitor.db';
+    } else {
+      path = join(await getDatabasesPath(), 'health_monitor.db');
     }
-
-    String path = join(await getDatabasesPath(), 'health_monitor.db');
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -42,7 +44,8 @@ class DatabaseHelper {
         id TEXT PRIMARY KEY,
         name TEXT,
         email TEXT,
-        createdAt TEXT,
+        password TEXT,
+        created_at TEXT,
         sync_status INTEGER DEFAULT 0
       )
     ''');
@@ -89,7 +92,13 @@ class DatabaseHelper {
     ''');
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    await db.execute('DROP TABLE IF EXISTS health_logs');
+    await db.execute('DROP TABLE IF EXISTS activities');
+    await db.execute('DROP TABLE IF EXISTS goals');
+    await db.execute('DROP TABLE IF EXISTS users');
+    await _onCreate(db, newVersion);
+  }
 
   Future<void> close() async {
     final db = await database;
