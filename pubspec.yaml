@@ -11,18 +11,30 @@ dependencies:
     sdk: flutter
   sqflite: any
   path: any
-  fl_chart: any
+  fl_chart: ^1.1.0
   http: any
-  flutter_local_notifications: any
+  flutter_local_notifications: ^19.5.0
   provider: any
   intl: any
   crypto: any
   timezone: ^0.10.1
+  shimmer: ^3.0.0
+  dio: ^5.9.2
+  dio_cache_interceptor: ^3.5.1
+  dio_cache_interceptor_hive_store: ^4.0.0
+  path_provider: ^2.1.5
+  flutter_widget_from_html: ^0.16.1
+  cached_network_image: ^3.4.1
+  share_plus: ^10.1.0
+  showcaseview: ^5.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+dependency_overrides:
+  vector_math: 2.3.0
 
 flutter:
   uses-material-design: true

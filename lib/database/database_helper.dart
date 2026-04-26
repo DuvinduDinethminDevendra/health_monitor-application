@@ -21,7 +21,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -39,6 +39,31 @@ class DatabaseHelper {
           is_enabled INTEGER NOT NULL DEFAULT 0
         )
       ''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE favorite_tips (
+          topic_id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          content TEXT NOT NULL,
+          url TEXT NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE recent_tips (
+          topic_id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          content TEXT NOT NULL,
+          url TEXT NOT NULL,
+          visited_at INTEGER NOT NULL
+        )
+      ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE favorite_tips ADD COLUMN image_url TEXT');
+      await db.execute('ALTER TABLE recent_tips ADD COLUMN image_url TEXT');
     }
   }
 
@@ -99,6 +124,29 @@ class DatabaseHelper {
         hour INTEGER NOT NULL,
         minute INTEGER NOT NULL,
         is_enabled INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE favorite_tips (
+        topic_id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        content TEXT NOT NULL,
+        url TEXT NOT NULL,
+        image_url TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE recent_tips (
+        topic_id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        content TEXT NOT NULL,
+        url TEXT NOT NULL,
+        visited_at INTEGER NOT NULL,
+        image_url TEXT
       )
     ''');
   }

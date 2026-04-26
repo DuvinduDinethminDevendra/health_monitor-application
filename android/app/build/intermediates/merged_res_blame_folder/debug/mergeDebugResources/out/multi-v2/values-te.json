@@ -1,0 +1,60 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.health_monitor.app-mergeDebugResources-36:/values-te/values-te.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\ROSHAN\\.gradle\\caches\\8.10.2\\transforms\\308a2e77faa557d0bd706972416bde6a\\transformed\\browser-1.8.0\\res\\values-te\\values-te.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,166,274,385",
+                        "endColumns": "110,107,110,106",
+                        "endOffsets": "161,269,380,487"
+                    },
+                    "to": {
+                        "startLines": "9,19,20,21",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "805,1626,1734,1845",
+                        "endColumns": "110,107,110,106",
+                        "endOffsets": "911,1729,1840,1947"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\ROSHAN\\.gradle\\caches\\8.10.2\\transforms\\34e8173ce89df20168a3523175f8024b\\transformed\\jetified-media3-exoplayer-1.5.1\\res\\values-te\\values-te.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10",
+                        "startColumns": "4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,127,195,268,336,416,493,594,687",
+                        "endColumns": "71,67,72,67,79,76,100,92,77",
+                        "endOffsets": "122,190,263,331,411,488,589,682,760"
+                    },
+                    "to": {
+                        "startLines": "10,11,12,13,14,15,16,17,18",
+                        "startColumns": "4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "916,988,1056,1129,1197,1277,1354,1455,1548",
+                        "endColumns": "71,67,72,67,79,76,100,92,77",
+                        "endOffsets": "983,1051,1124,1192,1272,1349,1450,1543,1621"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\ROSHAN\\.gradle\\caches\\8.10.2\\transforms\\8cf478dec41eed746328fa8046755ba2\\transformed\\core-1.13.1\\res\\values-te\\values-te.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,157,265,367,468,574,681,805",
+                        "endColumns": "101,107,101,100,105,106,123,100",
+                        "endOffsets": "152,260,362,463,569,676,800,901"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,22",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,157,265,367,468,574,681,1952",
+                        "endColumns": "101,107,101,100,105,106,123,100",
+                        "endOffsets": "152,260,362,463,569,676,800,2048"
+                    }
+                }
+            ]
+        }
+    ]
+}
