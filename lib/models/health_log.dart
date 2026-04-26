@@ -1,6 +1,6 @@
 class HealthLog {
-  final int? id;
-  final int userId;
+  final int? id; // SQLite auto-increment ID
+  final String userId; // Firebase UID
   final double weight; // in kg
   final double height; // in cm
   final double bmi;
@@ -44,7 +44,7 @@ class HealthLog {
   factory HealthLog.fromMap(Map<String, dynamic> map) {
     return HealthLog(
       id: map['id'] as int?,
-      userId: map['user_id'] as int,
+      userId: map['user_id'] as String,
       weight: (map['weight'] as num).toDouble(),
       height: (map['height'] as num).toDouble(),
       bmi: (map['bmi'] as num).toDouble(),

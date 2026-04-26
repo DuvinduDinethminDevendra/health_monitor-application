@@ -1,9 +1,14 @@
 class User {
-  final int? id;
+  final String? id; // Firebase UID
   final String name;
   final String email;
   final String password;
   final String createdAt;
+  final int? age;
+  final String? gender;
+  final double? height;
+  final double? weight;
+  final String? profilePicture; // Base64 string for SQLite offline image
 
   User({
     this.id,
@@ -11,6 +16,11 @@ class User {
     required this.email,
     required this.password,
     String? createdAt,
+    this.age,
+    this.gender,
+    this.height,
+    this.weight,
+    this.profilePicture,
   }) : createdAt = createdAt ?? DateTime.now().toIso8601String();
 
   Map<String, dynamic> toMap() {
@@ -20,25 +30,40 @@ class User {
       'email': email,
       'password': password,
       'created_at': createdAt,
+      'age': age,
+      'gender': gender,
+      'height': height,
+      'weight': weight,
+      'profile_picture': profilePicture,
     };
   }
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      id: map['id'] as int?,
+      id: map['id'] as String?,
       name: map['name'] as String,
       email: map['email'] as String,
       password: map['password'] as String,
       createdAt: map['created_at'] as String,
+      age: map['age'] as int?,
+      gender: map['gender'] as String?,
+      height: map['height'] as double?,
+      weight: map['weight'] as double?,
+      profilePicture: map['profile_picture'] as String?,
     );
   }
 
   User copyWith({
-    int? id,
+    String? id,
     String? name,
     String? email,
     String? password,
     String? createdAt,
+    int? age,
+    String? gender,
+    double? height,
+    double? weight,
+    String? profilePicture,
   }) {
     return User(
       id: id ?? this.id,
@@ -46,6 +71,11 @@ class User {
       email: email ?? this.email,
       password: password ?? this.password,
       createdAt: createdAt ?? this.createdAt,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      profilePicture: profilePicture ?? this.profilePicture,
     );
   }
 }

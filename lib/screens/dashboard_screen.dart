@@ -11,6 +11,7 @@ import 'health_tips_screen.dart';
 import 'charts_screen.dart';
 import 'reminders_screen.dart';
 import 'login_screen.dart';
+import '../services/sync_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -37,8 +38,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    final activities =
-        await ActivityRepository().getActivitiesByUser(userId);
+    // Trigger Firebase Sync on every manual refresh
+    await SyncService().syncData(userId);
+
+    final activities = await ActivityRepository().getActivitiesByUser(userId);
     final goals = await GoalRepository().getActiveGoals(userId);
     final latestLog = await HealthLogRepository().getLatestLog(userId);
 
@@ -77,7 +80,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     : 'Goals'),
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
-        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -300,8 +302,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildActionTile(
-      String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionTile(String title, String subtitle, IconData icon,
+      Color color, VoidCallback onTap) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

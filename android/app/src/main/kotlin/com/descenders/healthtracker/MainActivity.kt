@@ -1,4 +1,4 @@
-package com.example.health_monitor
+package com.descenders.healthtracker
 
 import io.flutter.embedding.android.FlutterActivity
 
