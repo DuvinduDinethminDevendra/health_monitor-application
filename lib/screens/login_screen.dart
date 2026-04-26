@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 import 'dashboard_screen.dart';
+import 'profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -233,12 +234,23 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     final authService = Provider.of<AuthService>(context, listen: false);
     try {
-      await authService.signInWithGoogle();
+      final isNewUser = await authService.signInWithGoogle();
       if (!mounted) return;
+      
+      // Navigate to the Dashboard first
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
+
+      // If they are a brand new user, automatically open their profile 
+      // so they can finish setting up their details & interests!
+      if (isNewUser) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Google Sign-In failed: $e'), backgroundColor: Colors.red),

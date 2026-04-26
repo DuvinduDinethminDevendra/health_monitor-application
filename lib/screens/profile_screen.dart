@@ -24,6 +24,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _base64Image;
   bool _isUploadingImage = false;
 
+  List<String> _selectedInterests = [];
+  final List<String> _availableTopics = [
+    'Fitness',
+    'Diet & Nutrition',
+    'Mental Health',
+    'Sleep Tracking',
+    'Cardio',
+    'Strength Training',
+    'Yoga & Flexibility',
+    'Running',
+    'Weight Loss',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +52,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user?.gender != null &&
         ['Male', 'Female', 'Other'].contains(user?.gender)) {
       _selectedGender = user!.gender!;
+    }
+    
+    if (user?.interests != null) {
+      _selectedInterests = List.from(user!.interests!);
     }
   }
 
@@ -97,6 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           weight: double.tryParse(_weightController.text.trim()),
           gender: _selectedGender == 'Not Specified' ? null : _selectedGender,
           profilePicture: _base64Image,
+          interests: _selectedInterests,
         );
 
         await authService.updateUserProfile(updatedUser);
@@ -171,23 +189,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 8),
-                    // Check if interests exist!
-                    if (user.interests != null && user.interests!.isNotEmpty)
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        alignment: WrapAlignment.center,
-                        children: user.interests!
-                            .map((interest) => Chip(
-                                  label: Text(interest,
-                                      style: const TextStyle(
-                                          fontSize: 10, color: Colors.white)),
-                                  backgroundColor: const Color(0xFF00BFA5),
-                                  padding: EdgeInsets.zero,
-                                  visualDensity: VisualDensity.compact,
-                                ))
-                            .toList(),
-                      ),
+                    // Editable Interests
+                    const Text('Your Interests', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      alignment: WrapAlignment.center,
+                      children: _availableTopics.map((topic) {
+                        final isSelected = _selectedInterests.contains(topic);
+                        return FilterChip(
+                          label: Text(
+                            topic,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: const Color(0xFF00BFA5),
+                          checkmarkColor: Colors.white,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedInterests.add(topic);
+                              } else {
+                                _selectedInterests.remove(topic);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
                     const SizedBox(height: 32),
 
                     // Name

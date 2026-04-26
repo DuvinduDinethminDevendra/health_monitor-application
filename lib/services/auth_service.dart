@@ -35,26 +35,28 @@ class AuthService with ChangeNotifier {
     });
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<bool> signInWithGoogle() async {
     try {
+      UserCredential credential;
       if (kIsWeb) {
         // Use Firebase Auth's built-in Web Google provider
         // This uses the config you already provided in main.dart!
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        await _auth.signInWithPopup(googleProvider);
+        credential = await _auth.signInWithPopup(googleProvider);
       } else {
         // Standard mobile flow
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        if (googleUser == null) return;
+        if (googleUser == null) return false;
 
         final GoogleSignInAuthentication googleAuth =
             await googleUser.authentication;
-        final AuthCredential credential = GoogleAuthProvider.credential(
+        final AuthCredential cred = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
-        await _auth.signInWithCredential(credential);
+        credential = await _auth.signInWithCredential(cred);
       }
+      return credential.additionalUserInfo?.isNewUser ?? false;
     } catch (e) {
       print("Error in Google Sign In: $e");
       rethrow;
