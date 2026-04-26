@@ -21,8 +21,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -74,6 +75,60 @@ class DatabaseHelper {
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE step_records (
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id    INTEGER NOT NULL,
+          date       TEXT NOT NULL,
+          step_count INTEGER NOT NULL DEFAULT 0,
+          goal       INTEGER NOT NULL DEFAULT 10000,
+          UNIQUE(user_id, date),
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE workout_records (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id         INTEGER NOT NULL,
+          workout_type    TEXT NOT NULL,
+          duration_mins   INTEGER NOT NULL,
+          calories_burned INTEGER,
+          logged_at       TEXT NOT NULL,
+          notes           TEXT,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE step_records (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id    INTEGER NOT NULL,
+            date       TEXT NOT NULL,
+            step_count INTEGER NOT NULL DEFAULT 0,
+            goal       INTEGER NOT NULL DEFAULT 10000,
+            UNIQUE(user_id, date),
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE workout_records (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id         INTEGER NOT NULL,
+            workout_type    TEXT NOT NULL,
+            duration_mins   INTEGER NOT NULL,
+            calories_burned INTEGER,
+            logged_at       TEXT NOT NULL,
+            notes           TEXT,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+      ''');
+    }
   }
 
   Future<void> close() async {
