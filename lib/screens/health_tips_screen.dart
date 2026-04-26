@@ -6,6 +6,8 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/health_tips_provider.dart';
 import '../services/health_tips_service.dart';
 
@@ -19,7 +21,31 @@ class HealthTipsScreen extends StatefulWidget {
 class _HealthTipsScreenState extends State<HealthTipsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final GlobalKey _cardKey = GlobalKey();
+  final GlobalKey _searchKey = GlobalKey();
+  final GlobalKey _favKey = GlobalKey();
+  final GlobalKey _shareKey = GlobalKey();
   Timer? _debounce;
+  bool _shouldShowMainTutorial = false;
+  bool _shouldShowBottomSheetTutorial = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkTutorialStatus();
+  }
+
+  Future<void> _checkTutorialStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _shouldShowMainTutorial = !(prefs.getBool('hasShownHealthTipsMainTutorial') ?? false);
+      _shouldShowBottomSheetTutorial = !(prefs.getBool('hasShownHealthTipsSheetTutorial') ?? false);
+    });
+  }
+
+  Future<void> _markTutorialShown(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, true);
+  }
 
   @override
   void dispose() {
@@ -59,12 +85,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
   Widget build(BuildContext context) {
     return ShowCaseWidget(
       builder: (context) {
-        // Trigger the showcase automatically after the first frame
-        // if the tips are loaded and we haven't shown it yet.
         final provider = Provider.of<HealthTipsProvider>(context);
-        if (provider.state == HealthTipsState.loaded && provider.tips.isNotEmpty) {
+        if (_shouldShowMainTutorial && provider.state == HealthTipsState.loaded && provider.tips.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ShowCaseWidget.of(context).startShowCase([_cardKey]);
+            ShowCaseWidget.of(context).startShowCase([_searchKey, _cardKey]);
+            _markTutorialShown('hasShownHealthTipsMainTutorial');
+            setState(() => _shouldShowMainTutorial = false);
           });
         }
 
@@ -79,22 +105,32 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              onSubmitted: (_) => _onSearchSubmitted(),
-              decoration: InputDecoration(
-                hintText: 'Search health tips...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _onSearchSubmitted();
-                  },
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: Showcase(
+              key: _searchKey,
+              title: 'Search Tips',
+              description: 'Type here to find specific health advice or keywords.',
+              tooltipBackgroundColor: const Color(0xFF1A73E8),
+              textColor: Colors.white,
+              titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+              descTextStyle: const TextStyle(fontSize: 14, color: Colors.white70),
+              tooltipBorderRadius: BorderRadius.circular(12),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _onSearchChanged,
+                onSubmitted: (_) => _onSearchSubmitted(),
+                decoration: InputDecoration(
+                  hintText: 'Search health tips...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      _onSearchSubmitted();
+                    },
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -145,105 +181,130 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                   case HealthTipsState.initial:
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: provider.tips.length,
-                        itemBuilder: (context, index) {
-                          final tip = provider.tips[index];
-                          final color = _cardColors[index % _cardColors.length];
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: provider.tips.length,
+                              itemBuilder: (context, index) {
+                                final tip = provider.tips[index];
+                                final color = _cardColors[index % _cardColors.length];
 
-                          final cardWidget = Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 2,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () => _showTipDetail(tip, color),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: tip.imageUrl != null && tip.imageUrl!.isNotEmpty
-                                          ? CachedNetworkImage(
-                                              imageUrl: tip.imageUrl!,
-                                              width: 60,
-                                              height: 60,
-                                              fit: BoxFit.cover,
-                                              placeholder: (context, url) => Container(
-                                                width: 60,
-                                                height: 60,
-                                                decoration: BoxDecoration(
-                                                  color: color.withOpacity(0.1),
-                                                ),
-                                                child: Center(
-                                                  child: SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                                final cardWidget = Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  elevation: 2,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () => _showTipDetail(tip, color),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: tip.imageUrl != null && tip.imageUrl!.isNotEmpty
+                                                ? CachedNetworkImage(
+                                                    imageUrl: tip.imageUrl!,
+                                                    width: 60,
+                                                    height: 60,
+                                                    fit: BoxFit.cover,
+                                                    placeholder: (context, url) => Container(
+                                                      width: 60,
+                                                      height: 60,
+                                                      decoration: BoxDecoration(
+                                                        color: color.withOpacity(0.1),
+                                                      ),
+                                                      child: Center(
+                                                        child: SizedBox(
+                                                          width: 20,
+                                                          height: 20,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            valueColor: AlwaysStoppedAnimation<Color>(color),
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
+                                                    errorWidget: (context, url, error) => _buildImageFallback(color),
+                                                  )
+                                                : _buildImageFallback(color),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: color.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    tip.description,
+                                                    style: TextStyle(
+                                                      color: color,
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
-                                              ),
-                                              errorWidget: (context, url, error) => _buildImageFallback(color),
-                                            )
-                                          : _buildImageFallback(color),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: color.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              tip.description,
-                                              style: TextStyle(
-                                                color: color,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  tip.title,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            tip.title,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                          const Icon(Icons.chevron_right, color: Colors.grey),
                                         ],
                                       ),
                                     ),
-                                    const Icon(Icons.chevron_right, color: Colors.grey),
-                                  ],
+                                  ),
+                                );
+
+                                if (index == 0) {
+                                  return Showcase(
+                                    key: _cardKey,
+                                    title: 'Read & Save',
+                                    description: 'Tap any card to read the full article, or tap the heart to save it offline.',
+                                    tooltipBackgroundColor: const Color(0xFFFFA726),
+                                    textColor: Colors.white,
+                                    titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                                    descTextStyle: const TextStyle(fontSize: 14, color: Colors.white70),
+                                    tooltipBorderRadius: BorderRadius.circular(12),
+                                    child: cardWidget,
+                                  );
+                                }
+                                return cardWidget;
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            child: InkWell(
+                              onTap: () => launchUrl(Uri.parse('https://health.gov')),
+                              child: const Text(
+                                'Source: MyHealthfinder (health.gov)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),
-                          );
-
-                          if (index == 0) {
-                            return Showcase(
-                              key: _cardKey,
-                              title: 'Read & Save',
-                              description: 'Tap any card to read the full article, or tap the heart to save it offline.',
-                              child: cardWidget,
-                            );
-                          }
-                          return cardWidget;
-                        },
+                          ),
+                        ],
                       ),
                     );
                 }
@@ -358,13 +419,24 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.3,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
+      builder: (context) => ShowCaseWidget(
+        builder: (context) => DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          maxChildSize: 0.9,
+          minChildSize: 0.3,
+          expand: false,
+          builder: (context, scrollController) {
+          // Trigger showcase for the buttons inside the bottom sheet ONLY once
+          if (_shouldShowBottomSheetTutorial) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ShowCaseWidget.of(context).startShowCase([_favKey, _shareKey]);
+              _markTutorialShown('hasShownHealthTipsSheetTutorial');
+              setState(() => _shouldShowBottomSheetTutorial = false);
+            });
+          }
+          
+          return Column(
+            children: [
             const SizedBox(height: 12),
             Center(
               child: Container(
@@ -420,6 +492,36 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                               height: 1.6,
                             ),
                           ),
+                    const SizedBox(height: 32),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () => launchUrl(Uri.parse('https://health.gov')),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Data Source:',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'MyHealthfinder API (health.gov)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: color,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Information provided by the Office of Disease Prevention and Health Promotion, U.S. Department of Health and Human Services.',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -443,41 +545,63 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     Consumer<HealthTipsProvider>(
                       builder: (context, provider, child) {
                         final isFav = provider.isFavorite(tip.id);
-                        return IconButton(
-                          icon: Icon(isFav ? Icons.favorite : Icons.favorite_border),
-                          color: Colors.redAccent,
-                          iconSize: 28,
-                          onPressed: () {
-                            provider.toggleFavorite(tip);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(isFav ? 'Removed from Favorites' : 'Saved to Favorites!')),
-                            );
-                          },
+                        return Showcase(
+                          key: _favKey,
+                          title: 'Save Offline',
+                          description: 'Tap the heart to save this article to your Favorites for offline reading.',
+                          tooltipBackgroundColor: Colors.redAccent,
+                          textColor: Colors.white,
+                          titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                          descTextStyle: const TextStyle(fontSize: 14, color: Colors.white70),
+                          tooltipBorderRadius: BorderRadius.circular(12),
+                          child: IconButton(
+                            icon: Icon(isFav ? Icons.favorite : Icons.favorite_border),
+                            color: Colors.redAccent,
+                            iconSize: 28,
+                            onPressed: () {
+                              provider.toggleFavorite(tip);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(isFav ? 'Removed from Favorites' : 'Saved to Favorites!')),
+                              );
+                            },
+                          ),
                         );
                       },
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.share_outlined),
-                      color: Colors.blueAccent,
-                      iconSize: 28,
-                      onPressed: () {
-                        final String shareText = 
-                          'Check out this health tip: ${tip.title}\n\n'
-                          '${tip.description}\n\n'
-                          'Read more at: ${tip.url.isNotEmpty ? tip.url : "https://health.gov"}';
-                        
-                        Share.share(shareText, subject: 'Health Tip: ${tip.title}');
-                      },
+                    Showcase(
+                      key: _shareKey,
+                      title: 'Spread the Word',
+                      description: 'Share this helpful health tip with your friends and family.',
+                      tooltipBackgroundColor: Colors.blueAccent,
+                      textColor: Colors.white,
+                      titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                      descTextStyle: const TextStyle(fontSize: 14, color: Colors.white70),
+                      tooltipBorderRadius: BorderRadius.circular(12),
+                      child: IconButton(
+                        icon: const Icon(Icons.share_outlined),
+                        color: Colors.blueAccent,
+                        iconSize: 28,
+                        onPressed: () {
+                          final String shareText = 
+                            'Check out this health tip: ${tip.title}\n\n'
+                            '${tip.description}\n\n'
+                            'Read more at: ${tip.url.isNotEmpty ? tip.url : "https://health.gov"}';
+                          
+                          Share.share(shareText, subject: 'Health Tip: ${tip.title}');
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ],
-        ),
+        );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildImageFallback(Color color) {
     return Container(
