@@ -40,7 +40,8 @@ The Health Tips feature provides users with dynamic, randomized, and searchable 
 | `flutter_widget_from_html` | Parses and renders raw HTML (`<ul>`, `<li>`, `<b>`, etc.) from the API response. Replaces plain `Text` widgets to properly display bullet points, bold text, and structured content in the Bottom Sheet. |
 | `cached_network_image` | Efficiently downloads and caches topic images from the API. Provides premium placeholders and error handling. |
 | `share_plus` | Implements native social sharing functionality for tips. |
-| `showcaseview` | Powers the first-time user tutorial by highlighting the first tip card. |
+| `showcaseview` | Powers the multi-step user tutorial highlighting key features. |
+| `shared_preferences` | Persists the 'tutorial shown' flags so the onboarding only triggers once per user. |
 
 ### Data Persistence
 
@@ -158,8 +159,15 @@ We follow a strict separation of concerns: **Data Layer → Logic Layer → Pres
     - 📤 Share icon — triggers native share sheet via `share_plus`.
   - Opening the sheet automatically saves the tip to the `recent_tips` table.
 - **Tutorial Integration**:
-  - `ShowCaseWidget` wraps the entire screen.
-  - Automatically triggers `startShowCase` on the first item (`_cardKey`) once the state transitions to `loaded`.
+  - `ShowCaseWidget` wraps both the main screen and the bottom sheet (separately) to handle overlay contexts.
+  - **Multi-Step Flow**:
+    1.  **Search Bar**: Highlighting discovery via keywords.
+    2.  **First Tip Card**: Highlighting the "Read & Save" workflow.
+    3.  **Article Actions**: Inside the sheet, highlighting **Favorite** and **Share** buttons.
+  - **Persistence**: Uses `SharedPreferences` flags (`hasShownHealthTipsMainTutorial`, `hasShownHealthTipsSheetTutorial`) to ensure tooltips only appear on the user's first visit.
+  - **Premium Design**:
+    - **Color-Coded**: Blue for Search/Share, Orange for Tips, Red for Favorites.
+    - **UX**: Rounded tooltips (`12.0` radius), bold titles, and muted descriptions.
 - **Media Performance**:
   - Uses `CachedNetworkImage` with 12.0 border radius.
   - Custom gradient placeholders and medical-themed error fallbacks for resilient UI.
@@ -208,5 +216,5 @@ HealthTipsScreen ──► HealthTipsProvider.fetchTipsByTag("Fitness")
 - **Offline**: If the network fails, `dio_cache_interceptor` serves cached responses (up to 7 days old) automatically. If no cache exists, the error state is shown with a "Load Offline Tips" fallback button.
 - **Database Migrations**: When upgrading to v4, `_onUpgrade` handles adding the `image_url` columns. Users must fully restart the app.
 - **Caching Strategy**: We use an **Instant-First** model. The UI loads from disk immediately. Fresh data is only fetched from the internet when the user explicitly "Pulls to Refresh."
-- **Tutorial Logic**: The showcase tutorial is triggered every time the list is loaded to ensure users see the "Read & Save" functionality. To prevent annoyance in production, a `SharedPreferences` flag should be implemented to only show it once.
+- **Tutorial Logic**: Onboarding is divided into **Main Screen** and **Article Sheet** tutorials. Each triggers automatically on the first frame of a "Loaded" state, provided the respective `SharedPreferences` flag is false. Once triggered, the flag is set to true permanently.
 - **Cross-Drive Windows Bug**: If the project and Pub Cache are on different drive letters, `kotlin.incremental=false` must be set in `gradle.properties`.
