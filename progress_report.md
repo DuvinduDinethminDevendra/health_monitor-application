@@ -38,13 +38,18 @@
     *   **Loading Indicators:** Showing `CircularProgressIndicator` during database queries or (future) API calls.
     *   **Lazy Loading / Pagination:** If `health_log` or `activity` tables get large, ensuring the use of `ListView.builder` optimally, potentially adding pagination.
 
-## 8. Member 3 Feature Enhancements (In Progress)
+## 8. Member 3 Feature Enhancements (Completed)
 *   **Step 1: Advanced Profile Management (Data Layer Upgrade):**
     *   **Completed:** Expanded the SQLite Database `users` table (v4 -> v5) and `User` model to support `age`, `gender`, `height`, `weight`, and local `profile_picture` storage (Base64). Added `updateUserProfile` into `AuthService` to persist local changes securely.
 *   **Step 2: Advanced Goals & Time-Based Reminders:**
     *   **Completed:** Migrated the `goals` table to Schema V6 to natively store `category` and `reminder_time`. Upgraded the notification system in `GoalRepository` to dynamically pull category specific congratulations. 
 *   **Step 3: The "Predictive Insights" Engine:**
     *   **Completed:** Re-engineered the Linear Regression function locally within SQLite's Dart abstraction. Added a `getPredictiveInsight` function that transforms mathematical velocity into human-readable analysis strings native to the database layer.
+*   **Step 4: UI Data Binding & Smart Profile Screen:**
+    *   **Completed:** Designed `lib/screens/profile_screen.dart` strictly to visualize the Data Layer's offline SQLite attributes, mapping the newly structured `age`, `height`, and `weight` into interactive text forms that trigger real-time SQL `UPDATE` operations without needing complex Cloud commands. Added the Predictive Insights to the main `charts_screen.dart`.
+
+## 9. Architectural Milestone: The Zero-Code Auto-Sync
+**Core Architecture Validation:** The application now successfully demonstrates "Map-Translation" driven Async Synchronization between SQLite and Firestore. By centralizing the schema into the Dart Model's `.toMap()` translation method, Firebase Firestore inherits any local SQLite modifications dynamically. When a new column like `category` or `reminder_time` was added, Firebase simply observed the new dictionary key being pushed by the Background Worker (`SyncService`) and auto-generated cloud tables with absolutely **zero extra mapping code** required. This is a true testament to the power of decoupled `Repository Patterns`.
 
 ---
 

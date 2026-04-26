@@ -10,14 +10,14 @@ The application follows a **Hybrid Data Layer** architecture. SQLite serves as t
 
 ```mermaid
 graph TD
-    User((User)) --> UI[Flutter UI Layer]
+    User((User)) --> UI[Flutter UI Layer\n(Member 1 & 2)]
     UI --> VM[ViewModels / Providers]
-    VM --> Repo[Repository Layer]
+    VM --> Repo[Repository Layer\n(Member 3)]
     
-    subgraph "Data Layer (Member 3)"
-        Repo --> SQL[(Local SQLite)]
-        Repo --> Sync[Sync Service]
-        Sync --> Fire[(Firebase Cloud)]
+    subgraph "Data Layer (LakiDev - Member 3)"
+        Repo --> SQL[(Local SQLite\nPrimary Storage)]
+        Repo --> Sync[Sync Service\nBackground Task]
+        Sync --> Fire[(Firebase Cloud\nBackup Storage)]
     end
     
     subgraph "Authentication"
@@ -27,14 +27,30 @@ graph TD
 
 ---
 
-## 2. Hybrid Data Synchronization Strategy
-To meet the university requirements for SQLite while adding modern cloud features, we use an **Async Mirroring** strategy:
+## 2. Hybrid Data Synchronization Strategy (The "Zero-Code" Auto-Sync)
+To meet the university requirements for SQLite while adding modern cloud features, we use an **Async Mirroring** strategy built on a unified "Map Translation" architecture. This allows SQLite and Firebase to communicate perfectly without writing complex, rigid cloud schemas.
 
-1.  **Write Path:** When data is created (e.g., a new Goal), it is written to SQLite immediately. A background task is then triggered to mirror this change to Cloud Firestore.
-2.  **Read Path:** The UI always reads from SQLite to ensure zero latency and offline support.
-3.  **Restoration Path:** Upon logging in on a new device, the app pulls the full dataset from Firestore and populates the local SQLite database.
+1.  **Shared Translation Layer:** The Dart Model classes (e.g., `Goal`) contain a `.toMap()` function. This map acts as the Single Source of Truth for both databases.
+2.  **Write Path:** When data is created or updated, the Repository inserts the generated `.toMap()` into SQLite immediately.
+3.  **The Auto-Sync Trigger:** Simultaneously, a background task (`SyncService`) is triggered. It takes that exact same `.toMap()` output and passes it directly to Firebase using `.set()`. 
+4.  **Zero-Configuration Scaling:** If Member 3 adds a new column to SQLite (like `category`), they only update the common `.toMap()` function. SQLite receives the new column, and Firebase *blindly accepts the new map key* and automatically generates a new field in the cloud without any extra Firebase-specific code.
 
----
+```mermaid
+graph TD
+    A([User Saves Goal]) -->|Passes Object| B[GoalRepository\n(Member 3)]
+    
+    subgraph "The 'Zero-Code' Translation Engine"
+    B -->|Calls| M[ Goal.toMap() \n Generates dynamic key-value pairs ]
+    end
+    
+    M -->|"INSERT INTO goals..."| SQL[(SQLite DB\nStrict Schema)]
+    M -->|"syncGoal( goal.toMap() )"| Sync[SyncService\nBackground Async]
+    Sync -->|Auto-Generates Cloud Fields| Fire[(Firebase Firestore\nNo Schema Needed)]
+
+    style M fill:#e1f5fe,stroke:#1565c0,stroke-width:2px,stroke-dasharray: 5 5
+    style SQL fill:#ce93d8,stroke:#4a148c,stroke-width:2px
+    style Fire fill:#ffcc80,stroke:#e65100,stroke-width:2px
+```
 
 ## 3. Performance & UX Optimization: Lazy Loading
 To ensure high performance and low memory consumption (Requirement #7), the architecture utilizes **Lazy Component Initialization**.

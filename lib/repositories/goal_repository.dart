@@ -148,14 +148,17 @@ class GoalRepository {
     if (maps.isEmpty) return "Goal not found.";
 
     final goal = Goal.fromMap(maps.first);
-    if (goal.isCompleted)
+    if (goal.isCompleted) {
       return "Amazing job! You have already conquered this goal.";
-    if (goal.currentValue <= 0)
+    }
+    if (goal.currentValue <= 0) {
       return "You haven't started yet! Log some activity to generate predictions.";
+    }
 
     final DateTime? predictedDate = await estimateCompletionDate(goalId);
-    if (predictedDate == null)
+    if (predictedDate == null) {
       return "Need more data to predict your velocity.";
+    }
 
     final deadlineDate = DateTime.tryParse(goal.deadline);
     if (deadlineDate == null) return "Invalid deadline format.";
@@ -196,8 +199,6 @@ class GoalRepository {
   /// Calculates the expected completion date based on average progress per day.
   Future<DateTime?> calculateExpectedCompletionDate(Goal goal) async {
     if (goal.currentValue <= 0) return null;
-
-    final db = await _dbHelper.database;
 
     // 1. Get user's recent activity relevant to this goal type (mocked logic for now)
     // In a full implementation, we would filter by activity type.

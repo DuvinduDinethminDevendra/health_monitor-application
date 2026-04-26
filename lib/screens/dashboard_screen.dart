@@ -10,6 +10,7 @@ import 'goals_screen.dart';
 import 'health_tips_screen.dart';
 import 'charts_screen.dart';
 import 'reminders_screen.dart';
+import 'profile_screen.dart';
 import 'login_screen.dart';
 import '../services/sync_service.dart';
 
@@ -81,6 +82,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: 'Smart Profile (Member 3)',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ).then((_) => _loadDashboardData());
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {

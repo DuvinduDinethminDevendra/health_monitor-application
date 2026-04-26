@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
+import '../repositories/goal_repository.dart';
 import '../services/auth_service.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
+import '../models/goal.dart';
 
 class ChartsScreen extends StatefulWidget {
   const ChartsScreen({super.key});
@@ -20,12 +22,14 @@ class _ChartsScreenState extends State<ChartsScreen>
   late TabController _tabController;
   List<Activity> _activities = [];
   List<HealthLog> _healthLogs = [];
+  List<Goal> _goals = [];
+  final GoalRepository _goalRepo = GoalRepository();
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
@@ -49,11 +53,13 @@ class _ChartsScreenState extends State<ChartsScreen>
         .getActivitiesByDateRange(userId, startDate, endDate);
     final healthLogs = await HealthLogRepository()
         .getLogsByDateRange(userId, startDate, endDate);
+    final goals = await _goalRepo.getGoalsByUser(userId);
 
     if (!mounted) return;
     setState(() {
       _activities = activities;
       _healthLogs = healthLogs;
+      _goals = goals;
       _isLoading = false;
     });
   }
@@ -74,6 +80,7 @@ class _ChartsScreenState extends State<ChartsScreen>
           tabs: const [
             Tab(text: 'Activities'),
             Tab(text: 'BMI Trend'),
+            Tab(text: 'Goal Insights'),
           ],
         ),
       ),
@@ -84,8 +91,102 @@ class _ChartsScreenState extends State<ChartsScreen>
               children: [
                 _buildActivityChart(),
                 _buildBmiChart(),
+                _buildGoalInsights(),
               ],
             ),
+    );
+  }
+
+  // --- Member 3 Feature: Advanced Predictive Insights UI ---
+  Widget _buildGoalInsights() {
+    if (_goals.isEmpty) {
+      return const Center(
+        child: Text(
+          'No goals set yet.\nAdd goals to see your predictive insights!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _goals.length,
+      itemBuilder: (context, index) {
+        final goal = _goals[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        goal.title,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(goal.category),
+                      backgroundColor: const Color(0xFFE3F2FD),
+                      labelStyle: const TextStyle(
+                          color: Color(0xFF1565C0), fontSize: 12),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Progress: ${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
+                const SizedBox(height: 8),
+                FutureBuilder<String>(
+                  future: _goalRepo.getPredictiveInsight(goal.id!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const LinearProgressIndicator();
+                    }
+                    final insight = snapshot.data ?? 'Calculating...';
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        border:
+                            Border.all(color: Colors.orange.withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.auto_graph,
+                              color: Color(0xFFFB8C00), size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              insight,
+                              style: const TextStyle(
+                                color: Color(0xFFE65100),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                )
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -160,7 +261,10 @@ class _ChartsScreenState extends State<ChartsScreen>
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
                               entries[idx].key.substring(
-                                  0, entries[idx].key.length > 5 ? 5 : entries[idx].key.length),
+                                  0,
+                                  entries[idx].key.length > 5
+                                      ? 5
+                                      : entries[idx].key.length),
                               style: const TextStyle(fontSize: 11),
                             ),
                           );
@@ -271,8 +375,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         return LineTooltipItem(
                           'BMI: ${log.bmi}\n${log.date}',
                           const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold),
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         );
                       }).toList();
                     },
@@ -348,8 +451,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                       label: HorizontalLineLabel(
                         show: true,
                         labelResolver: (_) => 'Underweight',
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.orange[300]),
+                        style:
+                            TextStyle(fontSize: 10, color: Colors.orange[300]),
                       ),
                     ),
                     HorizontalLine(
@@ -360,8 +463,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                       label: HorizontalLineLabel(
                         show: true,
                         labelResolver: (_) => 'Overweight',
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.orange[300]),
+                        style:
+                            TextStyle(fontSize: 10, color: Colors.orange[300]),
                       ),
                     ),
                   ],

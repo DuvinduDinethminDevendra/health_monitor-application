@@ -40,12 +40,13 @@ class _GoalsScreenState extends State<GoalsScreen> {
     final formKey = GlobalKey<FormState>();
     final titleController =
         TextEditingController(text: existingGoal?.title ?? '');
-    final targetController = TextEditingController(
-        text: existingGoal?.targetValue.toString() ?? '');
+    final targetController =
+        TextEditingController(text: existingGoal?.targetValue.toString() ?? '');
     final currentController = TextEditingController(
         text: existingGoal?.currentValue.toString() ?? '0');
     final unitController =
         TextEditingController(text: existingGoal?.unit ?? '');
+    String selectedCategory = existingGoal?.category ?? 'General';
     DateTime deadline = existingGoal != null
         ? DateTime.parse(existingGoal.deadline)
         : DateTime.now().add(const Duration(days: 30));
@@ -73,6 +74,23 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     ),
                     validator: (v) =>
                         v == null || v.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    items: ['Running', 'Diet', 'Water', 'Sleep', 'General']
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => selectedCategory = val);
+                      }
+                    },
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -134,8 +152,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         context: context,
                         initialDate: deadline,
                         firstDate: DateTime.now(),
-                        lastDate:
-                            DateTime.now().add(const Duration(days: 365)),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
                       );
                       if (picked != null) {
                         setDialogState(() => deadline = picked);
@@ -162,12 +179,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     id: existingGoal?.id,
                     userId: userId,
                     title: titleController.text,
+                    category: selectedCategory,
                     targetValue: double.parse(targetController.text),
-                    currentValue:
-                        double.tryParse(currentController.text) ?? 0,
+                    currentValue: double.tryParse(currentController.text) ?? 0,
                     unit: unitController.text,
-                    deadline:
-                        DateFormat('yyyy-MM-dd').format(deadline),
+                    deadline: DateFormat('yyyy-MM-dd').format(deadline),
                     isCompleted: existingGoal?.isCompleted ?? false,
                   );
 
@@ -239,15 +255,29 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: Text(
-                                goal.title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  decoration: goal.isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    goal.title,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      decoration: goal.isCompleted
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    goal.category,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF1565C0),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             if (goal.isCompleted)
@@ -275,8 +305,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                 const PopupMenuItem(
                                     value: 'delete',
                                     child: Text('Delete',
-                                        style:
-                                            TextStyle(color: Colors.red))),
+                                        style: TextStyle(color: Colors.red))),
                               ],
                             ),
                           ],

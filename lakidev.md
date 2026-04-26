@@ -143,6 +143,47 @@ graph TD
 
 ---
 
+## ☁️ How the "Zero-Config" Auto Sync Magic Works (Firestore Integration)
+
+If you are asked, *"When you added `category` and `reminder_time` to SQLite, why didn't you have to write new code for Firebase?"* 
+
+Here is exactly how your Data Layer design is beautifully optimized, making Firebase completely blind and flexible to whatever SQLite feeds it.
+
+### The "Mapping" Strategy
+In Flutter, Firebase Firestore accepts a generic `Map<String, dynamic>`. It does not strictly define columns like SQLite. By designing our local `Goal` model with a `.toMap()` function, **SQLite and Firebase share the exact same translation language**.
+
+When you add a new variable like `category` to `Goal`:
+1. You update the `toMap()` function so it includes `{'category': category}`.
+2. The Repository passes that identical map into both SQLite and Firebase simultaneously. 
+
+Because we decoupled them perfectly, **Firebase blindly accepts the map you provided** and generates the new column automatically on the cloud!
+
+```mermaid
+graph TD
+    A([User Edits Goal in UI]) --> B[Goal.toMap]
+    
+    subgraph "Member 3: Shared Translation"
+    B -->|Returns Map| M[ {'title': 'Run', 'category': 'Running', ...} ]
+    end
+    
+    M -->|"INSERT INTO goals (title, category) VALUES (?, ?)"| SQL[(SQLite Local DB\nSchema Version 6)]
+    M -->|".set( goal.toMap() )"| Sync[SyncService Background]
+    Sync -->|Auto-Generates Field| Fire[(Firebase Firestore\nNo Schema Needed)]
+
+    style M fill:#eee,stroke:#333,stroke-dasharray: 5 5
+    style SQL fill:#f9f,stroke:#333,stroke-width:2px
+    style Fire fill:#bbf,stroke:#333,stroke-width:2px
+```
+
+**Key Viva Taking Point:** "I designed the system so that our local Dart objects act as the Single Source of Truth for schemas. The `.toMap()` method is the universal translator for both SQLite and Firestore `.set()`, giving us Zero-Configuration Cloud Schemas whenever I scale the local tables."
+
+## 📊 Progress Visualization Integration
+While UI layouts technically belong to Member 1, the actual intelligence behind the data charts is powered securely by your Data Layer.
+*   **The Shared Canvas:** The `charts_screen.dart` is a collaborative display page used by all members to visualize their respective backend data points.
+*   **My Contribution (Predictive Cards):** I mapped my `getPredictiveInsight()` function directly into a custom Card view within the third tab (`Goal Insights`). The UI simply renders the text string I provide from the local DB queries, strictly maintaining the separation of Presentation (Member 1) and Logic/Data (Member 3).
+
+---
+
 ## 📝 Developer Notes (Viva Prep)
 - **Primary vs Secondary:** "SQLite is our **Primary** database for speed and offline use; Firebase is our **Secondary** database for cloud backup."
 - **Decoupled Firebase Sync:** "I implemented a decoupled sync pattern where SQLite data is pushed to Firebase Firestore. Sync is triggered automatically on login and manually via pull-to-refresh on the Dashboard."
