@@ -184,6 +184,18 @@ class _ChartsScreenState extends State<ChartsScreen>
                     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: false),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 25,
+                    getDrawingHorizontalLine: (value) {
+                      return FlLine(
+                        color: Colors.grey.withValues(alpha: 0.3),
+                        strokeWidth: 1,
+                        dashArray: [5, 5],
+                      );
+                    },
+                  ),
                   barGroups: List.generate(cumulativeGoals.length, (index) {
                     final goal = cumulativeGoals[index];
                     double percent = 0;
@@ -226,12 +238,10 @@ class _ChartsScreenState extends State<ChartsScreen>
               final color = palette[(cumulativeGoals.length + index) % palette.length];
 
               // --- Link real Activity Data for the last 30 days ---
+              final typeMatch = goal.baseType;
+              
               final goalActivities = _activities.where((a) {
-                final aType = a.type.toLowerCase();
-                final gTitle = goal.title.toLowerCase();
-                final gCategory = goal.category.toLowerCase();
-                // Match Custom goals by title, static goals by category
-                return aType == gCategory || aType == gTitle || gCategory.contains(aType);
+                return a.type.toLowerCase() == typeMatch;
               }).toList();
 
               final now = DateTime.now();
@@ -250,14 +260,10 @@ class _ChartsScreenState extends State<ChartsScreen>
                 spots.add(FlSpot(i.toDouble(), daySum));
               }
 
-              // Industry Standard: To prevent double counting between the Goal's manual 'currentValue' 
-              // and the Activity 'daySum' for Today, we take the maximum of the two.
-              if (goal.currentValue > 0) {
-                 final combinedToday = math.max(spots[29].y, goal.currentValue);
-                 spots[29] = FlSpot(29.0, combinedToday);
-                 if (combinedToday > maxAchieved) maxAchieved = combinedToday;
-              }
-
+              // We no longer need the math.max() hack because _updateProgress in goals_screen.dart 
+              // now natively inserts an Activity record for manual updates. 
+              // This guarantees the 'daySum' is permanently and perfectly accurate on the exact date!
+              
               // Set minimum Y height to the target value
               final double maxY = maxAchieved > goal.targetValue ? maxAchieved : goal.targetValue;
 
@@ -458,124 +464,151 @@ class _ChartsScreenState extends State<ChartsScreen>
       );
     }
 
-    // Group activities by type
-    final Map<String, double> activitySums = {};
-    for (final a in _activities) {
-      activitySums[a.type] = (activitySums[a.type] ?? 0) + a.value;
-    }
+    // Group activities by unique types to create a 30-day timeline for EACH type
+    final types = _activities.map((a) => a.type).toSet().toList();
+    final now = DateTime.now();
 
-    final entries = activitySums.entries.toList();
-    final colors = [
+    final palette = [
       const Color(0xFF1A73E8),
       const Color(0xFFE53935),
       const Color(0xFFFB8C00),
       const Color(0xFF00BFA5),
-      const Color(0xFFAB47BC),
       const Color(0xFF42A5F5),
+      const Color(0xFFAB47BC),
+      const Color(0xFF3949AB),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Activity Summary (Last 30 Days)',
+            'Activity Timeline (Last 30 Days)',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 250,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      return BarTooltipItem(
-                        '${entries[groupIndex].key}\n${rod.toY.toStringAsFixed(0)}',
-                        const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final idx = value.toInt();
-                        if (idx >= 0 && idx < entries.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              entries[idx].key.substring(
-                                  0,
-                                  entries[idx].key.length > 5
-                                      ? 5
-                                      : entries[idx].key.length),
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                    ),
-                  ),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: List.generate(entries.length, (index) {
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: entries[index].value,
-                        color: colors[index % colors.length],
-                        width: 24,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(6)),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ),
-          ),
           const SizedBox(height: 24),
-          // Legend
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: List.generate(entries.length, (index) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: colors[index % colors.length],
-                      borderRadius: BorderRadius.circular(3),
+          ...types.asMap().entries.map((entry) {
+            final type = entry.value;
+            final color = palette[entry.key % palette.length];
+            
+            final typeActivities = _activities.where((a) => a.type == type).toList();
+            final List<BarChartGroupData> barGroups = [];
+            double maxY = 0.0;
+
+            // Pass 1: Pre-calculate true maxY
+            for (int i = 0; i < 30; i++) {
+              final targetDate = now.subtract(Duration(days: 29 - i));
+              final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+              final daySum = typeActivities
+                  .where((a) => a.date.startsWith(dateStr))
+                  .fold(0.0, (sum, a) => sum + a.value);
+              if (daySum > maxY) maxY = daySum;
+            }
+
+            final chartMaxY = maxY > 0 ? maxY : 10.0;
+
+            // Pass 2: Build bars with consistent bounds
+            for (int i = 0; i < 30; i++) {
+              final targetDate = now.subtract(Duration(days: 29 - i));
+              final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+              
+              final daySum = typeActivities
+                  .where((a) => a.date.startsWith(dateStr))
+                  .fold(0.0, (sum, a) => sum + a.value);
+              
+              barGroups.add(
+                BarChartGroupData(
+                  x: i,
+                  barRods: [
+                    BarChartRodData(
+                      toY: daySum,
+                      color: color,
+                      width: 8,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      backDrawRodData: BackgroundBarChartRodData(
+                        show: true,
+                        toY: chartMaxY,
+                        color: Colors.grey[200],
+                      ),
+                    ),
+                  ],
+                )
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${type[0].toUpperCase()}${type.substring(1)}', 
+                  style: const TextStyle(fontWeight: FontWeight.bold)
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 150,
+                  child: BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: chartMaxY,
+                      barTouchData: BarTouchData(
+                        touchTooltipData: BarTouchTooltipData(
+                          fitInsideHorizontally: true,
+                          fitInsideVertically: true,
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            if (rod.toY == 0) return null;
+                            final daysAgo = 29 - group.x.toInt();
+                            final date = now.subtract(Duration(days: daysAgo));
+                            return BarTooltipItem(
+                              '${DateFormat('MMM dd').format(date)}\n${rod.toY.toStringAsFixed(1)}',
+                              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            );
+                          },
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            interval: 6,
+                            getTitlesWidget: (value, meta) {
+                              if (value % 6 != 0 && value != 29) return const Text('');
+                              final daysAgo = 29 - value.toInt();
+                              final date = now.subtract(Duration(days: daysAgo));
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  daysAgo == 0 ? 'Today' : DateFormat('MM/dd').format(date), 
+                                  style: const TextStyle(fontSize: 10)
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            getTitlesWidget: (value, meta) {
+                              if (value == 0) return const Text('');
+                              return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                            },
+                          ),
+                        ),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      gridData: const FlGridData(show: false),
+                      borderData: FlBorderData(show: false),
+                      barGroups: barGroups,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Text(entries[index].key,
-                      style: const TextStyle(fontSize: 12)),
-                ],
-              );
-            }),
-          ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            );
+          }).toList(),
         ],
       ),
     );

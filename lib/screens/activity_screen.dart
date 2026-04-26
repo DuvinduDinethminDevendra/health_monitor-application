@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/activity.dart';
 import '../repositories/activity_repository.dart';
+import '../repositories/goal_repository.dart';
+import '../models/goal.dart';
 import '../services/auth_service.dart';
 
 class ActivityScreen extends StatefulWidget {
@@ -156,6 +158,34 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     duration: type == 'sleep' ? 0 : int.parse(durationController.text),
                   );
                   await _activityRepo.insertActivity(activity);
+
+                  // Universal Sync: Push this activity natively to the matching Goals!
+                  final goalRepo = GoalRepository();
+                  final goals = await goalRepo.getGoalsByUser(userId);
+                  
+                  for (var goal in goals) {
+                    final typeMatch = goal.baseType;
+                    
+                    if (typeMatch == activity.type.toLowerCase()) {
+                       bool isDaily = goal.category.contains('(Daily)');
+                       double newProgress;
+                       
+                       if (isDaily) {
+                          final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                          final activities = await _activityRepo.getActivitiesByDateRange(userId, dateStr, dateStr);
+                          final todaySum = activities.where((a) => a.type.toLowerCase() == typeMatch).fold(0.0, (sum, a) => sum + a.value);
+                          newProgress = todaySum;
+                       } else {
+                          newProgress = goal.currentValue + activity.value;
+                       }
+                       
+                       await goalRepo.updateProgress(goal.id!, newProgress);
+                       if (newProgress >= goal.targetValue && !goal.isCompleted) {
+                          await goalRepo.markCompleted(goal.id!);
+                       }
+                    }
+                  }
+
                   if (ctx.mounted) Navigator.pop(ctx);
                   _loadActivities();
                 }

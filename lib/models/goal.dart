@@ -28,6 +28,14 @@ class Goal {
     return (currentValue / targetValue * 100).clamp(0, 100);
   }
 
+  String get baseType {
+    final cat = category.replaceAll(' (Daily)', '').replaceAll(' (Cumulative)', '').toLowerCase();
+    if (cat == 'general' || cat == 'custom') {
+      return title.toLowerCase();
+    }
+    return cat;
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

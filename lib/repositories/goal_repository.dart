@@ -1,5 +1,7 @@
+import 'package:intl/intl.dart';
 import '../database/database_helper.dart';
 import '../models/goal.dart';
+import 'activity_repository.dart';
 import '../services/sync_service.dart';
 import '../services/notification_service.dart';
 
@@ -160,19 +162,24 @@ class GoalRepository {
 
     // --- TRUE ADAPTIVE PREDICTION LOGIC ---
     // Check if the goal is a "Daily Reset" metric vs a "Cumulative" metric.
-    final category = goal.category.toLowerCase();
-    final isDailyGoal = category == 'sleep' || 
-                        category == 'water' || 
-                        category == 'diet' || 
-                        category.contains('(daily)');
+    final cat = goal.category.toLowerCase();
+    final isDailyGoal = cat == 'sleep' || cat == 'water' || cat == 'diet' || cat.contains('(daily)');
 
     if (isDailyGoal) {
       // Daily goals don't need a "days to completion" regression.
       // They just need a daily completion insight!
-      if (goal.currentValue >= goal.targetValue) {
+      
+      // We must fetch TODAY'S true sum from the activities table, because Daily goals lazy-reset.
+      final activityRepo = ActivityRepository();
+      final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final activities = await activityRepo.getActivitiesByDateRange(goal.userId, dateStr, dateStr);
+      final typeMatch = goal.baseType;
+      final todaySum = activities.where((a) => a.type.toLowerCase() == typeMatch).fold(0.0, (sum, a) => sum + a.value);
+
+      if (todaySum >= goal.targetValue) {
         return "Excellent! You've hit your daily target. Rest up for tomorrow!";
       } else {
-        final remaining = (goal.targetValue - goal.currentValue).toStringAsFixed(1);
+        final remaining = (goal.targetValue - todaySum).toStringAsFixed(1);
         return "You only need $remaining more ${goal.unit} to hit your daily goal. You can do it!";
       }
     }
