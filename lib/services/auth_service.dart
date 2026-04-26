@@ -16,9 +16,15 @@ class AuthService with ChangeNotifier {
 
   User? _firebaseUser;
   model.User? _currentLocalUser;
+  bool _isFirstTimeLogin = false;
 
   model.User? get currentUser => _currentLocalUser;
   bool get isLoggedIn => _firebaseUser != null;
+  bool get isFirstTimeLogin => _isFirstTimeLogin;
+
+  void clearFirstTimeLogin() {
+    _isFirstTimeLogin = false;
+  }
 
   AuthService() {
     _auth.authStateChanges().listen((User? user) async {
@@ -54,7 +60,11 @@ class AuthService with ChangeNotifier {
         );
         credential = await _auth.signInWithCredential(cred);
       }
-      return credential.additionalUserInfo?.isNewUser ?? false;
+      final isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
+      if (isNewUser) {
+        _isFirstTimeLogin = true;
+      }
+      return isNewUser;
     } catch (e) {
       print("Error in Google Sign In: $e");
       rethrow;
@@ -68,9 +78,19 @@ class AuthService with ChangeNotifier {
         password: password,
       );
       await result.user?.updateDisplayName(name);
+      _isFirstTimeLogin = true;
       return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        return 'This email is already registered. Please login or use "Sign in with Google".';
+      } else if (e.code == 'weak-password') {
+        return 'The password provided is too weak. Please use at least 6 characters.';
+      } else if (e.code == 'invalid-email') {
+        return 'The email address is not valid.';
+      }
+      return e.message ?? 'Registration failed. Please try again.';
     } catch (e) {
-      return e.toString();
+      return 'An unexpected error occurred.';
     }
   }
 
@@ -78,8 +98,13 @@ class AuthService with ChangeNotifier {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        return 'Invalid email or password.\n\nDid you previously register using Google? If so, please use the "Sign in with Google" button below.';
+      }
+      return e.message ?? 'Login failed. Please try again.';
     } catch (e) {
-      return e.toString();
+      return 'An unexpected error occurred.';
     }
   }
 
