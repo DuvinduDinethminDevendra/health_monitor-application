@@ -4,7 +4,12 @@ import 'services/auth_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 
-void main() {
+import 'services/background_step_service.dart';
+import 'providers/activity_provider.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initBackgroundService();
   runApp(const HealthMonitorApp());
 }
 
@@ -13,8 +18,11 @@ class HealthMonitorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthService(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => ActivityProvider()),
+      ],
       child: MaterialApp(
         title: 'Health Monitor',
         debugShowCheckedModeBanner: false,
@@ -28,7 +36,7 @@ class HealthMonitorApp extends StatelessWidget {
             centerTitle: true,
             elevation: 0,
           ),
-          cardTheme: CardTheme(
+          cardTheme: CardThemeData(
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

@@ -11,6 +11,9 @@ import 'health_tips_screen.dart';
 import 'charts_screen.dart';
 import 'reminders_screen.dart';
 import 'login_screen.dart';
+import '../providers/activity_provider.dart';
+import '../widgets/step_progress_ring.dart';
+import '../widgets/weekly_steps_chart.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -41,6 +44,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         await ActivityRepository().getActivitiesByUser(userId);
     final goals = await GoalRepository().getActiveGoals(userId);
     final latestLog = await HealthLogRepository().getLatestLog(userId);
+
+    if (mounted) {
+      Provider.of<ActivityProvider>(context, listen: false).loadData(userId);
+    }
 
     if (!mounted) return;
 
@@ -225,6 +232,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             const SizedBox(height: 24),
+
+            // Step Progress Section
+            Consumer<ActivityProvider>(
+              builder: (context, activityProvider, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Daily Steps',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: StepProgressRing(
+                            progress: activityProvider.stepProgress,
+                            stepCount: activityProvider.liveStepCount,
+                            goal: activityProvider.dailyStepGoal,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: WeeklyStepsChart(
+                          weeklySteps: activityProvider.weeklySteps,
+                          goal: activityProvider.dailyStepGoal,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
+            ),
 
             // Quick actions
             const Text(

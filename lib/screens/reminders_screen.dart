@@ -171,7 +171,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
             ),
             Switch(
               value: reminder.isEnabled,
-              activeColor: reminder.color,
+              activeThumbColor: reminder.color,
               onChanged: (value) async {
                 setState(() => reminder.isEnabled = value);
                 if (value) {
