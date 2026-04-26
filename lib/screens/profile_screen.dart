@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'dart:typed_data';
-// For web/mobile image picking in a real app, you'd use image_picker. We'll use a simple text input or mock mechanism for base64 here if needed, but for Viva, displaying and editing Age, Height, Weight is key.
-import '../models/user.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -22,6 +21,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _weightController;
   String _selectedGender = 'Not Specified';
 
+  String? _base64Image;
+  bool _isUploadingImage = false;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         TextEditingController(text: user?.height?.toString() ?? '');
     _weightController =
         TextEditingController(text: user?.weight?.toString() ?? '');
+    _base64Image = user?.profilePicture;
+
     if (user?.gender != null &&
         ['Male', 'Female', 'Other'].contains(user?.gender)) {
       _selectedGender = user!.gender!;
@@ -47,6 +51,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 70, // Compress to save SQLite space
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final String base64Str = base64Encode(bytes);
+
+        setState(() {
+          _base64Image = base64Str;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    } finally {
+      setState(() {
+        _isUploadingImage = false;
+      });
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -59,6 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: double.tryParse(_heightController.text.trim()),
           weight: double.tryParse(_weightController.text.trim()),
           gender: _selectedGender == 'Not Specified' ? null : _selectedGender,
+          profilePicture: _base64Image,
         );
 
         await authService.updateUserProfile(updatedUser);
@@ -95,25 +133,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Member 3 specific offline SQLite image rendering (mocked base64 logic)
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: user.profilePicture != null &&
-                              user.profilePicture!.isNotEmpty
-                          ? MemoryImage(base64Decode(user.profilePicture!))
-                          : null,
-                      child: user.profilePicture == null ||
-                              user.profilePicture!.isEmpty
-                          ? const Icon(Icons.person,
-                              size: 60, color: Colors.grey)
-                          : null,
+                    // Editable Profile avatar using image_picker
+                    GestureDetector(
+                      onTap: _isUploadingImage ? null : _pickImage,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundColor: Colors.grey[200],
+                            backgroundImage:
+                                _base64Image != null && _base64Image!.isNotEmpty
+                                    ? MemoryImage(base64Decode(_base64Image!))
+                                    : null,
+                            child: _isUploadingImage
+                                ? const CircularProgressIndicator()
+                                : (_base64Image == null || _base64Image!.isEmpty
+                                    ? const Icon(Icons.person,
+                                        size: 60, color: Colors.grey)
+                                    : null),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF1A73E8),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt,
+                                color: Colors.white, size: 20),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       user.email,
                       style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
+                    const SizedBox(height: 8),
+                    // Check if interests exist!
+                    if (user.interests != null && user.interests!.isNotEmpty)
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        alignment: WrapAlignment.center,
+                        children: user.interests!
+                            .map((interest) => Chip(
+                                  label: Text(interest,
+                                      style: const TextStyle(
+                                          fontSize: 10, color: Colors.white)),
+                                  backgroundColor: const Color(0xFF00BFA5),
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ))
+                            .toList(),
+                      ),
                     const SizedBox(height: 32),
 
                     // Name
@@ -220,14 +294,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      "Data Layer Note: Saving this executes an SQLite UPDATE natively updating Member 3's Smart Profile engine.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic),
-                    ),
                   ],
                 ),
               ),

@@ -190,3 +190,37 @@ While UI layouts technically belong to Member 1, the actual intelligence behind 
 - **Web-SQLite Support:** "Standard SQLite requires direct file-system access (blocked by browsers). I implemented a **Native Web Persistence** architecture using conditional imports to ensure the app remains fully functional and performant during browser-based demonstrations without external dependencies."
 - **Predictive Analytics:** "I implemented a linear regression logic in `GoalRepository` to estimate goal completion dates based on current user velocity."
 - **Lazy Loading:** "Implemented to optimize startup performance and memory management (Requirement #7)."
+
+
+Q1: How does the Profile Picture update, and how does it save to SQLite/Firebase?
+Answer: Because SQLite and Firestore don't easily store "files", we cheat.
+
+We use the image_picker package to open the camera or gallery.
+Once the image is picked, we convert the image bytes into a Base64 String (which is just a massive string of random text like "iVBO...=").
+SQLite: We save this massive text string into the profile_picture column (which is a TEXT data type).
+Firebase: Because it's just text now, Firebase treats it like any other word, and saves it in the user document document. When the UI loads, it decodes that text back into an image using MemoryImage(base64Decode(base64String)).
+Q2: How do you fetch existing data into input fields or charts? Is it like a Laravel Controller?
+Answer: In Laravel, you hit a Route -> Controller -> queries DB -> returns View with Data.
+In Flutter, the app is already running, so we use State Management (like setState or Provider). The flow is:
+
+// 1. Screen loads
+@override
+void initState() {
+  super.initState();
+  _loadData();
+}
+
+// 2. Fetch from DB (Like your Laravel Controller)
+Future<void> _loadData() async {
+  // Queries local SQLite
+  final myGoals = await _goalRepo.getGoalsByUser(userId); 
+  
+  // 3. Update the UI
+  setState(() {
+    _goalsList = myGoals; 
+  });
+}
+Screen Loads (initState): The screen starts up.
+Fetch Data (The "Controller" part): It calls a function (e.g., _loadGoals()) which asks the Repository to query SQLite (db.query('goals')).
+Update UI (setState): The data comes back as a List. We put it in a variable and call setState(), which redraws the screen with the data in the fields.
+Example Fetch Flow:

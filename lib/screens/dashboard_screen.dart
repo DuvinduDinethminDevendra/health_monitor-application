@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 import '../services/auth_service.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/goal_repository.dart';
@@ -82,15 +83,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            tooltip: 'Smart Profile (Member 3)',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              ).then((_) => _loadDashboardData());
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                ).then((_) => _loadDashboardData());
+              },
+              child: Tooltip(
+                message: 'Smart Profile (Member 3)',
+                child: CircleAvatar(
+                  backgroundColor: Colors.white24,
+                  radius: 18,
+                  backgroundImage: authService.currentUser?.profilePicture !=
+                              null &&
+                          authService.currentUser!.profilePicture!.isNotEmpty
+                      ? MemoryImage(base64Decode(
+                          authService.currentUser!.profilePicture!))
+                      : null,
+                  child: (authService.currentUser?.profilePicture == null ||
+                          authService.currentUser!.profilePicture!.isEmpty)
+                      ? const Icon(Icons.person, color: Colors.white)
+                      : null,
+                ),
+              ),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.logout),

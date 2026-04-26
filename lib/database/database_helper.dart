@@ -32,7 +32,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -51,6 +51,7 @@ class DatabaseHelper {
         height REAL,
         weight REAL,
         profile_picture TEXT,
+        interests TEXT,
         sync_status INTEGER DEFAULT 0
       )
     ''');
