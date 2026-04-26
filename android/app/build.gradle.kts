@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.health_monitor"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "29.0.14206865"
+    ndkVersion = "27.2.12479018"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true

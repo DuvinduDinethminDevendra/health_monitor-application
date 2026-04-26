@@ -17,6 +17,9 @@ dependencies:
   provider: any
   intl: any
   crypto: any
+  pedometer: ^4.0.2
+  flutter_background_service: ^5.0.9
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
