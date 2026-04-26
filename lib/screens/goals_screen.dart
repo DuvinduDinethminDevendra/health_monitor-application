@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/goal.dart';
 import '../repositories/goal_repository.dart';
 import '../services/auth_service.dart';
+import 'charts_screen.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -76,6 +77,28 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text('My Goals'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChartsScreen()),
+              );
+            },
+            icon: const Icon(Icons.show_chart, color: Color(0xFF1A73E8)),
+            label: const Text(
+              'View Charts',
+              style: TextStyle(color: Color(0xFF1A73E8), fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEditBottomSheet(),
         backgroundColor: const Color(0xFF00BFA5),

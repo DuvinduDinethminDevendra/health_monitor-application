@@ -35,6 +35,12 @@ You went far beyond the standard requirement of data visualization by building a
 *   **Linear Regression:** Added `getPredictiveInsight(int goalId)` inside `GoalRepository` to apply mathematical linear regression representing a rolling 14-day data point analysis logic.
 *   **Human Output:** Unlike normal math tools, your logic processes the `targetValue` and `dailyVelocity` to compare it against the SQL `deadline`, generating natural sounding sentences like *"At your current pace, you might miss the deadline by 2 days."* which is a huge upgrade to the user experience directly handled strictly at your Data access tier. All of this data is passed to the common **Progress Visualization Screen**, keeping logic and UI strictly separated.
 
+### 4. Auto-Merge Goal & Activity Architecture
+To solve the industry-wide problem of overlapping manual and automatic tracking, you engineered an "Auto-Merge" architecture at the Data Layer.
+*   **Dynamic Linking:** When querying the `activities` table, your logic automatically matches the string of the `type` column to the `category` or `title` column of the `goals` table, generating a mathematically unified dataset.
+*   **Conflict Resolution (Industry Standard):** If a user logs auto-activities (e.g. 2 hours) and also manually updates the goal's absolute `currentValue` (e.g. 4 hours), your algorithm intelligently combines them using `math.max()` for the current day to ensure absolutely no double-counting occurs on the daily tracker.
+*   **Visual Target Indicators:** Developed the logic that provides dynamic `maxY` rendering and passes the true `targetValue` bounds to the UI layer to render industry-standard dashed horizontal target lines.
+
 ---
 
 ## 📱 Device Feature Integration (Member 3 Contributions)

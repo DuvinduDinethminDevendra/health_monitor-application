@@ -39,6 +39,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   void _showAddDialog() {
     final formKey = GlobalKey<FormState>();
     String type = 'steps';
+    final customTypeController = TextEditingController();
     final valueController = TextEditingController();
     final durationController = TextEditingController();
 
@@ -59,15 +60,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     initialValue: type,
                     items: const [
                       DropdownMenuItem(value: 'steps', child: Text('Steps')),
-                      DropdownMenuItem(
-                          value: 'workout', child: Text('Workout')),
-                      DropdownMenuItem(
-                          value: 'running', child: Text('Running')),
-                      DropdownMenuItem(
-                          value: 'cycling', child: Text('Cycling')),
-                      DropdownMenuItem(
-                          value: 'swimming', child: Text('Swimming')),
+                      DropdownMenuItem(value: 'workout', child: Text('Workout')),
+                      DropdownMenuItem(value: 'running', child: Text('Running')),
+                      DropdownMenuItem(value: 'cycling', child: Text('Cycling')),
+                      DropdownMenuItem(value: 'swimming', child: Text('Swimming')),
                       DropdownMenuItem(value: 'yoga', child: Text('Yoga')),
+                      DropdownMenuItem(value: 'sleep', child: Text('Sleep')),
+                      DropdownMenuItem(value: 'custom', child: Text('Custom Goal Metric')),
                     ],
                     onChanged: (val) => setDialogState(() => type = val!),
                     decoration: InputDecoration(
@@ -76,39 +75,63 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
+                  if (type == 'custom') ...[
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: customTypeController,
+                      decoration: InputDecoration(
+                        labelText: 'Custom Activity Name',
+                        hintText: 'e.g. Reading, Meditation',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Required';
+                        return null;
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: valueController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText:
-                          type == 'steps' ? 'Number of Steps' : 'Distance (km)',
+                      labelText: type == 'sleep' 
+                          ? 'Hours Slept'
+                          : type == 'steps' 
+                              ? 'Number of Steps' 
+                              : type == 'custom'
+                                  ? 'Amount achieved'
+                                  : 'Distance (km)',
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (double.tryParse(v) == null)
+                      if (double.tryParse(v) == null) {
                         return 'Enter a valid number';
+                      }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: durationController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Duration (minutes)',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                  if (type != 'sleep')
+                    TextFormField(
+                      controller: durationController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Duration (minutes)',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Required';
+                        if (int.tryParse(v) == null) {
+                          return 'Enter a valid number';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Required';
-                      if (int.tryParse(v) == null)
-                        return 'Enter a valid number';
-                      return null;
-                    },
-                  ),
                 ],
               ),
             ),
@@ -127,10 +150,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           .id!;
                   final activity = Activity(
                     userId: userId,
-                    type: type,
+                    type: type == 'custom' ? customTypeController.text.trim().toLowerCase() : type,
                     value: double.parse(valueController.text),
                     date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                    duration: int.parse(durationController.text),
+                    duration: type == 'sleep' ? 0 : int.parse(durationController.text),
                   );
                   await _activityRepo.insertActivity(activity);
                   if (ctx.mounted) Navigator.pop(ctx);
@@ -150,7 +173,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   IconData _getActivityIcon(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'steps':
         return Icons.directions_walk;
       case 'workout':
@@ -163,13 +186,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
         return Icons.pool;
       case 'yoga':
         return Icons.self_improvement;
+      case 'sleep':
+        return Icons.bedtime;
       default:
-        return Icons.directions_run;
+        return Icons.star;
     }
   }
 
   Color _getActivityColor(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'steps':
         return const Color(0xFF1A73E8);
       case 'workout':
@@ -182,8 +207,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
         return const Color(0xFF42A5F5);
       case 'yoga':
         return const Color(0xFFAB47BC);
+      case 'sleep':
+        return const Color(0xFF3949AB);
       default:
-        return Colors.grey;
+        return Colors.teal;
     }
   }
 

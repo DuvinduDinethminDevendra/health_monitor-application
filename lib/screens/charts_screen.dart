@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
 import '../repositories/goal_repository.dart';
@@ -224,17 +225,41 @@ class _ChartsScreenState extends State<ChartsScreen>
               final goal = entry.value;
               final color = palette[(cumulativeGoals.length + index) % palette.length];
 
-              // Mocking a 7-day trend ending on currentValue for the line chart demonstration
-              final currentVal = goal.currentValue;
-              final spots = [
-                FlSpot(0, currentVal * 0.5),
-                FlSpot(1, currentVal * 0.7),
-                FlSpot(2, currentVal * 0.4),
-                FlSpot(3, currentVal * 0.8),
-                FlSpot(4, currentVal * 0.6),
-                FlSpot(5, currentVal * 0.9),
-                FlSpot(6, currentVal),
-              ];
+              // --- Link real Activity Data for the last 30 days ---
+              final goalActivities = _activities.where((a) {
+                final aType = a.type.toLowerCase();
+                final gTitle = goal.title.toLowerCase();
+                final gCategory = goal.category.toLowerCase();
+                // Match Custom goals by title, static goals by category
+                return aType == gCategory || aType == gTitle || gCategory.contains(aType);
+              }).toList();
+
+              final now = DateTime.now();
+              final List<FlSpot> spots = [];
+              double maxAchieved = 0.0;
+
+              for (int i = 0; i < 30; i++) {
+                final targetDate = now.subtract(Duration(days: 29 - i));
+                final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+                
+                final daySum = goalActivities
+                    .where((a) => a.date.startsWith(dateStr))
+                    .fold(0.0, (sum, a) => sum + a.value);
+                
+                if (daySum > maxAchieved) maxAchieved = daySum;
+                spots.add(FlSpot(i.toDouble(), daySum));
+              }
+
+              // Industry Standard: To prevent double counting between the Goal's manual 'currentValue' 
+              // and the Activity 'daySum' for Today, we take the maximum of the two.
+              if (goal.currentValue > 0) {
+                 final combinedToday = math.max(spots[29].y, goal.currentValue);
+                 spots[29] = FlSpot(29.0, combinedToday);
+                 if (combinedToday > maxAchieved) maxAchieved = combinedToday;
+              }
+
+              // Set minimum Y height to the target value
+              final double maxY = maxAchieved > goal.targetValue ? maxAchieved : goal.targetValue;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,12 +270,20 @@ class _ChartsScreenState extends State<ChartsScreen>
                     height: 150,
                     child: LineChart(
                       LineChartData(
+                        minX: 0,
+                        maxX: 29,
+                        minY: 0,
+                        maxY: maxY > 0 ? maxY : 10,
                         lineTouchData: LineTouchData(
                           touchTooltipData: LineTouchTooltipData(
+                            fitInsideHorizontally: true,
+                            fitInsideVertically: true,
                             getTooltipItems: (touchedSpots) {
                               return touchedSpots.map((spot) {
+                                final spotDate = now.subtract(Duration(days: 29 - spot.x.toInt()));
+                                final dateStr = DateFormat('MMM dd').format(spotDate);
                                 return LineTooltipItem(
-                                  '${spot.y.toStringAsFixed(1)} ${goal.unit}',
+                                  '$dateStr\n${spot.y.toStringAsFixed(1)} ${goal.unit}',
                                   const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                 );
                               }).toList();
@@ -258,25 +291,49 @@ class _ChartsScreenState extends State<ChartsScreen>
                           ),
                         ),
                         gridData: FlGridData(show: true, drawVerticalLine: false),
+                        extraLinesData: ExtraLinesData(
+                          horizontalLines: [
+                            HorizontalLine(
+                              y: goal.targetValue,
+                              color: Colors.redAccent.withOpacity(0.8),
+                              strokeWidth: 2,
+                              dashArray: [5, 5], // Industry standard dashed line
+                              label: HorizontalLineLabel(
+                                show: true,
+                                labelResolver: (line) => 'Goal: ${goal.targetValue}',
+                                style: const TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                                padding: const EdgeInsets.only(left: 4, bottom: 4),
+                              ),
+                            )
+                          ],
+                        ),
                         titlesData: FlTitlesData(
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
+                              interval: 6, // 30 days / 5 labels = interval of 6
                               getTitlesWidget: (value, meta) {
-                                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'];
-                                final idx = value.toInt();
-                                if (idx >= 0 && idx < days.length) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Text(days[idx], style: const TextStyle(fontSize: 10)),
-                                  );
-                                }
-                                return const Text('');
+                                if (value % 1 != 0) return const Text(''); // Prevent duplicates
+                                final daysAgo = 29 - value.toInt();
+                                final date = now.subtract(Duration(days: daysAgo));
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    daysAgo == 0 ? 'Today' : DateFormat('MM/dd').format(date), 
+                                    style: const TextStyle(fontSize: 10)
+                                  ),
+                                );
                               },
                             ),
                           ),
-                          leftTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true, 
+                              reservedSize: 40,
+                              getTitlesWidget: (value, meta) {
+                                return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                              }
+                            ),
                           ),
                           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                           rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -287,12 +344,15 @@ class _ChartsScreenState extends State<ChartsScreen>
                             spots: spots,
                             isCurved: true,
                             color: color,
-                            barWidth: 4,
+                            barWidth: 3,
                             isStrokeCapRound: true,
-                            dotData: const FlDotData(show: true),
+                            dotData: FlDotData(
+                              show: true,
+                              checkToShowDot: (spot, barData) => spot.x == 29 || spot.y > 0, // Show dots only if data exists or today
+                            ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: color.withOpacity(0.2),
+                              color: color.withOpacity(0.15),
                             ),
                           ),
                         ],

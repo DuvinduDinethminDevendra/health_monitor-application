@@ -53,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ['Male', 'Female', 'Other'].contains(user?.gender)) {
       _selectedGender = user!.gender!;
     }
-    
+
     if (user?.interests != null) {
       _selectedInterests = List.from(user!.interests!);
     }
@@ -190,7 +190,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 8),
                     // Editable Interests
-                    const Text('Your Interests', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Text('Your Interests',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8.0,
@@ -255,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _selectedGender,
+                            initialValue: _selectedGender,
                             decoration: InputDecoration(
                               labelText: 'Gender',
                               prefixIcon: const Icon(Icons.transgender),

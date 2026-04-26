@@ -131,5 +131,13 @@ An internal utility that monitors SQLite changes and ensures parity with Firebas
 Wraps `FirebaseAuth` to provide a clean interface for the UI, managing the transition between "Logged Out" and "Logged In" states while triggering the initial data rehydration.
 
 ---
-**Last Updated:** 2026-04-25
+
+## 6. Auto-Merge Goal & Activity Architecture
+To resolve conflicts between Manual User Input (Goals) and Automated Tracking (Activities), the UI Visualization Layer utilizes a mathematical Auto-Merge Strategy.
+- **Dynamic Linking**: The `charts_screen.dart` dynamically queries the `_activities` list over a 30-day period and matches the `type` string to the specific goal's `title` or `category`.
+- **Conflict Resolution (Industry Standard)**: Because the `Goal` entity's `currentValue` is an absolute manual override and `Activity` entries are additive, the system applies `math.max(daySum, goal.currentValue)` exclusively for the current day. This ensures the daily visualization correctly portrays the highest valid tracked value without risking compound double-counting.
+- **Visual Boundaries**: The system reads the `targetValue` of the Goal to generate dynamic Y-axis maximums and renders an industry-standard dashed horizontal target line, visually uniting the user's manual goals with their daily activity.
+
+---
+**Last Updated:** 2026-04-26
 **Author:** LSR Vidanaarachchi (Member 3)

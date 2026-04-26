@@ -30,18 +30,11 @@ While the Percentage Bar Chart is great for an "Overview", specific metrics requ
 ### B. Daily Reset Metrics (e.g., Sleep, Water Intake)
 - **Nature:** These reset to 0 every single day. If your goal is 8 hours of sleep, you don't accumulate 56 hours a week—you just try to hit 8 hours each night.
 - **Best Chart:** **Line Chart** (where the X-Axis is the Date/Days of the week, and the Y-Axis is the hours slept).
-- **Implementation for Activity Tracking Members:** 
-  You should query the `HealthLogs` or `Activities` tables (which store a `date` timestamp for each log) rather than just the `Goals` table. 
-  ```dart
-  // Example SQLite Query for Sleep Line Chart
-  final db = await _dbHelper.database;
-  final maps = await db.query(
-    'activities', 
-    where: 'type = ? AND user_id = ?', 
-    whereArgs: ['sleep', userId]
-  );
-  // Plot these results on an fl_chart LineChart!
-  ```
+
+### C. Auto-Merge: Linking Goals with Real Activities
+**CRITICAL ARCHITECTURE UPDATE:** The `charts_screen.dart` has now been explicitly programmed to automatically scan the `_activities` table (last 30 days) and merge it with the `goals` table. 
+- If a user sets a Custom Goal named "Meditation", the chart will mathematically hunt for any activity typed "meditation" and seamlessly plot the real 30-day Line Chart!
+- **Note for Team Members:** To improve this auto-tracking in the future, you should connect the Activity Data Layer to native **Auto-Tracking Hardware Sensors** (like Android's Health Connect API, pedometers, or smartwatch APIs). This will allow the `activities` table to populate automatically in the background, making the Goal Line Charts perfectly accurate without the user ever manually typing anything in!
 
 ---
 
