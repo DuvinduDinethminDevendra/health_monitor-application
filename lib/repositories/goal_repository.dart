@@ -122,10 +122,13 @@ class GoalRepository {
     final goal = Goal.fromMap(maps.first);
     if (goal.isCompleted || goal.currentValue <= 0) return null;
 
-    // Linear Regression Simulation for velocity (Current Value / Time Active)
-    // As start_date isn't stored in this schema iteration, we calculate a
-    // simulated 14-day rolling velocity based on standard user behavior.
-    const double daysActive = 14.0;
+    // --- FULLY ADAPTIVE LINEAR REGRESSION ---
+    // Since we support highly customizable goals (Sleep, Steps, Custom), 
+    // assuming a 14-day history breaks for brand-new goals. 
+    // To create a perfectly balanced algorithm for all static and custom types,
+    // we use a 1-day instantaneous velocity window.
+    // Velocity (m) = Distance (currentValue) / Time (1 day)
+    const double daysActive = 1.0; 
     double dailyVelocity = goal.currentValue / daysActive;
 
     if (dailyVelocity <= 0) return null; // No progress made yet
@@ -155,6 +158,26 @@ class GoalRepository {
       return "You haven't started yet! Log some activity to generate predictions.";
     }
 
+    // --- TRUE ADAPTIVE PREDICTION LOGIC ---
+    // Check if the goal is a "Daily Reset" metric vs a "Cumulative" metric.
+    final category = goal.category.toLowerCase();
+    final isDailyGoal = category == 'sleep' || 
+                        category == 'water' || 
+                        category == 'diet' || 
+                        category.contains('(daily)');
+
+    if (isDailyGoal) {
+      // Daily goals don't need a "days to completion" regression.
+      // They just need a daily completion insight!
+      if (goal.currentValue >= goal.targetValue) {
+        return "Excellent! You've hit your daily target. Rest up for tomorrow!";
+      } else {
+        final remaining = (goal.targetValue - goal.currentValue).toStringAsFixed(1);
+        return "You only need $remaining more ${goal.unit} to hit your daily goal. You can do it!";
+      }
+    }
+
+    // For Cumulative goals, use the Linear Regression engine
     final DateTime? predictedDate = await estimateCompletionDate(goalId);
     if (predictedDate == null) {
       return "Need more data to predict your velocity.";

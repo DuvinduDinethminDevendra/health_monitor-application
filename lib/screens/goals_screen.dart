@@ -303,6 +303,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
   DateTime _selectedDeadline = DateTime.now().add(const Duration(days: 7));
   String _selectedCategory = 'General';
   String? _selectedReminderTime;
+  String _customTrackingMethod = 'Cumulative'; // Default for custom
 
   final List<String> _categories = [
     'General',
@@ -310,7 +311,8 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
     'Diet',
     'Water',
     'Sleep',
-    'Workout'
+    'Workout',
+    'Custom'
   ];
 
   @override
@@ -325,8 +327,15 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
 
     if (widget.existingGoal != null) {
       _selectedDeadline = DateTime.parse(widget.existingGoal!.deadline);
-      _selectedCategory = widget.existingGoal!.category;
       _selectedReminderTime = widget.existingGoal!.reminderTime;
+      
+      final existingCat = widget.existingGoal!.category;
+      if (existingCat.startsWith('Custom')) {
+        _selectedCategory = 'Custom';
+        _customTrackingMethod = existingCat.contains('(Daily)') ? 'Daily Reset' : 'Cumulative';
+      } else {
+        _selectedCategory = existingCat;
+      }
     }
   }
 
@@ -365,11 +374,16 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
       final userId =
           Provider.of<AuthService>(context, listen: false).currentUser!.id!;
 
+      String finalCategory = _selectedCategory;
+      if (_selectedCategory == 'Custom') {
+        finalCategory = 'Custom (${_customTrackingMethod == 'Daily Reset' ? 'Daily' : 'Cumulative'})';
+      }
+
       final goal = Goal(
         id: widget.existingGoal?.id,
         userId: userId,
         title: _titleController.text.trim(),
-        category: _selectedCategory,
+        category: finalCategory,
         targetValue: double.parse(_targetController.text.trim()),
         currentValue: widget.existingGoal?.currentValue ?? 0,
         unit: _unitController.text.trim(),
@@ -449,6 +463,25 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 onChanged: (val) => setState(() => _selectedCategory = val!),
               ),
               const SizedBox(height: 16),
+
+              if (_selectedCategory == 'Custom') ...[
+                DropdownButtonFormField<String>(
+                  value: _customTrackingMethod,
+                  decoration: InputDecoration(
+                    labelText: 'Goal Tracking Method',
+                    prefixIcon: const Icon(Icons.analytics_outlined),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    helperText: 'Cumulative builds up over time (like Weight Loss).\nDaily Reset starts at 0 each day (like Sleep or Water).',
+                    helperMaxLines: 2,
+                  ),
+                  items: ['Cumulative', 'Daily Reset']
+                      .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                      .toList(),
+                  onChanged: (val) => setState(() => _customTrackingMethod = val!),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               Row(
                 children: [

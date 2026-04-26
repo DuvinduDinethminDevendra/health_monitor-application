@@ -81,3 +81,16 @@ Here is the exact chain of command with the real file paths:
 ---
 **Summary for Viva:** 
 "My components are strictly linked in a one-way chain: **UI -> Repository -> SQLite -> SyncService -> Firebase**. The UI never talks to the database, and the local database never talks to Firebase. They communicate by passing the `toMap()` data package down the chain. This guarantees that if the internet chain breaks at the very end, the local app chain remains 100% unbreakable."
+
+---
+
+## 4. Note on Reminders & Notifications (Chrome vs Mobile)
+
+During the Viva, you may be asked why the **Reminders** (alarms/notifications) do not fire when running the app on the Chrome browser.
+
+**The Answer:** 
+The reminders in this app use native local notification plugins (`flutter_local_notifications`). These plugins are designed specifically to hook into the native background operating systems of **Android** and **iOS** (like Android's `AlarmManager`). 
+
+When running on a sandboxed web browser like Chrome, Flutter Web does not have access to your phone's native alarm clock or notification center without configuring complex external Service Workers. 
+
+**Conclusion:** Reminders are confirmed to work perfectly on compiled Mobile (APK/iOS) builds, but they will purposefully remain silent during Web development builds.

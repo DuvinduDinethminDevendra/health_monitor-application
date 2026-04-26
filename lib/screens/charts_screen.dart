@@ -109,93 +109,203 @@ class _ChartsScreenState extends State<ChartsScreen>
       );
     }
 
+    final List<Color> palette = [
+      const Color(0xFF1A73E8), // Blue
+      const Color(0xFFFB8C00), // Orange
+      const Color(0xFF43A047), // Green
+      const Color(0xFF8E24AA), // Purple
+      const Color(0xFFE53935), // Red
+      const Color(0xFF00ACC1), // Cyan
+    ];
+
+    final dailyGoals = _goals.where((g) {
+      final cat = g.category.toLowerCase();
+      return cat == 'sleep' || cat == 'water' || cat == 'diet' || cat.contains('(daily)');
+    }).toList();
+
+    final cumulativeGoals = _goals.where((g) {
+      final cat = g.category.toLowerCase();
+      return !(cat == 'sleep' || cat == 'water' || cat == 'diet' || cat.contains('(daily)'));
+    }).toList();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Goal Completion (%)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 250,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 100, // Percentage
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final goal = _goals[groupIndex];
-                      return BarTooltipItem(
-                        '${goal.title}\n${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
-                        const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final idx = value.toInt();
-                        if (idx >= 0 && idx < _goals.length) {
-                          final title = _goals[idx].title;
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              title.length > 8 ? '${title.substring(0, 8)}...' : title,
-                              style: const TextStyle(fontSize: 10),
-                            ),
-                          );
-                        }
-                        return const Text('');
+          if (cumulativeGoals.isNotEmpty) ...[
+            const Text(
+              'Cumulative Goals (Completion %)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 250,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: 100, // Percentage
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final goal = cumulativeGoals[groupIndex];
+                        return BarTooltipItem(
+                          '${goal.title}\n${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        );
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      interval: 25,
-                    ),
-                  ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: List.generate(_goals.length, (index) {
-                  final goal = _goals[index];
-                  double percent = 0;
-                  if (goal.targetValue > 0) {
-                    percent = (goal.currentValue / goal.targetValue) * 100;
-                  }
-                  if (percent > 100) percent = 100;
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: percent,
-                        color: const Color(0xFF1A73E8),
-                        width: 20,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-                        backDrawRodData: BackgroundBarChartRodData(
-                          show: true,
-                          toY: 100,
-                          color: Colors.grey[200],
-                        ),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          final idx = value.toInt();
+                          if (idx >= 0 && idx < cumulativeGoals.length) {
+                            final title = cumulativeGoals[idx].title;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                title.length > 8 ? '${title.substring(0, 8)}...' : title,
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                            );
+                          }
+                          return const Text('');
+                        },
                       ),
-                    ],
-                  );
-                }),
+                    ),
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: 25),
+                    ),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  barGroups: List.generate(cumulativeGoals.length, (index) {
+                    final goal = cumulativeGoals[index];
+                    double percent = 0;
+                    if (goal.targetValue > 0) {
+                      percent = (goal.currentValue / goal.targetValue) * 100;
+                    }
+                    if (percent > 100) percent = 100;
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: percent,
+                          color: palette[index % palette.length],
+                          width: 20,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                          backDrawRodData: BackgroundBarChartRodData(
+                            show: true,
+                            toY: 100,
+                            color: Colors.grey[200],
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
+          ],
+
+          if (dailyGoals.isNotEmpty) ...[
+            const Text(
+              'Daily Goals (Weekly Trend)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            ...dailyGoals.asMap().entries.map((entry) {
+              final index = entry.key;
+              final goal = entry.value;
+              final color = palette[(cumulativeGoals.length + index) % palette.length];
+
+              // Mocking a 7-day trend ending on currentValue for the line chart demonstration
+              final currentVal = goal.currentValue;
+              final spots = [
+                FlSpot(0, currentVal * 0.5),
+                FlSpot(1, currentVal * 0.7),
+                FlSpot(2, currentVal * 0.4),
+                FlSpot(3, currentVal * 0.8),
+                FlSpot(4, currentVal * 0.6),
+                FlSpot(5, currentVal * 0.9),
+                FlSpot(6, currentVal),
+              ];
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${goal.title} (${goal.unit})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 150,
+                    child: LineChart(
+                      LineChartData(
+                        lineTouchData: LineTouchData(
+                          touchTooltipData: LineTouchTooltipData(
+                            getTooltipItems: (touchedSpots) {
+                              return touchedSpots.map((spot) {
+                                return LineTooltipItem(
+                                  '${spot.y.toStringAsFixed(1)} ${goal.unit}',
+                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                );
+                              }).toList();
+                            },
+                          ),
+                        ),
+                        gridData: FlGridData(show: true, drawVerticalLine: false),
+                        titlesData: FlTitlesData(
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'];
+                                final idx = value.toInt();
+                                if (idx >= 0 && idx < days.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(days[idx], style: const TextStyle(fontSize: 10)),
+                                  );
+                                }
+                                return const Text('');
+                              },
+                            ),
+                          ),
+                          leftTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                          ),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: spots,
+                            isCurved: true,
+                            color: color,
+                            barWidth: 4,
+                            isStrokeCapRound: true,
+                            dotData: const FlDotData(show: true),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: color.withOpacity(0.2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              );
+            }).toList(),
+          ],
+
+          const SizedBox(height: 16),
           const Text(
             'Predictive Insights',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
