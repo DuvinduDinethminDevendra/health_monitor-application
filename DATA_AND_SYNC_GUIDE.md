@@ -61,7 +61,8 @@ Here is the exact chain of command with the real file paths:
 **File:** `lib/repositories/goal_repository.dart`
 **How it links:** It has `import '../database/database_helper.dart';`
 * Now that the data is translated into a Map, the Repository opens the connection to the phone's hard drive.
-* It runs: `db.insert('goals', goal.toMap())`.
+* **What `database_helper` actually does:** It ONLY creates the physical tables when the app installs (`CREATE TABLE`) and upgrades them if the structure changes. It does NOT do the everyday saving.
+* The Repository is the one that does the actual everyday saving. It runs: `db.insert('goals', goal.toMap())`.
 * The data is now physically on the phone. `sync_status` is `0`.
 
 ### Link 4: The Repository calls the Sync Service

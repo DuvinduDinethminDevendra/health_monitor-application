@@ -109,84 +109,164 @@ class _ChartsScreenState extends State<ChartsScreen>
       );
     }
 
-    return ListView.builder(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      itemCount: _goals.length,
-      itemBuilder: (context, index) {
-        final goal = _goals[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        goal.title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ),
-                    Chip(
-                      label: Text(goal.category),
-                      backgroundColor: const Color(0xFFE3F2FD),
-                      labelStyle: const TextStyle(
-                          color: Color(0xFF1565C0), fontSize: 12),
-                    ),
-                  ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Goal Completion (%)',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 250,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: 100, // Percentage
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final goal = _goals[groupIndex];
+                      return BarTooltipItem(
+                        '${goal.title}\n${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
+                        const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      );
+                    },
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Progress: ${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
-                const SizedBox(height: 8),
-                FutureBuilder<String>(
-                  future: _goalRepo.getPredictiveInsight(goal.id!),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const LinearProgressIndicator();
-                    }
-                    final insight = snapshot.data ?? 'Calculating...';
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        border:
-                            Border.all(color: Colors.orange.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.auto_graph,
-                              color: Color(0xFFFB8C00), size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final idx = value.toInt();
+                        if (idx >= 0 && idx < _goals.length) {
+                          final title = _goals[idx].title;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              insight,
-                              style: const TextStyle(
-                                color: Color(0xFFE65100),
-                                fontStyle: FontStyle.italic,
-                              ),
+                              title.length > 8 ? '${title.substring(0, 8)}...' : title,
+                              style: const TextStyle(fontSize: 10),
                             ),
-                          ),
-                        ],
+                          );
+                        }
+                        return const Text('');
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      interval: 25,
+                    ),
+                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: List.generate(_goals.length, (index) {
+                  final goal = _goals[index];
+                  double percent = 0;
+                  if (goal.targetValue > 0) {
+                    percent = (goal.currentValue / goal.targetValue) * 100;
+                  }
+                  if (percent > 100) percent = 100;
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: percent,
+                        color: const Color(0xFF1A73E8),
+                        width: 20,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                        backDrawRodData: BackgroundBarChartRodData(
+                          show: true,
+                          toY: 100,
+                          color: Colors.grey[200],
+                        ),
                       ),
-                    );
-                  },
-                )
-              ],
+                    ],
+                  );
+                }),
+              ),
             ),
           ),
-        );
-      },
+          const SizedBox(height: 32),
+          const Text(
+            'Predictive Insights',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          ..._goals.map((goal) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            goal.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                        Chip(
+                          label: Text(goal.category),
+                          backgroundColor: const Color(0xFFE3F2FD),
+                          labelStyle: const TextStyle(color: Color(0xFF1565C0), fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    FutureBuilder<String>(
+                      future: _goalRepo.getPredictiveInsight(goal.id!),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const LinearProgressIndicator();
+                        }
+                        final insight = snapshot.data ?? 'Calculating...';
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.auto_graph, color: Color(0xFFFB8C00), size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  insight,
+                                  style: const TextStyle(
+                                    color: Color(0xFFE65100),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 

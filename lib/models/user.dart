@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+// A "Model" in Flutter is just a blueprint for an object.
+// Think of this like a blank form that every new user has to fill out.
 class User {
+  // These are the properties (the blank fields on the form)
   final String? id; // Firebase UID
   final String name;
   final String email;
@@ -13,6 +16,8 @@ class User {
   final String? profilePicture; // Base64 string for SQLite offline image
   final List<String>? interests; // Spotify-style topics (Fitness, Diet, etc)
 
+  // This is the Constructor. It tells Flutter how to create a new User object in memory.
+  // The 'required' keyword means that a User MUST have a name, email, and password to be created.
   User({
     this.id,
     required this.name,
@@ -27,6 +32,9 @@ class User {
     this.interests,
   }) : createdAt = createdAt ?? DateTime.now().toIso8601String();
 
+  // toMap() is a Translator. 
+  // SQLite and Firebase do NOT understand Dart objects. They only understand Maps (Key-Value pairs).
+  // This function takes our Dart User object and converts it into a Map so it can be saved in the database.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -39,19 +47,23 @@ class User {
       'height': height,
       'weight': weight,
       'profile_picture': profilePicture,
-      // Store list as JSON string for SQLite parsing
+      // We convert the list of topics into a JSON string because SQLite can't store Lists directly
       'interests': interests != null ? jsonEncode(interests) : null,
     };
   }
 
+  // factory fromMap() is the Reverse Translator.
+  // When we pull data from SQLite or Firebase, it comes back as a Map.
+  // This function takes that Map and builds a proper Dart User object so our app's UI can use it.
   factory User.fromMap(Map<String, dynamic> map) {
     List<String>? parsedInterests;
     if (map['interests'] != null) {
       if (map['interests'] is String) {
+        // If it came from SQLite, decode it from a string back into a List
         parsedInterests = List<String>.from(jsonDecode(map['interests']));
       } else if (map['interests'] is List) {
-        parsedInterests = List<String>.from(
-            map['interests']); // If Firebase gives an array directly
+        // If it came from Firebase directly as an array
+        parsedInterests = List<String>.from(map['interests']); 
       }
     }
 
@@ -70,6 +82,10 @@ class User {
     );
   }
 
+  // copyWith() is a shortcut function for updating users.
+  // Dart objects are often "immutable" (unchangeable). So if you want to change just a user's age, 
+  // you don't edit the object directly. You use copyWith to create a completely new clone of the user 
+  // with everything identical, EXCEPT the one variable (like age) you want to change.
   User copyWith({
     String? id,
     String? name,

@@ -173,8 +173,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
-              validator: (v) =>
-                  !v!.contains('@') ? 'Enter a valid email' : null,
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Enter your email';
+                final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                if (!emailRegex.hasMatch(v)) {
+                  return 'Enter a valid email (e.g., example@mail.com)';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -192,8 +198,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
-              validator: (v) =>
-                  v!.length < 6 ? 'Password must be 6+ characters' : null,
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Enter your password';
+                final passwordRegex = RegExp(
+                    r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
+                if (!passwordRegex.hasMatch(v)) {
+                  return 'Must be 8+ chars, 1 uppercase, 1 number, 1 symbol';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(

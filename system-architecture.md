@@ -31,9 +31,12 @@ graph TD
 To meet the university requirements for SQLite while adding modern cloud features, we use an **Async Mirroring** strategy built on a unified "Map Translation" architecture. This allows SQLite and Firebase to communicate perfectly without writing complex, rigid cloud schemas.
 
 1.  **Shared Translation Layer:** The Dart Model classes (e.g., `Goal`) contain a `.toMap()` function. This map acts as the Single Source of Truth for both databases.
-2.  **Write Path:** When data is created or updated, the Repository inserts the generated `.toMap()` into SQLite immediately.
-3.  **The Auto-Sync Trigger:** Simultaneously, a background task (`SyncService`) is triggered. It takes that exact same `.toMap()` output and passes it directly to Firebase using `.set()`. 
-4.  **Zero-Configuration Scaling:** If Member 3 adds a new column to SQLite (like `category`), they only update the common `.toMap()` function. SQLite receives the new column, and Firebase *blindly accepts the new map key* and automatically generates a new field in the cloud without any extra Firebase-specific code.
+2.  **The Complete Data Flow:** Data travels perfectly from `UI > Model (toMap) > Repository > database_helper > SQLite`. 
+    - The `database_helper` ONLY creates the physical table structure.
+    - The `Repository` uses the map from the Model to perform the actual daily inserts into the database.
+3.  **Write Path:** When data is created or updated, the Repository inserts the generated `.toMap()` into SQLite immediately.
+4.  **The Auto-Sync Trigger:** Simultaneously, a background task (`SyncService`) is triggered. It takes that exact same `.toMap()` output and passes it directly to Firebase using `.set()`. 
+5.  **Zero-Configuration Scaling:** If Member 3 adds a new column to SQLite (like `category`), they only update the common `.toMap()` function. SQLite receives the new column, and Firebase *blindly accepts the new map key* and automatically generates a new field in the cloud without any extra Firebase-specific code.
 
 ```mermaid
 graph TD

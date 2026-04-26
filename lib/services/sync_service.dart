@@ -3,6 +3,7 @@ import '../repositories/user_repository.dart';
 import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
+import '../models/user.dart';
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
@@ -120,6 +121,17 @@ class SyncService {
       await _activityRepo.updateSyncStatus(activity.id!, 1);
     } catch (e) {
       print("Error syncing activity: $e");
+    }
+  }
+
+  /// Pushes the User profile (including picture, age, weight, interests) to Firestore
+  Future<void> syncUserProfile(User user) async {
+    try {
+      if (user.id == null) return;
+      await _firestore.collection('users').doc(user.id).set(user.toMap(), SetOptions(merge: true));
+      print("User profile synced successfully: ${user.id}");
+    } catch (e) {
+      print("Error syncing user profile: $e");
     }
   }
 }

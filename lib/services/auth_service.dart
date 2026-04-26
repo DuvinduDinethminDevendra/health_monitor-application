@@ -93,19 +93,22 @@ class AuthService with ChangeNotifier {
   Future<void> _syncLocalUser(User firebaseUser) async {
     final localUser = await _userRepository.getUserById(firebaseUser.uid);
     if (localUser == null) {
-      await _userRepository.insertUser(model.User(
+      final newUser = model.User(
         id: firebaseUser.uid,
         name: firebaseUser.displayName ?? 'User',
         email: firebaseUser.email ?? '',
         password: '',
         createdAt: DateTime.now().toIso8601String(),
-      ));
+      );
+      await _userRepository.insertUser(newUser);
+      await _syncService.syncUserProfile(newUser);
     }
   }
 
   // Member 3 Feature: Advanced Profile Management
   Future<void> updateUserProfile(model.User updatedUser) async {
     await _userRepository.updateUser(updatedUser);
+    await _syncService.syncUserProfile(updatedUser); // Add explicit sync to Firebase!
     _currentLocalUser = updatedUser;
     notifyListeners();
   }
