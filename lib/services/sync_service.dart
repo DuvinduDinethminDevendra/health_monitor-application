@@ -4,6 +4,9 @@ import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
 import '../models/user.dart';
+import '../models/goal.dart';
+import '../models/activity.dart';
+import '../models/health_log.dart';
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
@@ -76,7 +79,8 @@ class SyncService {
       for (var doc in goalsSnapshot.docs) {
         final data = doc.data();
         data['sync_status'] = 1; // Mark as synced locally
-        // We'll let the repo handle the insert/ignore logic
+        final goal = Goal.fromMap(data);
+        await _goalRepo.upsertGoal(goal);
       }
 
       // 2. Rehydrate Activities
@@ -88,6 +92,21 @@ class SyncService {
       for (var doc in activitiesSnapshot.docs) {
         final data = doc.data();
         data['sync_status'] = 1;
+        final activity = Activity.fromMap(data);
+        await _activityRepo.upsertActivity(activity);
+      }
+
+      // 3. Rehydrate Health Logs
+      final logsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('health_logs')
+          .get();
+      for (var doc in logsSnapshot.docs) {
+        final data = doc.data();
+        data['sync_status'] = 1;
+        final log = HealthLog.fromMap(data);
+        await _healthLogRepo.upsertLog(log);
       }
 
       print("Rehydration completed for user: $userId");

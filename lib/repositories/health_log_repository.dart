@@ -1,3 +1,4 @@
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/health_log.dart';
 
@@ -7,6 +8,11 @@ class HealthLogRepository {
   Future<int> insertLog(HealthLog log) async {
     final db = await _dbHelper.database;
     return await db.insert('health_logs', log.toMap());
+  }
+
+  Future<void> upsertLog(HealthLog log) async {
+    final db = await _dbHelper.database;
+    await db.insert('health_logs', log.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // Alias for UI expectation

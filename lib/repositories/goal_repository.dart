@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/goal.dart';
 import 'activity_repository.dart';
@@ -22,6 +23,11 @@ class GoalRepository {
     }
 
     return id;
+  }
+
+  Future<void> upsertGoal(Goal goal) async {
+    final db = await _dbHelper.database;
+    await db.insert('goals', goal.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<Goal>> getGoalsByUser(String userId) async {

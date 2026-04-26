@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
@@ -39,12 +40,9 @@ class AuthService with ChangeNotifier {
     try {
       UserCredential credential;
       if (kIsWeb) {
-        // Use Firebase Auth's built-in Web Google provider
-        // This uses the config you already provided in main.dart!
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
         credential = await _auth.signInWithPopup(googleProvider);
       } else {
-        // Standard mobile flow
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser == null) return false;
 
@@ -95,15 +93,24 @@ class AuthService with ChangeNotifier {
   Future<void> _syncLocalUser(User firebaseUser) async {
     final localUser = await _userRepository.getUserById(firebaseUser.uid);
     if (localUser == null) {
-      final newUser = model.User(
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName ?? 'User',
-        email: firebaseUser.email ?? '',
-        password: '',
-        createdAt: DateTime.now().toIso8601String(),
-      );
-      await _userRepository.insertUser(newUser);
-      await _syncService.syncUserProfile(newUser);
+      // Check if profile exists in Firestore FIRST
+      final doc = await FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).get();
+      if (doc.exists && doc.data() != null) {
+        // Restore from Cloud!
+        final cloudUser = model.User.fromMap(doc.data()!);
+        await _userRepository.insertUser(cloudUser);
+      } else {
+        // Brand new user
+        final newUser = model.User(
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName ?? 'User',
+          email: firebaseUser.email ?? '',
+          password: '',
+          createdAt: DateTime.now().toIso8601String(),
+        );
+        await _userRepository.insertUser(newUser);
+        await _syncService.syncUserProfile(newUser);
+      }
     }
   }
 
