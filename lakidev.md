@@ -37,9 +37,28 @@ You went far beyond the standard requirement of data visualization by building a
 
 ### 4. Auto-Merge Goal & Activity Architecture
 To solve the industry-wide problem of overlapping manual and automatic tracking, you engineered an "Auto-Merge" architecture at the Data Layer.
-*   **Dynamic Linking:** When querying the `activities` table, your logic automatically matches the string of the `type` column to the `category` or `title` column of the `goals` table, generating a mathematically unified dataset.
-*   **Conflict Resolution (Industry Standard):** If a user logs auto-activities (e.g. 2 hours) and also manually updates the goal's absolute `currentValue` (e.g. 4 hours), your algorithm intelligently combines them using `math.max()` for the current day to ensure absolutely no double-counting occurs on the daily tracker.
+*   **Dynamic Linking:** When querying the `activities` table, your logic automatically matches the string of the `type` column to the specific goal via the central `Goal.baseType` getter, generating a mathematically unified dataset.
+*   **Conflict Resolution (Industry Standard):** The Goal tracker's `currentValue` natively suffered from a "midnight carry-over" bug because SQLite goals don't track daily timestamps. You solved this permanently at the Database Level: when a user manually updates a Goal, the `GoalRepository` intercepts the input, calculates the difference, and invisibly inserts a timestamped `Activity` record. This guarantees that manual progress is permanently anchored to the correct date.
+*   **Feature 2: Advanced Predictive Insights (Member 3)**
+    *   **Daily Goals:** The Predictive Insights feature bypasses `goal.currentValue` for Daily Goals, directly querying the `activities` table for today's true sum. This completely solves the "midnight carry-over" bug by ensuring AI predictions are 100% historically accurate for the current day.
+    *   **Cumulative Goals:** Uses a lightweight Linear Regression algorithm to calculate the user's velocity based on `createdAt` and `currentValue`. It projects the estimated completion date and returns human-readable encouragement.
 *   **Visual Target Indicators:** Developed the logic that provides dynamic `maxY` rendering and passes the true `targetValue` bounds to the UI layer to render industry-standard dashed horizontal target lines.
+
+### Goal Categorization & Charting Behaviors
+To ensure the mathematical models and the UI charts render correctly, all Goals and Activities are strictly classified into two categories via a central `Goal.baseType` getter (which provides 100% legacy backward compatibility).
+
+**1. Daily Goals**
+*   **Types:** `Sleep`, `Water`, `Diet`, `Steps (Daily)`, `Running (Daily)`, `Custom (Daily)`.
+*   **Logic:** Utilizes a "Lazy-Reset" architecture. Progress is bound strictly to the current 24-hour cycle.
+*   **Goal Insights UI:** Rendered as **separate 30-day Line Charts** under the "Daily Goals (Weekly Trend)" section. Each Daily goal gets its own chart to visualize daily fluctuations.
+
+**2. Cumulative Goals**
+*   **Types:** `Steps (Cumulative)`, `Running (Cumulative)`, `Custom (Cumulative)`, `General`, and any goal not explicitly defined as Daily.
+*   **Logic:** Progress is persistent and historically cumulative until the user reaches the `targetValue`.
+*   **Goal Insights UI:** Grouped together into a **single standard Bar Chart** under "Cumulative Goals (Completion %)". Each cumulative goal is represented as a single progress bar from 0% to 100%.
+
+**3. Activity Timeline Charts**
+*   **UI:** The "Activities" tab renders a **separate 30-day Bar Chart** for *every single unique activity type* the user has logged. It is purely a historical log, ignoring "targets" entirely.
 
 ---
 
