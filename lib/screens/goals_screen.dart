@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/goal.dart';
+import '../models/activity.dart';
 import '../repositories/goal_repository.dart';
+import '../repositories/activity_repository.dart';
 import '../services/auth_service.dart';
 import 'charts_screen.dart';
 
@@ -61,7 +63,44 @@ class _GoalsScreenState extends State<GoalsScreen> {
     _loadGoals();
   }
 
+  String _getBaseType(Goal goal) {
+    if (goal.category.startsWith('Custom')) {
+      return goal.title.toLowerCase();
+    }
+    return goal.category.replaceAll(' (Daily)', '').replaceAll(' (Cumulative)', '').toLowerCase();
+  }
+
   Future<void> _updateProgress(Goal goal, double newProgress) async {
+    // Determine the exact date to permanently anchor this manual progress
+    final userId = Provider.of<AuthService>(context, listen: false).currentUser!.id!;
+    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final activityRepo = ActivityRepository();
+    
+    // Auto-Merge: Universally anchor manual progress to the Activity timeline
+    bool isDaily = goal.category.contains('(Daily)');
+    final typeMatch = _getBaseType(goal);
+
+    double diff = 0.0;
+    if (isDaily) {
+      final activities = await activityRepo.getActivitiesByDateRange(userId, dateStr, dateStr);
+      final goalActivities = activities.where((a) => a.type.toLowerCase() == typeMatch).toList();
+      double currentDaySum = goalActivities.fold(0.0, (sum, a) => sum + a.value);
+      diff = newProgress - currentDaySum;
+    } else {
+      diff = newProgress - goal.currentValue;
+    }
+
+    if (diff > 0) {
+       // Insert the missing difference so the true historical Activity matches the manual input
+       await activityRepo.insertActivity(Activity(
+          userId: userId,
+          type: typeMatch,
+          value: diff,
+          date: dateStr,
+          duration: 0,
+       ));
+    }
+
     await _goalRepo.updateProgress(goal.id!, newProgress);
     if (newProgress >= goal.targetValue) {
       await _goalRepo.markCompleted(goal.id!);
@@ -324,19 +363,28 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
   late TextEditingController _unitController;
 
   DateTime _selectedDeadline = DateTime.now().add(const Duration(days: 7));
-  String _selectedCategory = 'General';
+  String _selectedCategory = 'Steps (Daily)';
   String? _selectedReminderTime;
   String _customTrackingMethod = 'Cumulative'; // Default for custom
 
   final List<String> _categories = [
-    'General',
-    'Running',
-    'Diet',
-    'Water',
-    'Sleep',
-    'Workout',
-    'Custom'
+    'Steps (Daily)',
+    'Steps (Cumulative)',
+    'Running (Daily)',
+    'Running (Cumulative)',
+    'Sleep (Daily)',
+    'Water (Daily)',
+    'Diet (Daily)',
+    'Custom (Daily)',
+    'Custom (Cumulative)'
   ];
+
+  String _getBaseType(Goal goal) {
+    if (goal.category.startsWith('Custom')) {
+      return goal.title.toLowerCase();
+    }
+    return goal.category.replaceAll(' (Daily)', '').replaceAll(' (Cumulative)', '').toLowerCase();
+  }
 
   @override
   void initState() {
@@ -353,10 +401,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
       _selectedReminderTime = widget.existingGoal!.reminderTime;
       
       final existingCat = widget.existingGoal!.category;
-      if (existingCat.startsWith('Custom')) {
-        _selectedCategory = 'Custom';
-        _customTrackingMethod = existingCat.contains('(Daily)') ? 'Daily Reset' : 'Cumulative';
-      } else {
+      if (_categories.contains(existingCat)) {
         _selectedCategory = existingCat;
       }
     }
@@ -397,16 +442,11 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
       final userId =
           Provider.of<AuthService>(context, listen: false).currentUser!.id!;
 
-      String finalCategory = _selectedCategory;
-      if (_selectedCategory == 'Custom') {
-        finalCategory = 'Custom (${_customTrackingMethod == 'Daily Reset' ? 'Daily' : 'Cumulative'})';
-      }
-
       final goal = Goal(
         id: widget.existingGoal?.id,
         userId: userId,
         title: _titleController.text.trim(),
-        category: finalCategory,
+        category: _selectedCategory,
         targetValue: double.parse(_targetController.text.trim()),
         currentValue: widget.existingGoal?.currentValue ?? 0,
         unit: _unitController.text.trim(),
@@ -471,42 +511,24 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _categories.contains(_selectedCategory)
-                    ? _selectedCategory
-                    : 'General',
+                value: _categories.contains(_selectedCategory) ? _selectedCategory : 'Steps (Daily)',
                 decoration: InputDecoration(
-                  labelText: 'Category',
+                  labelText: 'Category / Tracking Type',
                   prefixIcon: const Icon(Icons.category_outlined),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                items: _categories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
+                items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (val) => setState(() => _selectedCategory = val!),
               ),
-              const SizedBox(height: 16),
-
-              if (_selectedCategory == 'Custom') ...[
-                DropdownButtonFormField<String>(
-                  value: _customTrackingMethod,
-                  decoration: InputDecoration(
-                    labelText: 'Goal Tracking Method',
-                    prefixIcon: const Icon(Icons.analytics_outlined),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    helperText: 'Cumulative builds up over time (like Weight Loss).\nDaily Reset starts at 0 each day (like Sleep or Water).',
-                    helperMaxLines: 2,
-                  ),
-                  items: ['Cumulative', 'Daily Reset']
-                      .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                      .toList(),
-                  onChanged: (val) => setState(() => _customTrackingMethod = val!),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'Industry Standard Note:\n- Daily goals (e.g. 10,000 steps) reset every day.\n- Cumulative goals track total progress over time.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
                 ),
-                const SizedBox(height: 16),
-              ],
-
-              Row(
+              ),
+              const SizedBox(height: 16),              Row(
                 children: [
                   Expanded(
                     flex: 2,
