@@ -316,6 +316,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               },
             ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'activity_fab',
         onPressed: _showAddDialog,
         backgroundColor: const Color(0xFF1A73E8),
         child: const Icon(Icons.add, color: Colors.white),

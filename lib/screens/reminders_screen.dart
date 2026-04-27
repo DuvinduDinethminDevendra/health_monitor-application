@@ -118,6 +118,7 @@ class RemindersScreen extends StatelessWidget {
           floatingActionButton: isSelecting
               ? null
               : FloatingActionButton.extended(
+                  heroTag: 'reminders_fab',
                   onPressed: () => _navigateToEdit(context),
                   backgroundColor: const Color(0xFFAB47BC),
                   foregroundColor: Colors.white,

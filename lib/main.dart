@@ -6,7 +6,11 @@ import 'services/notification_service.dart';
 import 'providers/health_tips_provider.dart';
 import 'providers/reminders_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/health_tips_screen.dart';
+import 'screens/charts_screen.dart';
+import 'screens/reminders_screen.dart';
 
 import 'package:flutter/foundation.dart'; // Added for kIsWeb
 
@@ -80,6 +84,14 @@ class HealthMonitorApp extends StatelessWidget {
                 : const LoginScreen();
           },
         ),
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/dashboard': (context) => const DashboardScreen(),
+          '/health-tips': (context) => const HealthTipsScreen(),
+          '/charts': (context) => const ChartsScreen(),
+          '/reminders': (context) => const RemindersScreen(),
+        },
       ),
     );
   }

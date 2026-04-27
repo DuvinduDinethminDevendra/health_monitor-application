@@ -222,10 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await authService.signInWithGoogle();
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
+      Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Google Sign-In failed: $e'), backgroundColor: Colors.red),
