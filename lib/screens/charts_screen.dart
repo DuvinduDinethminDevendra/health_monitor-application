@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
+import '../repositories/goal_repository.dart';
 import '../services/auth_service.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
+import '../models/goal.dart';
 
 class ChartsScreen extends StatefulWidget {
   const ChartsScreen({super.key});
@@ -20,12 +23,14 @@ class _ChartsScreenState extends State<ChartsScreen>
   late TabController _tabController;
   List<Activity> _activities = [];
   List<HealthLog> _healthLogs = [];
+  List<Goal> _goals = [];
+  final GoalRepository _goalRepo = GoalRepository();
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
@@ -49,11 +54,13 @@ class _ChartsScreenState extends State<ChartsScreen>
         .getActivitiesByDateRange(userId, startDate, endDate);
     final healthLogs = await HealthLogRepository()
         .getLogsByDateRange(userId, startDate, endDate);
+    final goals = await _goalRepo.getGoalsByUser(userId);
 
     if (!mounted) return;
     setState(() {
       _activities = activities;
       _healthLogs = healthLogs;
+      _goals = goals;
       _isLoading = false;
     });
   }
@@ -74,6 +81,7 @@ class _ChartsScreenState extends State<ChartsScreen>
           tabs: const [
             Tab(text: 'Activities'),
             Tab(text: 'BMI Trend'),
+            Tab(text: 'Goal Insights'),
           ],
         ),
       ),
@@ -84,8 +92,357 @@ class _ChartsScreenState extends State<ChartsScreen>
               children: [
                 _buildActivityChart(),
                 _buildBmiChart(),
+                _buildGoalInsights(),
               ],
             ),
+    );
+  }
+
+  // --- Member 3 Feature: Advanced Predictive Insights UI ---
+  Widget _buildGoalInsights() {
+    if (_goals.isEmpty) {
+      return const Center(
+        child: Text(
+          'No goals set yet.\nAdd goals to see your predictive insights!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
+    final List<Color> palette = [
+      const Color(0xFF1A73E8), // Blue
+      const Color(0xFFFB8C00), // Orange
+      const Color(0xFF43A047), // Green
+      const Color(0xFF8E24AA), // Purple
+      const Color(0xFFE53935), // Red
+      const Color(0xFF00ACC1), // Cyan
+    ];
+
+    final dailyGoals = _goals.where((g) {
+      final cat = g.category.toLowerCase();
+      return cat == 'sleep' || cat == 'water' || cat == 'diet' || cat.contains('(daily)');
+    }).toList();
+
+    final cumulativeGoals = _goals.where((g) {
+      final cat = g.category.toLowerCase();
+      return !(cat == 'sleep' || cat == 'water' || cat == 'diet' || cat.contains('(daily)'));
+    }).toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (cumulativeGoals.isNotEmpty) ...[
+            const Text(
+              'Cumulative Goals (Completion %)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 250,
+              child: BarChart(
+                BarChartData(
+                  alignment: BarChartAlignment.spaceAround,
+                  maxY: 100, // Percentage
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final goal = cumulativeGoals[groupIndex];
+                        return BarTooltipItem(
+                          '${goal.title}\n${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          final idx = value.toInt();
+                          if (idx >= 0 && idx < cumulativeGoals.length) {
+                            final title = cumulativeGoals[idx].title;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                title.length > 8 ? '${title.substring(0, 8)}...' : title,
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                            );
+                          }
+                          return const Text('');
+                        },
+                      ),
+                    ),
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: 25),
+                    ),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 25,
+                    getDrawingHorizontalLine: (value) {
+                      return FlLine(
+                        color: Colors.grey.withValues(alpha: 0.3),
+                        strokeWidth: 1,
+                        dashArray: [5, 5],
+                      );
+                    },
+                  ),
+                  barGroups: List.generate(cumulativeGoals.length, (index) {
+                    final goal = cumulativeGoals[index];
+                    double percent = 0;
+                    if (goal.targetValue > 0) {
+                      percent = (goal.currentValue / goal.targetValue) * 100;
+                    }
+                    if (percent > 100) percent = 100;
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: percent,
+                          color: palette[index % palette.length],
+                          width: 20,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                          backDrawRodData: BackgroundBarChartRodData(
+                            show: true,
+                            toY: 100,
+                            color: Colors.grey[200],
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+          ],
+
+          if (dailyGoals.isNotEmpty) ...[
+            const Text(
+              'Daily Goals (Weekly Trend)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            ...dailyGoals.asMap().entries.map((entry) {
+              final index = entry.key;
+              final goal = entry.value;
+              final color = palette[(cumulativeGoals.length + index) % palette.length];
+
+              // --- Link real Activity Data for the last 30 days ---
+              final typeMatch = goal.baseType;
+              
+              final goalActivities = _activities.where((a) {
+                return a.type.toLowerCase() == typeMatch;
+              }).toList();
+
+              final now = DateTime.now();
+              final List<FlSpot> spots = [];
+              double maxAchieved = 0.0;
+
+              for (int i = 0; i < 30; i++) {
+                final targetDate = now.subtract(Duration(days: 29 - i));
+                final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+                
+                final daySum = goalActivities
+                    .where((a) => a.date.startsWith(dateStr))
+                    .fold(0.0, (sum, a) => sum + a.value);
+                
+                if (daySum > maxAchieved) maxAchieved = daySum;
+                spots.add(FlSpot(i.toDouble(), daySum));
+              }
+
+              // We no longer need the math.max() hack because _updateProgress in goals_screen.dart 
+              // now natively inserts an Activity record for manual updates. 
+              // This guarantees the 'daySum' is permanently and perfectly accurate on the exact date!
+              
+              // Set minimum Y height to the target value
+              final double maxY = maxAchieved > goal.targetValue ? maxAchieved : goal.targetValue;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${goal.title} (${goal.unit})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 150,
+                    child: LineChart(
+                      LineChartData(
+                        minX: 0,
+                        maxX: 29,
+                        minY: 0,
+                        maxY: maxY > 0 ? maxY : 10,
+                        lineTouchData: LineTouchData(
+                          touchTooltipData: LineTouchTooltipData(
+                            fitInsideHorizontally: true,
+                            fitInsideVertically: true,
+                            getTooltipItems: (touchedSpots) {
+                              return touchedSpots.map((spot) {
+                                final spotDate = now.subtract(Duration(days: 29 - spot.x.toInt()));
+                                final dateStr = DateFormat('MMM dd').format(spotDate);
+                                return LineTooltipItem(
+                                  '$dateStr\n${spot.y.toStringAsFixed(1)} ${goal.unit}',
+                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                );
+                              }).toList();
+                            },
+                          ),
+                        ),
+                        gridData: FlGridData(show: true, drawVerticalLine: false),
+                        extraLinesData: ExtraLinesData(
+                          horizontalLines: [
+                            HorizontalLine(
+                              y: goal.targetValue,
+                              color: Colors.redAccent.withOpacity(0.8),
+                              strokeWidth: 2,
+                              dashArray: [5, 5], // Industry standard dashed line
+                              label: HorizontalLineLabel(
+                                show: true,
+                                labelResolver: (line) => 'Goal: ${goal.targetValue}',
+                                style: const TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                                padding: const EdgeInsets.only(left: 4, bottom: 4),
+                              ),
+                            )
+                          ],
+                        ),
+                        titlesData: FlTitlesData(
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              interval: 6, // 30 days / 5 labels = interval of 6
+                              getTitlesWidget: (value, meta) {
+                                if (value % 1 != 0) return const Text(''); // Prevent duplicates
+                                final daysAgo = 29 - value.toInt();
+                                final date = now.subtract(Duration(days: daysAgo));
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    daysAgo == 0 ? 'Today' : DateFormat('MM/dd').format(date), 
+                                    style: const TextStyle(fontSize: 10)
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true, 
+                              reservedSize: 40,
+                              getTitlesWidget: (value, meta) {
+                                return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                              }
+                            ),
+                          ),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: spots,
+                            isCurved: true,
+                            color: color,
+                            barWidth: 3,
+                            isStrokeCapRound: true,
+                            dotData: FlDotData(
+                              show: true,
+                              checkToShowDot: (spot, barData) => spot.x == 29 || spot.y > 0, // Show dots only if data exists or today
+                            ),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: color.withOpacity(0.15),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              );
+            }).toList(),
+          ],
+
+          const SizedBox(height: 16),
+          const Text(
+            'Predictive Insights',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          ..._goals.map((goal) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            goal.title,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                        Chip(
+                          label: Text(goal.category),
+                          backgroundColor: const Color(0xFFE3F2FD),
+                          labelStyle: const TextStyle(color: Color(0xFF1565C0), fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    FutureBuilder<String>(
+                      future: _goalRepo.getPredictiveInsight(goal.id!),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const LinearProgressIndicator();
+                        }
+                        final insight = snapshot.data ?? 'Calculating...';
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.auto_graph, color: Color(0xFFFB8C00), size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  insight,
+                                  style: const TextStyle(
+                                    color: Color(0xFFE65100),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -107,121 +464,151 @@ class _ChartsScreenState extends State<ChartsScreen>
       );
     }
 
-    // Group activities by type
-    final Map<String, double> activitySums = {};
-    for (final a in _activities) {
-      activitySums[a.type] = (activitySums[a.type] ?? 0) + a.value;
-    }
+    // Group activities by unique types to create a 30-day timeline for EACH type
+    final types = _activities.map((a) => a.type).toSet().toList();
+    final now = DateTime.now();
 
-    final entries = activitySums.entries.toList();
-    final colors = [
+    final palette = [
       const Color(0xFF1A73E8),
       const Color(0xFFE53935),
       const Color(0xFFFB8C00),
       const Color(0xFF00BFA5),
-      const Color(0xFFAB47BC),
       const Color(0xFF42A5F5),
+      const Color(0xFFAB47BC),
+      const Color(0xFF3949AB),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Activity Summary (Last 30 Days)',
+            'Activity Timeline (Last 30 Days)',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 250,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      return BarTooltipItem(
-                        '${entries[groupIndex].key}\n${rod.toY.toStringAsFixed(0)}',
-                        const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final idx = value.toInt();
-                        if (idx >= 0 && idx < entries.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              entries[idx].key.substring(
-                                  0, entries[idx].key.length > 5 ? 5 : entries[idx].key.length),
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                    ),
-                  ),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: List.generate(entries.length, (index) {
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: entries[index].value,
-                        color: colors[index % colors.length],
-                        width: 24,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(6)),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ),
-          ),
           const SizedBox(height: 24),
-          // Legend
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: List.generate(entries.length, (index) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: colors[index % colors.length],
-                      borderRadius: BorderRadius.circular(3),
+          ...types.asMap().entries.map((entry) {
+            final type = entry.value;
+            final color = palette[entry.key % palette.length];
+            
+            final typeActivities = _activities.where((a) => a.type == type).toList();
+            final List<BarChartGroupData> barGroups = [];
+            double maxY = 0.0;
+
+            // Pass 1: Pre-calculate true maxY
+            for (int i = 0; i < 30; i++) {
+              final targetDate = now.subtract(Duration(days: 29 - i));
+              final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+              final daySum = typeActivities
+                  .where((a) => a.date.startsWith(dateStr))
+                  .fold(0.0, (sum, a) => sum + a.value);
+              if (daySum > maxY) maxY = daySum;
+            }
+
+            final chartMaxY = maxY > 0 ? maxY : 10.0;
+
+            // Pass 2: Build bars with consistent bounds
+            for (int i = 0; i < 30; i++) {
+              final targetDate = now.subtract(Duration(days: 29 - i));
+              final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+              
+              final daySum = typeActivities
+                  .where((a) => a.date.startsWith(dateStr))
+                  .fold(0.0, (sum, a) => sum + a.value);
+              
+              barGroups.add(
+                BarChartGroupData(
+                  x: i,
+                  barRods: [
+                    BarChartRodData(
+                      toY: daySum,
+                      color: color,
+                      width: 8,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      backDrawRodData: BackgroundBarChartRodData(
+                        show: true,
+                        toY: chartMaxY,
+                        color: Colors.grey[200],
+                      ),
+                    ),
+                  ],
+                )
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${type[0].toUpperCase()}${type.substring(1)}', 
+                  style: const TextStyle(fontWeight: FontWeight.bold)
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 150,
+                  child: BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: chartMaxY,
+                      barTouchData: BarTouchData(
+                        touchTooltipData: BarTouchTooltipData(
+                          fitInsideHorizontally: true,
+                          fitInsideVertically: true,
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            if (rod.toY == 0) return null;
+                            final daysAgo = 29 - group.x.toInt();
+                            final date = now.subtract(Duration(days: daysAgo));
+                            return BarTooltipItem(
+                              '${DateFormat('MMM dd').format(date)}\n${rod.toY.toStringAsFixed(1)}',
+                              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            );
+                          },
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            interval: 6,
+                            getTitlesWidget: (value, meta) {
+                              if (value % 6 != 0 && value != 29) return const Text('');
+                              final daysAgo = 29 - value.toInt();
+                              final date = now.subtract(Duration(days: daysAgo));
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  daysAgo == 0 ? 'Today' : DateFormat('MM/dd').format(date), 
+                                  style: const TextStyle(fontSize: 10)
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            getTitlesWidget: (value, meta) {
+                              if (value == 0) return const Text('');
+                              return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                            },
+                          ),
+                        ),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      gridData: const FlGridData(show: false),
+                      borderData: FlBorderData(show: false),
+                      barGroups: barGroups,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Text(entries[index].key,
-                      style: const TextStyle(fontSize: 12)),
-                ],
-              );
-            }),
-          ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            );
+          }).toList(),
         ],
       ),
     );
@@ -271,8 +658,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         return LineTooltipItem(
                           'BMI: ${log.bmi}\n${log.date}',
                           const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold),
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         );
                       }).toList();
                     },
@@ -348,8 +734,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                       label: HorizontalLineLabel(
                         show: true,
                         labelResolver: (_) => 'Underweight',
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.orange[300]),
+                        style:
+                            TextStyle(fontSize: 10, color: Colors.orange[300]),
                       ),
                     ),
                     HorizontalLine(
@@ -360,8 +746,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                       label: HorizontalLineLabel(
                         show: true,
                         labelResolver: (_) => 'Overweight',
-                        style: TextStyle(
-                            fontSize: 10, color: Colors.orange[300]),
+                        style:
+                            TextStyle(fontSize: 10, color: Colors.orange[300]),
                       ),
                     ),
                   ],

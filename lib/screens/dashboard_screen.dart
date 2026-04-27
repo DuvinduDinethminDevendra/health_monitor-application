@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 import '../services/auth_service.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/goal_repository.dart';
@@ -10,10 +11,9 @@ import 'goals_screen.dart';
 import 'health_tips_screen.dart';
 import 'charts_screen.dart';
 import 'reminders_screen.dart';
+import 'profile_screen.dart';
 import 'login_screen.dart';
-import '../providers/activity_provider.dart';
-import '../widgets/step_progress_ring.dart';
-import '../widgets/weekly_steps_chart.dart';
+import '../services/sync_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -33,6 +33,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboardData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      if (authService.isFirstTimeLogin) {
+        authService.clearFirstTimeLogin();
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      }
+    });
   }
 
   Future<void> _loadDashboardData() async {
@@ -40,14 +50,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    final activities =
-        await ActivityRepository().getActivitiesByUser(userId);
+    // Trigger Firebase Sync on every manual refresh
+    await SyncService().syncData(userId);
+
+    final activities = await ActivityRepository().getActivitiesByUser(userId);
     final goals = await GoalRepository().getActiveGoals(userId);
     final latestLog = await HealthLogRepository().getLatestLog(userId);
-
-    if (mounted) {
-      Provider.of<ActivityProvider>(context, listen: false).loadData(userId);
-    }
 
     if (!mounted) return;
 
@@ -84,8 +92,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     : 'Goals'),
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
-        elevation: 0,
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                ).then((_) => _loadDashboardData());
+              },
+              child: Tooltip(
+                message: 'Smart Profile (Member 3)',
+                child: CircleAvatar(
+                  backgroundColor: Colors.white24,
+                  radius: 18,
+                  backgroundImage: authService.currentUser?.profilePicture !=
+                              null &&
+                          authService.currentUser!.profilePicture!.isNotEmpty
+                      ? MemoryImage(base64Decode(
+                          authService.currentUser!.profilePicture!))
+                      : null,
+                  child: (authService.currentUser?.profilePicture == null ||
+                          authService.currentUser!.profilePicture!.isEmpty)
+                      ? const Icon(Icons.person, color: Colors.white)
+                      : null,
+                ),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -233,49 +268,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Step Progress Section
-            Consumer<ActivityProvider>(
-              builder: (context, activityProvider, _) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Daily Steps',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(
-                          child: StepProgressRing(
-                            progress: activityProvider.stepProgress,
-                            stepCount: activityProvider.liveStepCount,
-                            goal: activityProvider.dailyStepGoal,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: WeeklyStepsChart(
-                          weeklySteps: activityProvider.weeklySteps,
-                          goal: activityProvider.dailyStepGoal,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                );
-              },
-            ),
-
             // Quick actions
             const Text(
               'Quick Actions',
@@ -350,8 +342,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildActionTile(
-      String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionTile(String title, String subtitle, IconData icon,
+      Color color, VoidCallback onTap) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

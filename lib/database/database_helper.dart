@@ -1,13 +1,19 @@
-import 'package:sqflite/sqflite.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
+// Conditional imports
+import 'database_helper_stub.dart'
+    if (dart.library.html) 'database_helper_web.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
 
-  DatabaseHelper._internal();
-
   factory DatabaseHelper() => _instance;
+
+  DatabaseHelper._internal();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -16,12 +22,17 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'health_monitor.db');
+    String path;
+    if (kIsWeb) {
+      await initWebDatabase();
+      path = 'health_monitor.db';
+    } else {
+      path = join(await getDatabasesPath(), 'health_monitor.db');
+    }
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -29,111 +40,76 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        created_at TEXT NOT NULL
+      CREATE TABLE users(
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        email TEXT,
+        password TEXT,
+        created_at TEXT,
+        age INTEGER,
+        gender TEXT,
+        height REAL,
+        weight REAL,
+        profile_picture TEXT,
+        interests TEXT,
+        sync_status INTEGER DEFAULT 0
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE activities (
+      CREATE TABLE goals(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        type TEXT NOT NULL,
-        value REAL NOT NULL,
-        date TEXT NOT NULL,
-        duration INTEGER NOT NULL,
+        user_id TEXT,
+        title TEXT,
+        category TEXT,
+        target_value REAL,
+        current_value REAL,
+        unit TEXT,
+        deadline TEXT,
+        reminder_time TEXT,
+        is_completed INTEGER DEFAULT 0,
+        sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE goals (
+      CREATE TABLE activities(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        target_value REAL NOT NULL,
-        current_value REAL NOT NULL DEFAULT 0,
-        unit TEXT NOT NULL,
-        deadline TEXT NOT NULL,
-        is_completed INTEGER NOT NULL DEFAULT 0,
+        user_id TEXT,
+        type TEXT,
+        value REAL,
+        date TEXT,
+        duration INTEGER,
+        sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE health_logs (
+      CREATE TABLE health_logs(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        weight REAL NOT NULL,
-        height REAL NOT NULL,
-        bmi REAL NOT NULL,
-        date TEXT NOT NULL,
+        user_id TEXT,
+        weight REAL,
+        height REAL,
+        bmi REAL,
+        date TEXT,
+        sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE step_records (
-          id         INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id    INTEGER NOT NULL,
-          date       TEXT NOT NULL,
-          step_count INTEGER NOT NULL DEFAULT 0,
-          goal       INTEGER NOT NULL DEFAULT 10000,
-          UNIQUE(user_id, date),
-          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE workout_records (
-          id              INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id         INTEGER NOT NULL,
-          workout_type    TEXT NOT NULL,
-          duration_mins   INTEGER NOT NULL,
-          calories_burned INTEGER,
-          logged_at       TEXT NOT NULL,
-          notes           TEXT,
-          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE step_records (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id    INTEGER NOT NULL,
-            date       TEXT NOT NULL,
-            step_count INTEGER NOT NULL DEFAULT 0,
-            goal       INTEGER NOT NULL DEFAULT 10000,
-            UNIQUE(user_id, date),
-            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )
-      ''');
-
-      await db.execute('''
-        CREATE TABLE workout_records (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id         INTEGER NOT NULL,
-            workout_type    TEXT NOT NULL,
-            duration_mins   INTEGER NOT NULL,
-            calories_burned INTEGER,
-            logged_at       TEXT NOT NULL,
-            notes           TEXT,
-            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )
-      ''');
-    }
+    await db.execute('DROP TABLE IF EXISTS health_logs');
+    await db.execute('DROP TABLE IF EXISTS activities');
+    await db.execute('DROP TABLE IF EXISTS goals');
+    await db.execute('DROP TABLE IF EXISTS users');
+    await _onCreate(db, newVersion);
   }
 
   Future<void> close() async {
     final db = await database;
     db.close();
-    _database = null;
   }
 }

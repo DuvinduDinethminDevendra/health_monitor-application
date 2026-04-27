@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 import 'dashboard_screen.dart';
+import 'profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,8 +42,19 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Authentication Failed'),
+          content: Text(error),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       );
     } else {
       Navigator.pushReplacement(
@@ -187,6 +199,36 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(color: Color(0xFF1A73E8)),
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        const Row(
+                          children: [
+                            Expanded(child: Divider()),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              child: Text('OR', style: TextStyle(color: Colors.grey)),
+                            ),
+                            Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _loginWithGoogle,
+                            icon: Image.network(
+                              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                              height: 24,
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_circle),
+                            ),
+                            label: const Text('Sign in with Google'),
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -197,5 +239,35 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+    final authService = Provider.of<AuthService>(context, listen: false);
+    try {
+      final isNewUser = await authService.signInWithGoogle();
+      if (!mounted) return;
+      
+      // Navigate to the Dashboard first
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+
+      // If they are a brand new user, automatically open their profile 
+      // so they can finish setting up their details & interests!
+      if (isNewUser) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google Sign-In failed: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }
