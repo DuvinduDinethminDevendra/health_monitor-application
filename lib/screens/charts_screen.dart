@@ -7,8 +7,6 @@ import '../repositories/health_log_repository.dart';
 import '../services/auth_service.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
-import 'widgets/error_widget.dart';
-import 'widgets/shimmer_loading.dart';
 
 class ChartsScreen extends StatefulWidget {
   const ChartsScreen({super.key});
@@ -23,7 +21,6 @@ class _ChartsScreenState extends State<ChartsScreen>
   List<Activity> _activities = [];
   List<HealthLog> _healthLogs = [];
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -43,36 +40,22 @@ class _ChartsScreenState extends State<ChartsScreen>
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
+    final now = DateTime.now();
+    final startDate =
+        DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 30)));
+    final endDate = DateFormat('yyyy-MM-dd').format(now);
+
+    final activities = await ActivityRepository()
+        .getActivitiesByDateRange(userId, startDate, endDate);
+    final healthLogs = await HealthLogRepository()
+        .getLogsByDateRange(userId, startDate, endDate);
+
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _activities = activities;
+      _healthLogs = healthLogs;
+      _isLoading = false;
     });
-
-    try {
-      final now = DateTime.now();
-      final startDate =
-          DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 30)));
-      final endDate = DateFormat('yyyy-MM-dd').format(now);
-
-      final activities = await ActivityRepository()
-          .getActivitiesByDateRange(userId, startDate, endDate);
-      final healthLogs = await HealthLogRepository()
-          .getLogsByDateRange(userId, startDate, endDate);
-
-      if (!mounted) return;
-      setState(() {
-        _activities = activities;
-        _healthLogs = healthLogs;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to load chart data. Please try again.';
-      });
-    }
   }
 
   @override
@@ -95,19 +78,14 @@ class _ChartsScreenState extends State<ChartsScreen>
         ),
       ),
       body: _isLoading
-          ? const ShimmerLoading(itemCount: 2)
-          : _errorMessage != null
-              ? AppErrorWidget(
-                  message: _errorMessage!,
-                  onRetry: _loadData,
-                )
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildActivityChart(),
-                    _buildBmiChart(),
-                  ],
-                ),
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildActivityChart(),
+                _buildBmiChart(),
+              ],
+            ),
     );
   }
 

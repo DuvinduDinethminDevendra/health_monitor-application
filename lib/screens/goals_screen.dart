@@ -4,8 +4,6 @@ import 'package:intl/intl.dart';
 import '../models/goal.dart';
 import '../repositories/goal_repository.dart';
 import '../services/auth_service.dart';
-import 'widgets/error_widget.dart';
-import 'widgets/shimmer_loading.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -18,7 +16,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
   final GoalRepository _goalRepo = GoalRepository();
   List<Goal> _goals = [];
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -31,26 +28,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
+    final goals = await _goalRepo.getGoalsByUser(userId);
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _goals = goals;
+      _isLoading = false;
     });
-
-    try {
-      final goals = await _goalRepo.getGoalsByUser(userId);
-      if (!mounted) return;
-      setState(() {
-        _goals = goals;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to load goals. Please try again.';
-      });
-    }
   }
 
   void _showAddEditDialog({Goal? existingGoal}) {
@@ -67,175 +50,144 @@ class _GoalsScreenState extends State<GoalsScreen> {
         ? DateTime.parse(existingGoal.deadline)
         : DateTime.now().add(const Duration(days: 30));
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[400],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(existingGoal != null ? 'Edit Goal' : 'New Goal'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Goal Title',
+                      hintText: 'e.g., Walk 10,000 steps daily',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      existingGoal != null ? 'Edit Goal' : 'New Goal',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Goal Title',
-                        hintText: 'e.g., Walk 10,000 steps daily',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (v) =>
-                          v == null || v.isEmpty ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: TextFormField(
-                            controller: targetController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Target',
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            validator: (v) {
-                              if (v == null || v.isEmpty) return 'Required';
-                              if (double.tryParse(v) == null) return 'Invalid';
-                              return null;
-                            },
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextFormField(
+                          controller: targetController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Target',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Required';
+                            if (double.tryParse(v) == null) return 'Invalid';
+                            return null;
+                          },
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 2,
-                          child: TextFormField(
-                            controller: unitController,
-                            decoration: InputDecoration(
-                              labelText: 'Unit',
-                              hintText: 'kg, km, steps',
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                            validator: (v) =>
-                                v == null || v.isEmpty ? 'Required' : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextFormField(
+                          controller: unitController,
+                          decoration: InputDecoration(
+                            labelText: 'Unit',
+                            hintText: 'kg, km, steps',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
-                        ),
-                      ],
-                    ),
-                    if (existingGoal != null) ...[
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: currentController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Current Progress',
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                          validator: (v) =>
+                              v == null || v.isEmpty ? 'Required' : null,
                         ),
                       ),
                     ],
+                  ),
+                  if (existingGoal != null) ...[
                     const SizedBox(height: 16),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.calendar_today),
-                      title: Text(
-                          'Deadline: ${DateFormat('MMM dd, yyyy').format(deadline)}'),
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: deadline,
-                          firstDate: DateTime.now(),
-                          lastDate:
-                              DateTime.now().add(const Duration(days: 365)),
-                        );
-                        if (picked != null) {
-                          setDialogState(() => deadline = picked);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (formKey.currentState!.validate()) {
-                            final userId =
-                                Provider.of<AuthService>(context, listen: false)
-                                    .currentUser!
-                                    .id!;
-                            final goal = Goal(
-                              id: existingGoal?.id,
-                              userId: userId,
-                              title: titleController.text,
-                              targetValue: double.parse(targetController.text),
-                              currentValue:
-                                  double.tryParse(currentController.text) ?? 0,
-                              unit: unitController.text,
-                              deadline:
-                                  DateFormat('yyyy-MM-dd').format(deadline),
-                              isCompleted: existingGoal?.isCompleted ?? false,
-                            );
-
-                            if (existingGoal != null) {
-                              await _goalRepo.updateGoal(goal);
-                            } else {
-                              await _goalRepo.insertGoal(goal);
-                            }
-
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            _loadGoals();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFB8C00),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(existingGoal != null ? 'Update Goal' : 'Create Goal', style: const TextStyle(fontSize: 16)),
+                    TextFormField(
+                      controller: currentController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Current Progress',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ],
-                ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_today),
+                    title: Text(
+                        'Deadline: ${DateFormat('MMM dd, yyyy').format(deadline)}'),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: deadline,
+                        firstDate: DateTime.now(),
+                        lastDate:
+                            DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() => deadline = picked);
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final userId =
+                      Provider.of<AuthService>(context, listen: false)
+                          .currentUser!
+                          .id!;
+                  final goal = Goal(
+                    id: existingGoal?.id,
+                    userId: userId,
+                    title: titleController.text,
+                    targetValue: double.parse(targetController.text),
+                    currentValue:
+                        double.tryParse(currentController.text) ?? 0,
+                    unit: unitController.text,
+                    deadline:
+                        DateFormat('yyyy-MM-dd').format(deadline),
+                    isCompleted: existingGoal?.isCompleted ?? false,
+                  );
+
+                  if (existingGoal != null) {
+                    await _goalRepo.updateGoal(goal);
+                  } else {
+                    await _goalRepo.insertGoal(goal);
+                  }
+
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _loadGoals();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFB8C00),
+                foregroundColor: Colors.white,
+              ),
+              child: Text(existingGoal != null ? 'Update' : 'Create'),
+            ),
+          ],
         ),
       ),
     );
@@ -244,16 +196,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const ShimmerLoading(itemCount: 3);
-    }
-
-    if (_errorMessage != null) {
-      return Scaffold(
-        body: AppErrorWidget(
-          message: _errorMessage!,
-          onRetry: _loadGoals,
-        ),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(
@@ -262,27 +205,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFB8C00).withAlpha(20),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.flag, size: 80, color: Color(0xFFFB8C00)),
-                  ),
-                  const SizedBox(height: 24),
+                  Icon(Icons.flag, size: 80, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
                   Text(
                     'No goals set yet',
-                    style: TextStyle(
-                      fontSize: 20, 
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tap + to create your first goal',
-                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+                    style: TextStyle(color: Colors.grey[400]),
                   ),
                 ],
               ),
