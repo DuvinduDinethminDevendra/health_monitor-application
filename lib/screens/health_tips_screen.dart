@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/health_tips_provider.dart';
 import '../services/health_tips_service.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'dart:ui';
 
 class HealthTipsScreen extends StatefulWidget {
   const HealthTipsScreen({super.key});
@@ -95,48 +97,10 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
         }
 
         return Scaffold(
-      appBar: AppBar(
-        title: const Text('Health Tips'),
-        backgroundColor: const Color(0xFFFFA726),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Column(
+      backgroundColor: Colors.white,
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Showcase(
-              key: _searchKey,
-              title: 'Search Tips',
-              description: 'Type here to find specific health advice or keywords.',
-              tooltipBackgroundColor: const Color(0xFF1A73E8),
-              textColor: Colors.white,
-              titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
-              descTextStyle: const TextStyle(fontSize: 14, color: Colors.white70),
-              tooltipBorderRadius: BorderRadius.circular(12),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                onSubmitted: (_) => _onSearchSubmitted(),
-                decoration: InputDecoration(
-                  hintText: 'Search health tips...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                      _onSearchSubmitted();
-                    },
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          _buildTagChips(context),
-          Expanded(
+          Positioned.fill(
             child: Consumer<HealthTipsProvider>(
               builder: (context, provider, child) {
                 switch (provider.state) {
@@ -145,7 +109,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                   case HealthTipsState.error:
                     return Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: const EdgeInsets.only(top: 140.0, left: 24.0, right: 24.0, bottom: 24.0),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -168,113 +132,44 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     );
                   case HealthTipsState.empty:
                     return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search_off, size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text('No health tips found for that keyword.', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                        ],
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 140.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.search_off, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('No health tips found for that keyword.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                          ],
+                        ),
                       ),
                     );
                   case HealthTipsState.loaded:
                   case HealthTipsState.initial:
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: provider.tips.length,
-                              itemBuilder: (context, index) {
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(top: 230, left: 16, right: 16, bottom: 16),
+                        child: Column(
+                          children: [
+                            StaggeredGrid.count(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              children: List.generate(provider.tips.length, (index) {
                                 final tip = provider.tips[index];
                                 final color = _cardColors[index % _cardColors.length];
+                                
+                                final isFeatured = index % 3 == 0;
+                                
+                                final cardWidget = isFeatured
+                                    ? _buildFeaturedTipCard(tip, color)
+                                    : _buildGridTipCard(tip, color);
 
-                                final cardWidget = Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  elevation: 2,
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(16),
-                                    onTap: () => _showTipDetail(tip, color),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(12),
-                                            child: tip.imageUrl != null && tip.imageUrl!.isNotEmpty
-                                                ? CachedNetworkImage(
-                                                    imageUrl: tip.imageUrl!,
-                                                    width: 60,
-                                                    height: 60,
-                                                    fit: BoxFit.cover,
-                                                    placeholder: (context, url) => Container(
-                                                      width: 60,
-                                                      height: 60,
-                                                      decoration: BoxDecoration(
-                                                        color: color.withOpacity(0.1),
-                                                      ),
-                                                      child: Center(
-                                                        child: SizedBox(
-                                                          width: 20,
-                                                          height: 20,
-                                                          child: CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                            valueColor: AlwaysStoppedAnimation<Color>(color),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    errorWidget: (context, url, error) => _buildImageFallback(color),
-                                                  )
-                                                : _buildImageFallback(color),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: color.withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                  child: Text(
-                                                    tip.description,
-                                                    style: TextStyle(
-                                                      color: color,
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Text(
-                                                  tip.title,
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const Icon(Icons.chevron_right, color: Colors.grey),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-
+                                Widget wrappedCard = cardWidget;
                                 if (index == 0) {
-                                  return Showcase(
+                                  wrappedCard = Showcase(
                                     key: _cardKey,
                                     title: 'Read & Save',
                                     description: 'Tap any card to read the full article, or tap the heart to save it offline.',
@@ -286,29 +181,116 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                     child: cardWidget,
                                   );
                                 }
-                                return cardWidget;
-                              },
+
+                                return StaggeredGridTile.count(
+                                  crossAxisCellCount: isFeatured ? 2 : 1,
+                                  mainAxisCellCount: isFeatured ? 1.5 : 1,
+                                  child: wrappedCard,
+                                );
+                              }),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                            child: InkWell(
-                              onTap: () => launchUrl(Uri.parse('https://health.gov')),
-                              child: const Text(
-                                'Source: MyHealthfinder (health.gov)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                  decoration: TextDecoration.underline,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24.0),
+                              child: InkWell(
+                                onTap: () => launchUrl(Uri.parse('https://health.gov')),
+                                child: const Text(
+                                  'Source: MyHealthfinder (health.gov)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    decoration: TextDecoration.underline,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                 }
               },
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: Container(
+                  color: Colors.white.withOpacity(0.85),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                              const Text(
+                                'Health Tips',
+                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
+                          child: Showcase(
+                            key: _searchKey,
+                            title: 'Search Tips',
+                            description: 'Type here to find specific health advice or keywords.',
+                            tooltipBackgroundColor: const Color(0xFF1A73E8),
+                            textColor: Colors.white,
+                            titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                            descTextStyle: const TextStyle(fontSize: 14, color: Colors.white70),
+                            tooltipBorderRadius: BorderRadius.circular(12),
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: _onSearchChanged,
+                              onSubmitted: (_) => _onSearchSubmitted(),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                hintText: 'Search health tips...',
+                                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.clear, color: Colors.grey),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _onSearchSubmitted();
+                                  },
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      _buildTagChips(context),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+              ),
             ),
           ),
         ],
@@ -336,16 +318,22 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
             child: ChoiceChip(
               label: Text(tag),
               selected: isSelected,
+              showCheckmark: false,
+              backgroundColor: Colors.grey[100],
+              selectedColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.0),
+                side: BorderSide.none,
+              ),
               onSelected: (selected) {
                 if (selected) {
                   _searchController.clear();
                   provider.fetchTipsByTag(tag);
                 }
               },
-              selectedColor: const Color(0xFFFFA726).withOpacity(0.2),
               labelStyle: TextStyle(
-                color: isSelected ? const Color(0xFFE65100) : Colors.black87,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.white : Colors.grey[800],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
           );
@@ -355,58 +343,32 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
   }
 
   Widget _buildShimmerSkeleton() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 6,
-      itemBuilder: (context, index) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(top: 230, left: 16, right: 16, bottom: 16),
+      child: StaggeredGrid.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        children: List.generate(6, (index) {
+          final isFeatured = index % 3 == 0;
+          
+          return StaggeredGridTile.count(
+            crossAxisCellCount: isFeatured ? 2 : 1,
+            mainAxisCellCount: isFeatured ? 1.5 : 1,
             child: Shimmer.fromColors(
               baseColor: Colors.grey[300]!,
               highlightColor: Colors.grey[100]!,
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.white,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.4,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white),
-                ],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        }),
+      ),
     );
   }
 
@@ -435,93 +397,116 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
             });
           }
           
-          return Column(
+          return Stack(
             children: [
-            const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+              Column(
+                children: [
             Expanded(
               child: SingleChildScrollView(
                 controller: scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: EdgeInsets.zero,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: color.withAlpha(20),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        tip.description,
-                        style: TextStyle(color: color, fontSize: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      tip.title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    tip.content.isNotEmpty
-                        ? HtmlWidget(
-                            tip.content,
-                            textStyle: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[800],
-                              height: 1.6,
-                            ),
-                          )
-                        : Text(
-                            'Follow this health tip to improve your overall wellness and maintain a healthy lifestyle.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                              height: 1.6,
+                    if (tip.imageUrl != null && tip.imageUrl!.isNotEmpty)
+                      CachedNetworkImage(
+                        imageUrl: tip.imageUrl!,
+                        width: double.infinity,
+                        height: 240,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          height: 240,
+                          color: color.withOpacity(0.1),
+                          child: Center(
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(color),
+                              ),
                             ),
                           ),
-                    const SizedBox(height: 32),
-                    const Divider(),
-                    const SizedBox(height: 16),
-                    InkWell(
-                      onTap: () => launchUrl(Uri.parse('https://health.gov')),
+                        ),
+                        errorWidget: (context, url, error) => const SizedBox(),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Data Source:',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'MyHealthfinder API (health.gov)',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: color,
-                              decoration: TextDecoration.underline,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: Text(
+                              tip.description.toUpperCase(),
+                              style: TextStyle(color: color.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Information provided by the Office of Disease Prevention and Health Promotion, U.S. Department of Health and Human Services.',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          Text(
+                            tip.title,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              height: 1.2,
+                              letterSpacing: -0.5,
+                            ),
                           ),
+                          const SizedBox(height: 24),
+                          tip.content.isNotEmpty
+                              ? HtmlWidget(
+                                  tip.content,
+                                  textStyle: TextStyle(
+                                    fontSize: 17,
+                                    color: Colors.grey[850],
+                                    height: 1.7,
+                                  ),
+                                )
+                              : Text(
+                                  'Follow this health tip to improve your overall wellness and maintain a healthy lifestyle.',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    color: Colors.grey[850],
+                                    height: 1.7,
+                                  ),
+                                ),
+                          const SizedBox(height: 32),
+                          const Divider(),
+                          const SizedBox(height: 16),
+                          InkWell(
+                            onTap: () => launchUrl(Uri.parse('https://health.gov')),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Data Source:',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'MyHealthfinder API (health.gov)',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: color,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Information provided by the Office of Disease Prevention and Health Promotion, U.S. Department of Health and Human Services.',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -595,9 +580,203 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                 ),
               ),
             ),
-          ],
-        );
+                ],
+              ),
+              Positioned(
+                top: 12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: (tip.imageUrl != null && tip.imageUrl!.isNotEmpty) 
+                          ? Colors.white.withOpacity(0.8) 
+                          : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
         },
+      ),
+    ),
+  );
+}
+
+  Widget _buildFeaturedTipCard(HealthTip tip, Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20.0,
+            offset: const Offset(0, 8.0),
+          ),
+        ],
+      ),
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+        onTap: () => _showTipDetail(tip, color),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (tip.imageUrl != null && tip.imageUrl!.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: tip.imageUrl!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(color: color.withOpacity(0.1)),
+                errorWidget: (context, url, error) => _buildImageFallback(color),
+              )
+            else
+              _buildImageFallback(color),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Text(
+                        tip.description,
+                        style: TextStyle(color: color.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      tip.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  Widget _buildGridTipCard(HealthTip tip, Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20.0,
+            offset: const Offset(0, 8.0),
+          ),
+        ],
+      ),
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+        onTap: () => _showTipDetail(tip, color),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (tip.imageUrl != null && tip.imageUrl!.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: tip.imageUrl!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(color: color.withOpacity(0.1)),
+                errorWidget: (context, url, error) => _buildImageFallback(color),
+              )
+            else
+              _buildImageFallback(color),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Text(
+                        tip.description,
+                        style: TextStyle(color: color.withOpacity(0.9), fontSize: 10, fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      tip.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                        height: 1.2,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -605,8 +784,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
 
   Widget _buildImageFallback(Color color) {
     return Container(
-      width: 60,
-      height: 60,
+      width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -617,10 +796,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
           ],
         ),
       ),
-      child: Icon(
-        Icons.health_and_safety_outlined,
-        color: color.withOpacity(0.5),
-        size: 30,
+      child: Center(
+        child: Icon(
+          Icons.health_and_safety_outlined,
+          color: color.withOpacity(0.5),
+          size: 40,
+        ),
       ),
     );
   }
