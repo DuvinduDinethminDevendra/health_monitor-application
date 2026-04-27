@@ -21,9 +21,56 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 5,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE reminders (
+          id INTEGER PRIMARY KEY,
+          title TEXT NOT NULL,
+          body TEXT NOT NULL,
+          hour INTEGER NOT NULL,
+          minute INTEGER NOT NULL,
+          is_enabled INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE favorite_tips (
+          topic_id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          content TEXT NOT NULL,
+          url TEXT NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE recent_tips (
+          topic_id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          content TEXT NOT NULL,
+          url TEXT NOT NULL,
+          visited_at INTEGER NOT NULL
+        )
+      ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE favorite_tips ADD COLUMN image_url TEXT');
+      await db.execute('ALTER TABLE recent_tips ADD COLUMN image_url TEXT');
+    }
+    if (oldVersion < 5) {
+      await db.execute("ALTER TABLE reminders ADD COLUMN alert_style TEXT NOT NULL DEFAULT 'banner'");
+      await db.execute("ALTER TABLE reminders ADD COLUMN repeat_days TEXT NOT NULL DEFAULT '1111111'");
+      await db.execute('ALTER TABLE reminders ADD COLUMN vibration INTEGER NOT NULL DEFAULT 1');
+      await db.execute("ALTER TABLE reminders ADD COLUMN sound_name TEXT NOT NULL DEFAULT 'default'");
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -72,6 +119,44 @@ class DatabaseHelper {
         bmi REAL NOT NULL,
         date TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE reminders (
+        id INTEGER PRIMARY KEY,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        hour INTEGER NOT NULL,
+        minute INTEGER NOT NULL,
+        is_enabled INTEGER NOT NULL DEFAULT 0,
+        alert_style TEXT NOT NULL DEFAULT 'banner',
+        repeat_days TEXT NOT NULL DEFAULT '1111111',
+        vibration INTEGER NOT NULL DEFAULT 1,
+        sound_name TEXT NOT NULL DEFAULT 'default'
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE favorite_tips (
+        topic_id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        content TEXT NOT NULL,
+        url TEXT NOT NULL,
+        image_url TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE recent_tips (
+        topic_id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        content TEXT NOT NULL,
+        url TEXT NOT NULL,
+        visited_at INTEGER NOT NULL,
+        image_url TEXT
       )
     ''');
   }
