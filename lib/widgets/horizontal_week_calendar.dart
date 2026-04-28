@@ -40,9 +40,9 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
   }
 
   void _scrollToSelectedDate() {
-    if (!_scrollController.hasClients) return;
+    if (!mounted || !_scrollController.hasClients) return;
     final int difference = widget.selectedDate.difference(_startDate).inDays;
-    final double offset = (difference * 68.0) - (MediaQuery.of(context).size.width / 2) + 34;
+    final double offset = (difference * 58.0) - (MediaQuery.of(context).size.width / 2) + 29;
     _scrollController.animateTo(
       offset.clamp(0.0, _scrollController.position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
@@ -182,44 +182,50 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                                      date.month == widget.selectedDate.month &&
                                      date.day == widget.selectedDate.day;
 
-                  return GestureDetector(
-                    onTap: () => widget.onDateSelected(date),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      width: 50,
-                      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.emeraldGreen : Colors.white.withValues(alpha: 0.08),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => widget.onDateSelected(date),
                         borderRadius: BorderRadius.circular(15),
-                        boxShadow: isSelected ? [
-                          BoxShadow(
-                            color: AppTheme.emeraldGreen.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          )
-                        ] : null,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            DateFormat('E').format(date).substring(0, 1),
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white54,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppTheme.caribbeanGreen : AppTheme.bangladeshGreen.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: isSelected ? [
+                              BoxShadow(
+                                color: AppTheme.caribbeanGreen.withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              )
+                            ] : null,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            date.day.toString(),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                DateFormat('E').format(date).substring(0, 1),
+                                style: TextStyle(
+                                  color: isSelected ? AppTheme.richBlack : AppTheme.antiFlashWhite.withValues(alpha: 0.5),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                date.day.toString(),
+                                style: TextStyle(
+                                  color: isSelected ? AppTheme.richBlack : AppTheme.antiFlashWhite,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   );

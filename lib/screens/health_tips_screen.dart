@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/health_tips_service.dart';
+import '../theme/app_theme.dart';
 
 class HealthTipsScreen extends StatefulWidget {
   const HealthTipsScreen({super.key});
@@ -54,11 +55,13 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Health Tips'),
-        backgroundColor: const Color(0xFFFFA726),
-        foregroundColor: Colors.white,
+        title: const Text('Health Insights', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppTheme.darkCharcoal,
         elevation: 0,
+        centerTitle: true,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -72,22 +75,23 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                   final color = _cardColors[index % _cardColors.length];
                   final icon = _tipIcons[index % _tipIcons.length];
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    elevation: 2,
+                  return GlassCard(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: EdgeInsets.zero,
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(24),
                       onTap: () => _showTipDetail(tip, color),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         child: Row(
                           children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: color.withAlpha(30),
-                              child: Icon(icon, color: color, size: 24),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(icon, color: color, size: 28),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -97,22 +101,24 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                   Text(
                                     tip.title,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      color: AppTheme.darkCharcoal,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Text(
                                     tip.description,
                                     style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600]),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppTheme.darkCharcoal.withValues(alpha: 0.5)),
                                   ),
                                 ],
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios,
-                                size: 16, color: Colors.grey[400]),
+                            Icon(Icons.arrow_forward_ios_rounded,
+                                size: 14, color: color.withValues(alpha: 0.4)),
                           ],
                         ),
                       ),

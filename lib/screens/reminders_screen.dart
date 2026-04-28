@@ -92,10 +92,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Smart Reminders'),
+        title: const Text('Smart Reminders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         backgroundColor: Colors.transparent,
         foregroundColor: AppTheme.darkCharcoal,
         elevation: 0,
+        centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
@@ -135,7 +136,6 @@ class _RemindersScreenState extends State<RemindersScreen> {
           ),
           const SizedBox(height: 16),
           ..._reminders.map((reminder) => _buildReminderCard(reminder)),
-          const SizedBox(height: 100), // Space for floating bar
         ],
       ),
     );

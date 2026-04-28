@@ -44,7 +44,11 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      elevation: 20,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           void updateBmiPreview() {

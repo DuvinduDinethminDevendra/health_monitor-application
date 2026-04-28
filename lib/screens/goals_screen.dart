@@ -43,8 +43,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useRootNavigator: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      elevation: 20,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       builder: (context) => _GoalBottomSheet(
         existingGoal: existingGoal,
         onSave: (goal) async {
@@ -609,20 +612,86 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              DropdownButtonFormField<String>(
-                initialValue: _categories.contains(_selectedCategory)
-                    ? _selectedCategory
-                    : 'Steps (Daily)',
-                decoration: InputDecoration(
-                  labelText: 'Category / Tracking Type',
-                  prefixIcon: const Icon(Icons.category_outlined),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+              // Custom Industry Standard Selector for Goals
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.white,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+                    builder: (ctx) => Container(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Select Goal Category', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                          const SizedBox(height: 24),
+                          Expanded(
+                            child: ListView.separated(
+                              itemCount: _categories.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (ctx, idx) {
+                                final cat = _categories[idx];
+                                final isSelected = _selectedCategory == cat;
+                                return ListTile(
+                                  onTap: () {
+                                    setState(() => _selectedCategory = cat);
+                                    Navigator.pop(ctx);
+                                  },
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? AppTheme.caribbeanGreen : Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      cat.contains('Steps') ? Icons.directions_run_rounded :
+                                      cat.contains('Running') ? Icons.speed_rounded :
+                                      cat.contains('Sleep') ? Icons.bedtime_rounded :
+                                      cat.contains('Water') ? Icons.water_drop_rounded :
+                                      cat.contains('Diet') ? Icons.restaurant_rounded : Icons.flag_rounded,
+                                      color: isSelected ? Colors.white : Colors.grey[600],
+                                      size: 20,
+                                    ),
+                                  ),
+                                  title: Text(cat, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? AppTheme.caribbeanGreen : AppTheme.darkCharcoal)),
+                                  trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppTheme.caribbeanGreen) : null,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  tileColor: isSelected ? AppTheme.caribbeanGreen.withValues(alpha: 0.05) : Colors.transparent,
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.category_rounded, color: AppTheme.caribbeanGreen),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Category / Tracking Type', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            Text(_selectedCategory, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
+                    ],
+                  ),
                 ),
-                items: _categories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val!),
               ),
               const SizedBox(height: 8),
               Padding(

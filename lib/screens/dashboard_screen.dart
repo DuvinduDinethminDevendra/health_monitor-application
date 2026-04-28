@@ -28,6 +28,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
   int _totalActivities = 0;
+  int _totalSteps = 0;
   int _activeGoals = 0;
   double _latestBmi = 0;
   String _bmiCategory = 'N/A';
@@ -66,8 +67,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (!mounted) return;
 
+    int steps = 0;
+    for (var a in activities) {
+      if (a.type.toLowerCase() == 'steps') {
+        steps += a.value.toInt();
+      }
+    }
+
     setState(() {
       _totalActivities = activities.length;
+      _totalSteps = steps; // New state variable
       _activeGoals = goals.length;
       if (latestLog != null) {
         _latestBmi = latestLog.bmi;
@@ -79,7 +88,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showAddMenu() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      elevation: 20,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: const BoxDecoration(
@@ -205,10 +218,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85),
+                color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(35),
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                    color: AppTheme.caribbeanGreen.withValues(alpha: 0.2), width: 1.5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -265,6 +278,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _currentIndex == index;
+    final color = isSelected ? AppTheme.caribbeanGreen : AppTheme.mutedGrey;
     return GestureDetector(
       onTap: () {
         _onItemTapped(index);
@@ -274,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.all(10),
         child: Icon(
           icon,
-          color: isSelected ? AppTheme.emeraldGreen : AppTheme.mutedGrey,
+          color: color,
           size: 26,
         ),
       ),
@@ -381,22 +395,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   centerSpaceRadius: 70,
                                   startDegreeOffset: -90,
                                   sections: [
+                                    // Steps section (Max 60% of total visual weight to keep others visible)
                                     PieChartSectionData(
-                                      value: 70,
-                                      color: AppTheme.emeraldGreen,
+                                      value: _totalSteps > 0 ? (_totalSteps > 10000 ? 60 : (10 + (_totalSteps / 10000 * 50))) : 10,
+                                      color: AppTheme.caribbeanGreen,
                                       radius: _touchedIndex == 0 ? 30 : 20,
                                       showTitle: false,
-                                      badgeWidget: _buildPieBadge(Icons.directions_run_rounded, AppTheme.emeraldGreen),
+                                      badgeWidget: _buildPieBadge(Icons.directions_run_rounded, AppTheme.caribbeanGreen),
                                       badgePositionPercentageOffset: 1,
                                     ),
+                                    // Goals section (Minimum 20% weight)
                                     PieChartSectionData(
-                                      value: 15,
+                                      value: 20 + (_activeGoals > 0 ? 10 : 0),
                                       color: AppTheme.warmOrange,
                                       radius: _touchedIndex == 1 ? 25 : 16,
                                       showTitle: false,
                                     ),
+                                    // Health section (Minimum 20% weight)
                                     PieChartSectionData(
-                                      value: 15,
+                                      value: 20 + (_latestBmi > 0 ? 10 : 0),
                                       color: AppTheme.skyBlue,
                                       radius: _touchedIndex == 2 ? 22 : 12,
                                       showTitle: false,
@@ -408,8 +425,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _touchedIndex == 1 ? _activeGoals.toString() : (_touchedIndex == 2 ? 'Optimal' : '8,432'),
-                                    style: TextStyle(
+                                    _touchedIndex == 1 ? '${_activeGoals}' : (_touchedIndex == 2 ? 'Optimal' : '${_totalSteps}'),
+                                    style: const TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.w900,
                                       color: AppTheme.darkCharcoal,
@@ -526,6 +543,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 32),
+                  // "Name on Bottom" card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.darkCharcoal, Color(0xFF374151)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        )
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.stars_rounded, color: AppTheme.emeraldGreen, size: 32),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Keep pushing, $userName!',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Your health journey is looking great.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -544,13 +607,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
             colors: [
-              color.withValues(alpha: 0.25),
-              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.45), // Significantly boosted saturation
+              color.withValues(alpha: 0.2),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.5), width: 2), // Thicker, more solid border
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -562,20 +625,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.2),
+                    color: color.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: color, size: 20),
+                  child: Icon(icon, color: Colors.white, size: 20), // White icon for better contrast
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, color: color.withValues(alpha: 0.3), size: 14),
+                Icon(Icons.arrow_forward_ios_rounded, color: Colors.white.withValues(alpha: 0.5), size: 14),
               ],
             ),
             const SizedBox(height: 20),
             Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900, // Even bolder
                 color: AppTheme.darkCharcoal,
                 letterSpacing: -0.5,
               ),
@@ -585,8 +648,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               title,
               style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.darkCharcoal.withValues(alpha: 0.5)),
+                  fontWeight: FontWeight.w700, // Bolder
+                  color: AppTheme.darkCharcoal.withValues(alpha: 0.7)),
             ),
           ],
         ),

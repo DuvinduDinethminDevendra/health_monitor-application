@@ -253,7 +253,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      elevation: 20,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -285,26 +289,79 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     fontWeight: FontWeight.w900,
                     color: AppTheme.darkCharcoal)),
             const SizedBox(height: 24),
-            DropdownButtonFormField<String>(
-              initialValue: 'Running',
-              items: [
-                'Running',
-                'Cycling',
-                'Swimming',
-                'Workout',
-                'Yoga',
-                'Steps',
-                'Sleep'
-              ]
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (val) => typeController.text = val!,
-              decoration: InputDecoration(
-                labelText: 'Activity Type',
-                prefixIcon: const Icon(Icons.category_rounded,
-                    color: AppTheme.emeraldGreen),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16)),
+            // Custom Industry Standard Selector
+            GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+                  builder: (ctx) => Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Select Activity Type', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 24),
+                        Expanded(
+                          child: GridView.count(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            children: [
+                              'Running', 'Cycling', 'Swimming', 'Workout', 'Yoga', 'Steps', 'Sleep'
+                            ].map((type) => GestureDetector(
+                              onTap: () {
+                                setState(() => typeController.text = type);
+                                Navigator.pop(ctx);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: typeController.text == type ? AppTheme.caribbeanGreen.withValues(alpha: 0.1) : Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: typeController.text == type ? AppTheme.caribbeanGreen : Colors.transparent, width: 2),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(_getActivityIcon(type), color: typeController.text == type ? AppTheme.caribbeanGreen : Colors.grey[600]),
+                                    const SizedBox(height: 8),
+                                    Text(type, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: typeController.text == type ? AppTheme.caribbeanGreen : Colors.grey[600])),
+                                  ],
+                                ),
+                              ),
+                            )).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.category_rounded, color: AppTheme.caribbeanGreen),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Activity Type', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                          Text(typeController.text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
