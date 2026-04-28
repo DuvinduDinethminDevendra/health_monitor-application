@@ -13,16 +13,37 @@ class HealthLogScreen extends StatefulWidget {
   State<HealthLogScreen> createState() => _HealthLogScreenState();
 }
 
-class _HealthLogScreenState extends State<HealthLogScreen> {
+class _HealthLogScreenState extends State<HealthLogScreen>
+    with SingleTickerProviderStateMixin {
   final HealthLogRepository _healthRepo = HealthLogRepository();
   List<HealthLog> _logs = [];
   bool _isLoading = true;
   String? _errorMessage;
 
+  // Empty state pulse animation
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _loadLogs();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadLogs() async {
@@ -239,32 +260,91 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
     return Scaffold(
       body: _logs.isEmpty
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00BFA5).withAlpha(20),
-                      shape: BoxShape.circle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Pulsing icon container
+                    ScaleTransition(
+                      scale: _pulseAnimation,
+                      child: Container(
+                        padding: const EdgeInsets.all(28),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF00BFA5).withAlpha(30),
+                              const Color(0xFF1A73E8).withAlpha(20),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00BFA5).withAlpha(15),
+                              blurRadius: 24,
+                              spreadRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF00BFA5).withAlpha(25),
+                          ),
+                          child: const Icon(
+                            Icons.monitor_weight_outlined,
+                            size: 64,
+                            color: Color(0xFF00BFA5),
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Icon(Icons.monitor_weight, size: 80, color: Color(0xFF00BFA5)),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'No health data logged yet',
-                    style: TextStyle(
-                      fontSize: 20, 
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    const SizedBox(height: 32),
+                    Text(
+                      'No health data logged yet',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to log your weight & height',
-                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Text(
+                      'Start tracking your BMI journey.\nLog your weight and height to get insights.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    // Call-to-action button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _showAddDialog,
+                        icon: const Icon(Icons.add_circle_outline, size: 22),
+                        label: const Text(
+                          'Log Your First Entry',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00BFA5),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
           : ListView.builder(
