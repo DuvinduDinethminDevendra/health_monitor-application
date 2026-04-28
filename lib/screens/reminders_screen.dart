@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
+import '../theme/app_theme.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -89,112 +90,115 @@ class _RemindersScreenState extends State<RemindersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Health Reminders'),
-        backgroundColor: const Color(0xFFAB47BC),
-        foregroundColor: Colors.white,
+        title: const Text('Smart Reminders'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppTheme.darkCharcoal,
         elevation: 0,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFAB47BC), Color(0xFF7E57C2)],
-              ),
-              borderRadius: BorderRadius.circular(16),
+          GlassCard(
+            padding: const EdgeInsets.all(24),
+            gradient: LinearGradient(
+              colors: [AppTheme.emeraldGreen.withValues(alpha: 0.8), AppTheme.emeraldGreen],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.notifications_active, color: Colors.white, size: 32),
-                SizedBox(height: 12),
-                Text(
-                  'Stay On Track',
+                const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 32),
+                const SizedBox(height: 12),
+                const Text(
+                  'Habit Tracking',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Enable reminders to maintain healthy habits',
-                  style: TextStyle(color: Colors.white70),
+                  'Set daily reminders to maintain your healthy lifestyle',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 32),
           const Text(
-            'Daily Reminders',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            'Daily Schedules',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.darkCharcoal),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           ..._reminders.map((reminder) => _buildReminderCard(reminder)),
+          const SizedBox(height: 100), // Space for floating bar
         ],
       ),
     );
   }
 
   Widget _buildReminderCard(_Reminder reminder) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: reminder.color.withAlpha(30),
-              child: Icon(reminder.icon, color: reminder.color, size: 22),
+    return GlassCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: reminder.color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(reminder.title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 15)),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatTime(reminder.hour, reminder.minute),
-                    style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            child: Icon(reminder.icon, color: reminder.color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(reminder.title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.darkCharcoal)),
+                const SizedBox(height: 2),
+                Text(
+                  _formatTime(reminder.hour, reminder.minute),
+                  style: TextStyle(fontSize: 14, color: AppTheme.mutedGrey),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: reminder.isEnabled,
+            activeThumbColor: AppTheme.emeraldGreen,
+            onChanged: (value) async {
+              setState(() => reminder.isEnabled = value);
+              if (value) {
+                await _notificationService.scheduleDaily(
+                  id: reminder.id,
+                  title: reminder.title,
+                  body: reminder.body,
+                  hour: reminder.hour,
+                  minute: reminder.minute,
+                );
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${reminder.title} reminder enabled'),
+                    backgroundColor: AppTheme.emeraldGreen,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                ],
-              ),
-            ),
-            Switch(
-              value: reminder.isEnabled,
-              activeThumbColor: reminder.color,
-              onChanged: (value) async {
-                setState(() => reminder.isEnabled = value);
-                if (value) {
-                  await _notificationService.scheduleDaily(
-                    id: reminder.id,
-                    title: reminder.title,
-                    body: reminder.body,
-                    hour: reminder.hour,
-                    minute: reminder.minute,
-                  );
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${reminder.title} reminder enabled'),
-                      backgroundColor: reminder.color,
-                    ),
-                  );
-                } else {
-                  await _notificationService.cancelNotification(reminder.id);
-                }
-              },
-            ),
-          ],
-        ),
+                );
+              } else {
+                await _notificationService.cancelNotification(reminder.id);
+              }
+            },
+          ),
+        ],
       ),
     );
   }

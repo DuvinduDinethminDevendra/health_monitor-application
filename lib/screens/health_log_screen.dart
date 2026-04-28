@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/health_log.dart';
 import '../repositories/health_log_repository.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 
 class HealthLogScreen extends StatefulWidget {
   const HealthLogScreen({super.key});
@@ -57,9 +58,10 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
           }
 
           return AlertDialog(
-            title: const Text('Log Health Data'),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+            title: const Text('Log Health Data',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             content: Form(
               key: formKey,
               child: SingleChildScrollView(
@@ -71,15 +73,17 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Weight (kg)',
-                        prefixIcon: const Icon(Icons.monitor_weight),
+                        prefixIcon: const Icon(Icons.monitor_weight_rounded,
+                            color: AppTheme.skyBlue),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(15)),
                       ),
                       onChanged: (_) => updateBmiPreview(),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Required';
                         final val = double.tryParse(v);
-                        if (val == null || val <= 0) return 'Enter valid weight';
+                        if (val == null || val <= 0)
+                          return 'Enter valid weight';
                         return null;
                       },
                     ),
@@ -89,38 +93,43 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Height (cm)',
-                        prefixIcon: const Icon(Icons.height),
+                        prefixIcon: const Icon(Icons.height_rounded,
+                            color: AppTheme.skyBlue),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(15)),
                       ),
                       onChanged: (_) => updateBmiPreview(),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Required';
                         final val = double.tryParse(v);
-                        if (val == null || val <= 0) return 'Enter valid height';
+                        if (val == null || val <= 0)
+                          return 'Enter valid height';
                         return null;
                       },
                     ),
                     if (previewBmi != null) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00BFA5).withAlpha(20),
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                              color:
+                                  AppTheme.emeraldGreen.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.calculate,
-                                color: Color(0xFF00BFA5)),
-                            const SizedBox(width: 8),
+                            const Icon(Icons.calculate_rounded,
+                                color: AppTheme.emeraldGreen),
+                            const SizedBox(width: 12),
                             Text(
                               'BMI: $previewBmi',
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF00BFA5),
+                                color: AppTheme.emeraldGreen,
                               ),
                             ),
                           ],
@@ -134,7 +143,8 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
+                child: const Text('Cancel',
+                    style: TextStyle(color: AppTheme.mutedGrey)),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -154,10 +164,12 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00BFA5),
+                  backgroundColor: AppTheme.skyBlue,
                   foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Save'),
+                child: const Text('Save Log'),
               ),
             ],
           );
@@ -167,10 +179,10 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
   }
 
   Color _getBmiColor(double bmi) {
-    if (bmi < 18.5) return Colors.orange;
-    if (bmi < 25) return const Color(0xFF00BFA5);
-    if (bmi < 30) return Colors.orange;
-    return Colors.red;
+    if (bmi < 18.5) return AppTheme.warmOrange;
+    if (bmi < 25) return AppTheme.emeraldGreen;
+    if (bmi < 30) return AppTheme.warmOrange;
+    return Colors.redAccent;
   }
 
   @override
@@ -180,42 +192,51 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: _logs.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.monitor_weight, size: 80, color: Colors.grey[300]),
+                  Icon(Icons.monitor_weight_rounded,
+                      size: 80,
+                      color: AppTheme.mutedGrey.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
-                  Text(
-                    'No health data logged yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  const Text(
+                    'No health logs yet',
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: AppTheme.darkCharcoal,
+                        fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap + to log your weight & height',
-                    style: TextStyle(color: Colors.grey[400]),
+                    'Tap the + button to log your health metrics',
+                    style: TextStyle(color: AppTheme.mutedGrey),
                   ),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: _logs.length,
               itemBuilder: (context, index) {
                 final log = _logs[index];
                 final bmiColor = _getBmiColor(log.bmi);
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: GlassCard(
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: bmiColor.withAlpha(30),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: bmiColor.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
                           child: Text(
                             log.bmi.toString(),
                             style: TextStyle(
@@ -240,20 +261,24 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Weight: ${log.weight} kg • Height: ${log.height} cm',
-                                style: TextStyle(color: Colors.grey[600]),
+                                'Weight: ${log.weight}kg • Height: ${log.height}cm',
+                                style: TextStyle(
+                                    color: AppTheme.darkCharcoal
+                                        .withValues(alpha: 0.6),
+                                    fontSize: 13),
                               ),
                             ],
                           ),
                         ),
                         Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(log.date,
                                 style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[500])),
+                                    fontSize: 11, color: AppTheme.mutedGrey)),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline,
-                                  size: 20, color: Colors.red),
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  size: 20, color: AppTheme.warmOrange),
                               onPressed: () async {
                                 await _healthRepo.deleteHealthLog(log.id!);
                                 _loadLogs();
@@ -267,11 +292,6 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddDialog,
-        backgroundColor: const Color(0xFF00BFA5),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 }

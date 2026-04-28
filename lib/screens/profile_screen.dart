@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -85,11 +86,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final bytes = await image.readAsBytes();
         final String base64Str = base64Encode(bytes);
 
+        if (!mounted) return;
         setState(() {
           _base64Image = base64Str;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pick image: $e')),
       );
@@ -136,52 +139,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = Provider.of<AuthService>(context).currentUser;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Smart Profile'),
-        backgroundColor: const Color(0xFF1A73E8),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppTheme.darkCharcoal,
+        elevation: 0,
       ),
       body: user == null
           ? const Center(child: Text("User not found."))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Editable Profile avatar using image_picker
-                    GestureDetector(
-                      onTap: _isUploadingImage ? null : _pickImage,
-                      child: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          CircleAvatar(
-                            radius: 60,
-                            backgroundColor: Colors.grey[200],
-                            backgroundImage:
-                                _base64Image != null && _base64Image!.isNotEmpty
-                                    ? MemoryImage(base64Decode(_base64Image!))
-                                    : null,
-                            child: _isUploadingImage
-                                ? const CircularProgressIndicator()
-                                : (_base64Image == null || _base64Image!.isEmpty
-                                    ? const Icon(Icons.person,
-                                        size: 60, color: Colors.grey)
-                                    : null),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF1A73E8),
-                              shape: BoxShape.circle,
+              child: GlassCard(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Editable Profile avatar using image_picker
+                      GestureDetector(
+                        onTap: _isUploadingImage ? null : _pickImage,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundColor: AppTheme.glassWhite,
+                              backgroundImage:
+                                  _base64Image != null && _base64Image!.isNotEmpty
+                                      ? MemoryImage(base64Decode(_base64Image!))
+                                      : null,
+                              child: _isUploadingImage
+                                  ? const CircularProgressIndicator(color: AppTheme.emeraldGreen)
+                                  : (_base64Image == null || _base64Image!.isEmpty
+                                      ? const Icon(Icons.person,
+                                          size: 60, color: AppTheme.mutedGrey)
+                                      : null),
                             ),
-                            child: const Icon(Icons.camera_alt,
-                                color: Colors.white, size: 20),
-                          ),
-                        ],
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.emeraldGreen,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt,
+                                  color: Colors.white, size: 20),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 16),
                     Text(
                       user.email,
@@ -193,23 +200,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
-                      alignment: WrapAlignment.center,
-                      children: _availableTopics.map((topic) {
-                        final isSelected = _selectedInterests.contains(topic);
-                        return FilterChip(
-                          label: Text(
-                            topic,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isSelected ? Colors.white : Colors.black87,
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        alignment: WrapAlignment.center,
+                        children: _availableTopics.map((topic) {
+                          final isSelected = _selectedInterests.contains(topic);
+                          return FilterChip(
+                            label: Text(
+                              topic,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isSelected ? Colors.white : AppTheme.darkCharcoal,
+                              ),
                             ),
-                          ),
-                          selected: isSelected,
-                          selectedColor: const Color(0xFF00BFA5),
-                          checkmarkColor: Colors.white,
+                            selected: isSelected,
+                            selectedColor: AppTheme.emeraldGreen,
+                            backgroundColor: AppTheme.glassWhite,
+                            checkmarkColor: Colors.white,
                           onSelected: (bool selected) {
                             setState(() {
                               if (selected) {
@@ -238,10 +246,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Age & Gender
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
+                          flex: 2,
                           child: TextFormField(
                             controller: _ageController,
                             keyboardType: TextInputType.number,
@@ -253,10 +262,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         Expanded(
+                          flex: 3,
                           child: DropdownButtonFormField<String>(
-                            initialValue: _selectedGender,
+                            value: _selectedGender,
+                            isExpanded: true,
                             decoration: InputDecoration(
                               labelText: 'Gender',
                               prefixIcon: const Icon(Icons.transgender),
@@ -264,8 +275,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   borderRadius: BorderRadius.circular(12)),
                             ),
                             items: ['Not Specified', 'Male', 'Female', 'Other']
-                                .map((g) =>
-                                    DropdownMenuItem(value: g, child: Text(g)))
+                                .map((g) => DropdownMenuItem(
+                                    value: g,
+                                    child: Text(g,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 13))))
                                 .toList(),
                             onChanged: (val) {
                               if (val != null) {
@@ -310,18 +324,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 40),
 
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFB8C00),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _saveProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.emeraldGreen,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        ),
                         child: const Text('Save Profile Data',
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
@@ -332,6 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+          ),
     );
   }
 }

@@ -5,6 +5,7 @@ import '../models/activity.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/goal_repository.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -239,21 +240,21 @@ class _ActivityScreenState extends State<ActivityScreen> {
   Color _getActivityColor(String type) {
     switch (type.toLowerCase()) {
       case 'steps':
-        return const Color(0xFF1A73E8);
+        return AppTheme.skyBlue;
       case 'workout':
-        return const Color(0xFFE53935);
+        return AppTheme.warmOrange;
       case 'running':
-        return const Color(0xFFFB8C00);
+        return AppTheme.warmOrange;
       case 'cycling':
-        return const Color(0xFF00BFA5);
+        return AppTheme.emeraldGreen;
       case 'swimming':
-        return const Color(0xFF42A5F5);
+        return AppTheme.skyBlue;
       case 'yoga':
-        return const Color(0xFFAB47BC);
+        return AppTheme.emeraldGreen;
       case 'sleep':
-        return const Color(0xFF3949AB);
+        return AppTheme.darkCharcoal;
       default:
-        return Colors.teal;
+        return AppTheme.emeraldGreen;
     }
   }
 
@@ -264,21 +265,22 @@ class _ActivityScreenState extends State<ActivityScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: _activities.isEmpty
-          ? Center(
+            ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.directions_run, size: 80, color: Colors.grey[300]),
+                  Icon(Icons.directions_run_rounded, size: 80, color: AppTheme.mutedGrey.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'No activities logged yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 18, color: AppTheme.darkCharcoal, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap + to log your first activity',
-                    style: TextStyle(color: Colors.grey[400]),
+                    'Tap the + button to log your first activity',
+                    style: TextStyle(color: AppTheme.mutedGrey),
                   ),
                 ],
               ),
@@ -289,49 +291,50 @@ class _ActivityScreenState extends State<ActivityScreen> {
               itemBuilder: (context, index) {
                 final activity = _activities[index];
                 final color = _getActivityColor(activity.type);
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: color.withAlpha(30),
-                      child:
-                          Icon(_getActivityIcon(activity.type), color: color),
-                    ),
-                    title: Text(
-                      activity.type[0].toUpperCase() +
-                          activity.type.substring(1),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      '${activity.type == 'steps' ? '${activity.value.toInt()} steps' : '${activity.value} km'} • ${activity.duration} min',
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(activity.date,
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.grey[500])),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              size: 20, color: Colors.red),
-                          onPressed: () async {
-                            await _activityRepo.deleteActivity(activity.id!);
-                            _loadActivities();
-                          },
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: GlassCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
                         ),
-                      ],
+                        child: Icon(_getActivityIcon(activity.type), color: color),
+                      ),
+                      title: Text(
+                        activity.type[0].toUpperCase() +
+                            activity.type.substring(1),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      subtitle: Text(
+                        '${activity.type == 'steps' ? '${activity.value.toInt()} steps' : '${activity.value} km'} • ${activity.duration} min',
+                        style: TextStyle(color: AppTheme.darkCharcoal.withValues(alpha: 0.6)),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(activity.date,
+                              style: TextStyle(
+                                  fontSize: 11, color: AppTheme.mutedGrey)),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded,
+                                size: 20, color: AppTheme.warmOrange),
+                            onPressed: () async {
+                              await _activityRepo.deleteActivity(activity.id!);
+                              _loadActivities();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddDialog,
-        backgroundColor: const Color(0xFF1A73E8),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 }

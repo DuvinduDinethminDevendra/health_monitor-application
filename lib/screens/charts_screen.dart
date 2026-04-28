@@ -9,6 +9,7 @@ import '../services/auth_service.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
 import '../models/goal.dart';
+import '../theme/app_theme.dart';
 
 class ChartsScreen extends StatefulWidget {
   final int initialIndex;
@@ -30,7 +31,8 @@ class _ChartsScreenState extends State<ChartsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialIndex);
+    _tabController = TabController(
+        length: 3, vsync: this, initialIndex: widget.initialIndex);
     _loadData();
   }
 
@@ -68,25 +70,54 @@ class _ChartsScreenState extends State<ChartsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
-        title: const Text('Progress Charts'),
-        backgroundColor: const Color(0xFF42A5F5),
-        foregroundColor: Colors.white,
+        title: const Text('Health Insights', 
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppTheme.darkCharcoal)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          tabs: const [
-            Tab(text: 'Activities'),
-            Tab(text: 'BMI Trend'),
-            Tab(text: 'Goal Insights'),
-          ],
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.darkCharcoal, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: AppTheme.emeraldGreen,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.emeraldGreen.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: AppTheme.mutedGrey,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(text: 'Activity'),
+                Tab(text: 'Trends'),
+                Tab(text: 'Insights'),
+              ],
+            ),
+          ),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.emeraldGreen))
           : TabBarView(
               controller: _tabController,
               children: [
@@ -121,51 +152,69 @@ class _ChartsScreenState extends State<ChartsScreen>
 
     final dailyGoals = _goals.where((g) {
       final cat = g.category.toLowerCase();
-      return cat == 'sleep' || cat == 'water' || cat == 'diet' || cat.contains('(daily)');
+      return cat == 'sleep' ||
+          cat == 'water' ||
+          cat == 'diet' ||
+          cat.contains('(daily)');
     }).toList();
 
     final cumulativeGoals = _goals.where((g) {
       final cat = g.category.toLowerCase();
-      return !(cat == 'sleep' || cat == 'water' || cat == 'diet' || cat.contains('(daily)'));
+      return !(cat == 'sleep' ||
+          cat == 'water' ||
+          cat == 'diet' ||
+          cat.contains('(daily)'));
     }).toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppTheme.warmOrange,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Predictive Insights',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Smart analysis of your long-term health goals',
+            style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
+          ),
+          const SizedBox(height: 32),
           if (cumulativeGoals.isNotEmpty) ...[
             const Text(
-              'Cumulative Goals (Completion %)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'Goal Progress Overview',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 24),
-            Container(
-              height: 250,
-              padding: const EdgeInsets.fromLTRB(10, 20, 20, 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-                border: Border.all(color: Colors.grey[100]!),
-              ),
+            const SizedBox(height: 16),
+            GlassCard(
+              height: 280,
+              color: AppTheme.warmOrange.withValues(alpha: 0.03),
+              padding: const EdgeInsets.fromLTRB(10, 24, 24, 10),
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  maxY: 100, // Percentage
+                  maxY: 110, // Extra space for labels
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final goal = cumulativeGoals[groupIndex];
                         return BarTooltipItem(
-                          '${goal.title}\n${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
-                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}\n${rod.toY.toInt()}%',
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                         );
                       },
                     ),
@@ -174,15 +223,19 @@ class _ChartsScreenState extends State<ChartsScreen>
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
+                        reservedSize: 40,
                         getTitlesWidget: (value, meta) {
                           final idx = value.toInt();
                           if (idx >= 0 && idx < cumulativeGoals.length) {
                             final title = cumulativeGoals[idx].title;
                             return Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                title.length > 8 ? '${title.substring(0, 8)}...' : title,
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                              padding: const EdgeInsets.only(top: 10),
+                              child: Transform.rotate(
+                                angle: -0.5,
+                                child: Text(
+                                  title.length > 8 ? '${title.substring(0, 8)}...' : title,
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey),
+                                ),
                               ),
                             );
                           }
@@ -192,48 +245,50 @@ class _ChartsScreenState extends State<ChartsScreen>
                     ),
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
-                        showTitles: true, 
-                        reservedSize: 40, 
+                        showTitles: true,
+                        reservedSize: 35,
                         interval: 25,
                         getTitlesWidget: (value, meta) {
-                          return Text('${value.toInt()}%', style: const TextStyle(fontSize: 10, color: Colors.grey));
-                        }
+                          if (value > 100) return const Text('');
+                          return Text('${value.toInt()}%',
+                              style: const TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500));
+                        },
                       ),
                     ),
                     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
-                  borderData: FlBorderData(show: false),
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
                     horizontalInterval: 25,
-                    getDrawingHorizontalLine: (value) {
-                      return FlLine(
-                        color: Colors.grey.withOpacity(0.1),
-                        strokeWidth: 1,
-                      );
-                    },
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                      strokeWidth: 1,
+                    ),
                   ),
+                  borderData: FlBorderData(show: false),
                   barGroups: List.generate(cumulativeGoals.length, (index) {
                     final goal = cumulativeGoals[index];
-                    double percent = 0;
-                    if (goal.targetValue > 0) {
-                      percent = (goal.currentValue / goal.targetValue) * 100;
-                    }
+                    double percent = (goal.targetValue > 0) ? (goal.currentValue / goal.targetValue) * 100 : 0;
                     if (percent > 100) percent = 100;
+                    final color = palette[index % palette.length];
                     return BarChartGroupData(
                       x: index,
                       barRods: [
                         BarChartRodData(
                           toY: percent,
-                          color: palette[index % palette.length],
-                          width: 22,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                          gradient: LinearGradient(
+                            colors: [color, color.withValues(alpha: 0.7)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          width: 20,
+                          borderRadius: BorderRadius.circular(6),
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: 100,
-                            color: Colors.grey[100],
+                            color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
                           ),
                         ),
                       ],
@@ -244,7 +299,6 @@ class _ChartsScreenState extends State<ChartsScreen>
             ),
             const SizedBox(height: 32),
           ],
-
           if (dailyGoals.isNotEmpty) ...[
             const Text(
               'Daily Goals (Weekly Trend)',
@@ -254,11 +308,12 @@ class _ChartsScreenState extends State<ChartsScreen>
             ...dailyGoals.asMap().entries.map((entry) {
               final index = entry.key;
               final goal = entry.value;
-              final color = palette[(cumulativeGoals.length + index) % palette.length];
+              final color =
+                  palette[(cumulativeGoals.length + index) % palette.length];
 
               // --- Link real Activity Data for the last 30 days ---
               final typeMatch = goal.baseType;
-              
+
               final goalActivities = _activities.where((a) {
                 return a.type.toLowerCase() == typeMatch;
               }).toList();
@@ -270,42 +325,33 @@ class _ChartsScreenState extends State<ChartsScreen>
               for (int i = 0; i < 30; i++) {
                 final targetDate = now.subtract(Duration(days: 29 - i));
                 final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
-                
+
                 final daySum = goalActivities
                     .where((a) => a.date.startsWith(dateStr))
                     .fold(0.0, (sum, a) => sum + a.value);
-                
+
                 if (daySum > maxAchieved) maxAchieved = daySum;
                 spots.add(FlSpot(i.toDouble(), daySum));
               }
 
-              // We no longer need the math.max() hack because _updateProgress in goals_screen.dart 
-              // now natively inserts an Activity record for manual updates. 
+              // We no longer need the math.max() hack because _updateProgress in goals_screen.dart
+              // now natively inserts an Activity record for manual updates.
               // This guarantees the 'daySum' is permanently and perfectly accurate on the exact date!
-              
+
               // Set minimum Y height to the target value
-              final double maxY = maxAchieved > goal.targetValue ? maxAchieved : goal.targetValue;
+              final double maxY = maxAchieved > goal.targetValue
+                  ? maxAchieved
+                  : goal.targetValue;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${goal.title} (${goal.unit})', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('${goal.title} (${goal.unit})',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  Container(
+                  GlassCard(
                     height: 150,
                     padding: const EdgeInsets.fromLTRB(10, 15, 20, 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                      border: Border.all(color: Colors.grey[100]!),
-                    ),
                     child: LineChart(
                       LineChartData(
                         minX: 0,
@@ -318,33 +364,43 @@ class _ChartsScreenState extends State<ChartsScreen>
                             fitInsideVertically: true,
                             getTooltipItems: (touchedSpots) {
                               return touchedSpots.map((spot) {
-                                final spotDate = now.subtract(Duration(days: 29 - spot.x.toInt()));
-                                final dateStr = DateFormat('MMM dd').format(spotDate);
+                                final spotDate = now.subtract(
+                                    Duration(days: 29 - spot.x.toInt()));
+                                final dateStr =
+                                    DateFormat('MMM dd').format(spotDate);
                                 return LineTooltipItem(
                                   '$dateStr\n${spot.y.toStringAsFixed(1)} ${goal.unit}',
-                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
                                 );
                               }).toList();
                             },
                           ),
                         ),
                         gridData: FlGridData(
-                          show: true, 
+                          show: true,
                           drawVerticalLine: false,
-                          getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.05), strokeWidth: 1),
+                          getDrawingHorizontalLine: (value) => FlLine(
+                              color: Colors.grey.withValues(alpha: 0.05),
+                              strokeWidth: 1),
                         ),
                         extraLinesData: ExtraLinesData(
                           horizontalLines: [
                             HorizontalLine(
                               y: goal.targetValue,
-                              color: Colors.redAccent.withOpacity(0.6),
+                              color: Colors.redAccent.withValues(alpha: 0.6),
                               strokeWidth: 1.5,
                               dashArray: [5, 5],
                               label: HorizontalLineLabel(
                                 show: true,
                                 labelResolver: (line) => 'Goal',
-                                style: const TextStyle(color: Colors.redAccent, fontSize: 9, fontWeight: FontWeight.bold),
-                                padding: const EdgeInsets.only(left: 4, bottom: 4),
+                                style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold),
+                                padding:
+                                    const EdgeInsets.only(left: 4, bottom: 4),
                               ),
                             )
                           ],
@@ -357,28 +413,34 @@ class _ChartsScreenState extends State<ChartsScreen>
                               getTitlesWidget: (value, meta) {
                                 if (value % 1 != 0) return const Text('');
                                 final daysAgo = 29 - value.toInt();
-                                final date = now.subtract(Duration(days: daysAgo));
+                                final date =
+                                    now.subtract(Duration(days: daysAgo));
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
-                                    daysAgo == 0 ? 'Today' : DateFormat('MM/dd').format(date), 
-                                    style: const TextStyle(fontSize: 9, color: Colors.grey)
-                                  ),
+                                      daysAgo == 0
+                                          ? 'Today'
+                                          : DateFormat('MM/dd').format(date),
+                                      style: const TextStyle(
+                                          fontSize: 9, color: Colors.grey)),
                                 );
                               },
                             ),
                           ),
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
-                              showTitles: true, 
-                              reservedSize: 35,
-                              getTitlesWidget: (value, meta) {
-                                return Text(value.toInt().toString(), style: const TextStyle(fontSize: 9, color: Colors.grey));
-                              }
-                            ),
+                                showTitles: true,
+                                reservedSize: 35,
+                                getTitlesWidget: (value, meta) {
+                                  return Text(value.toInt().toString(),
+                                      style: const TextStyle(
+                                          fontSize: 9, color: Colors.grey));
+                                }),
                           ),
-                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
                         ),
                         borderData: FlBorderData(show: false),
                         lineBarsData: [
@@ -390,11 +452,12 @@ class _ChartsScreenState extends State<ChartsScreen>
                             isStrokeCapRound: true,
                             dotData: FlDotData(
                               show: true,
-                              checkToShowDot: (spot, barData) => spot.x == 29 || spot.y > 0,
+                              checkToShowDot: (spot, barData) =>
+                                  spot.x == 29 || spot.y > 0,
                             ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: color.withOpacity(0.1),
+                              color: color.withValues(alpha: 0.1),
                             ),
                           ),
                         ],
@@ -404,9 +467,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                   const SizedBox(height: 24),
                 ],
               );
-            }).toList(),
+            }),
           ],
-
           const SizedBox(height: 16),
           const Text(
             'Predictive Insights',
@@ -414,45 +476,28 @@ class _ChartsScreenState extends State<ChartsScreen>
           ),
           const SizedBox(height: 12),
           ..._goals.map((goal) {
-            // Premium Category Mappings (Reuse Goal Screen Aesthetic)
-            IconData watermarkIcon = Icons.flag;
-            Color cardColor = Colors.white;
-            Color accentColor = const Color(0xFF1A73E8);
+            IconData watermarkIcon = Icons.flag_rounded;
+            Color accentColor = AppTheme.skyBlue;
 
             final category = goal.category.toLowerCase();
             if (category.contains('sleep')) {
-              watermarkIcon = Icons.nights_stay;
-              cardColor = const Color(0xFFE8EAF6);
-              accentColor = const Color(0xFF3F51B5);
+              watermarkIcon = Icons.nights_stay_rounded;
+              accentColor = AppTheme.darkCharcoal;
             } else if (category.contains('water')) {
-              watermarkIcon = Icons.water_drop;
-              cardColor = const Color(0xFFE1F5FE);
-              accentColor = const Color(0xFF0288D1);
+              watermarkIcon = Icons.water_drop_rounded;
+              accentColor = AppTheme.skyBlue;
             } else if (category.contains('step') || category.contains('walk')) {
-              watermarkIcon = Icons.directions_run;
-              cardColor = const Color(0xFFE8F5E9);
-              accentColor = const Color(0xFF2E7D32);
+              watermarkIcon = Icons.directions_run_rounded;
+              accentColor = AppTheme.emeraldGreen;
             } else if (category.contains('diet') || category.contains('food')) {
-              watermarkIcon = Icons.restaurant;
-              cardColor = const Color(0xFFFFF3E0);
-              accentColor = const Color(0xFFEF6C00);
+              watermarkIcon = Icons.restaurant_rounded;
+              accentColor = AppTheme.warmOrange;
             }
 
             return Container(
               margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: accentColor.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+              child: GlassCard(
+                padding: EdgeInsets.zero,
                 child: Stack(
                   children: [
                     // Watermark
@@ -462,7 +507,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                       child: Icon(
                         watermarkIcon,
                         size: 100,
-                        color: accentColor.withOpacity(0.07),
+                        color: accentColor.withValues(alpha: 0.07),
                       ),
                     ),
                     Padding(
@@ -476,14 +521,17 @@ class _ChartsScreenState extends State<ChartsScreen>
                               Expanded(
                                 child: Text(
                                   goal.title,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: AppTheme.darkCharcoal),
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: accentColor.withOpacity(0.15),
+                                  color: accentColor.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -502,27 +550,30 @@ class _ChartsScreenState extends State<ChartsScreen>
                           FutureBuilder<String>(
                             future: _goalRepo.getPredictiveInsight(goal.id!),
                             builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
                                 return const LinearProgressIndicator();
                               }
                               final insight = snapshot.data ?? 'Calculating...';
                               return Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: Colors.white.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: accentColor.withOpacity(0.1)),
+                                  border: Border.all(
+                                      color: accentColor.withValues(alpha: 0.1)),
                                 ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.auto_graph, color: accentColor, size: 20),
+                                    Icon(Icons.auto_graph,
+                                        color: accentColor, size: 20),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
                                         insight,
                                         style: TextStyle(
-                                          color: accentColor.withOpacity(0.9),
+                                          color: accentColor.withValues(alpha: 0.9),
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                           fontStyle: FontStyle.italic,
@@ -580,24 +631,42 @@ class _ChartsScreenState extends State<ChartsScreen>
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Activity Timeline (Last 30 Days)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppTheme.emeraldGreen,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Activity Timeline',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your performance over the last 30 days',
+            style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           const SizedBox(height: 24),
           ...types.asMap().entries.map((entry) {
             final type = entry.value;
             final color = palette[entry.key % palette.length];
-            
-            final typeActivities = _activities.where((a) => a.type == type).toList();
+
+            final typeActivities =
+                _activities.where((a) => a.type == type).toList();
             final List<BarChartGroupData> barGroups = [];
             double maxY = 0.0;
 
-            // Pass 1: Pre-calculate true maxY
             for (int i = 0; i < 30; i++) {
               final targetDate = now.subtract(Duration(days: 29 - i));
               final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
@@ -609,46 +678,62 @@ class _ChartsScreenState extends State<ChartsScreen>
 
             final chartMaxY = maxY > 0 ? maxY : 10.0;
 
-            // Pass 2: Build bars with consistent bounds
             for (int i = 0; i < 30; i++) {
               final targetDate = now.subtract(Duration(days: 29 - i));
               final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
-              
+
               final daySum = typeActivities
                   .where((a) => a.date.startsWith(dateStr))
                   .fold(0.0, (sum, a) => sum + a.value);
-              
-              barGroups.add(
-                BarChartGroupData(
-                  x: i,
-                  barRods: [
-                    BarChartRodData(
-                      toY: daySum,
-                      color: color,
-                      width: 8,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                      backDrawRodData: BackgroundBarChartRodData(
-                        show: true,
-                        toY: chartMaxY,
-                        color: Colors.grey[200],
-                      ),
+
+              barGroups.add(BarChartGroupData(
+                x: i,
+                barRods: [
+                  BarChartRodData(
+                    toY: daySum,
+                    gradient: LinearGradient(
+                      colors: [color, color.withValues(alpha: 0.6)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
-                  ],
-                )
-              );
+                    width: 7,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                    backDrawRodData: BackgroundBarChartRodData(
+                      show: true,
+                      toY: chartMaxY,
+                      color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                    ),
+                  ),
+                ],
+              ));
             }
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${type[0].toUpperCase()}${type.substring(1)}', 
-                  style: const TextStyle(fontWeight: FontWeight.bold)
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 150,
-                  child: BarChart(
+            return Container(
+              margin: const EdgeInsets.only(bottom: 24),
+              child: GlassCard(
+                padding: const EdgeInsets.all(20),
+                color: color.withValues(alpha: 0.03),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${type[0].toUpperCase()}${type.substring(1)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: color,
+                          ),
+                        ),
+                        Icon(Icons.trending_up, color: color, size: 18),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: 140,
+                      child: BarChart(
                     BarChartData(
                       alignment: BarChartAlignment.spaceAround,
                       maxY: chartMaxY,
@@ -662,7 +747,9 @@ class _ChartsScreenState extends State<ChartsScreen>
                             final date = now.subtract(Duration(days: daysAgo));
                             return BarTooltipItem(
                               '${DateFormat('MMM dd').format(date)}\n${rod.toY.toStringAsFixed(1)}',
-                              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
                             );
                           },
                         ),
@@ -674,15 +761,21 @@ class _ChartsScreenState extends State<ChartsScreen>
                             showTitles: true,
                             interval: 6,
                             getTitlesWidget: (value, meta) {
-                              if (value % 6 != 0 && value != 29) return const Text('');
+                              if (value % 6 != 0 && value != 29) {
+                                return const Text('');
+                              }
                               final daysAgo = 29 - value.toInt();
-                              final date = now.subtract(Duration(days: daysAgo));
+                              final date =
+                                  now.subtract(Duration(days: daysAgo));
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
-                                  daysAgo == 0 ? 'Today' : DateFormat('MM/dd').format(date), 
-                                  style: const TextStyle(fontSize: 10)
-                                ),
+                                    daysAgo == 0
+                                        ? 'Today'
+                                        : DateFormat('MM/dd').format(date),
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: AppTheme.darkCharcoal)),
                               );
                             },
                           ),
@@ -693,12 +786,17 @@ class _ChartsScreenState extends State<ChartsScreen>
                             reservedSize: 30,
                             getTitlesWidget: (value, meta) {
                               if (value == 0) return const Text('');
-                              return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                              return Text(value.toInt().toString(),
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color: AppTheme.darkCharcoal));
                             },
                           ),
                         ),
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
                       ),
                       gridData: const FlGridData(show: false),
                       borderData: FlBorderData(show: false),
@@ -708,8 +806,10 @@ class _ChartsScreenState extends State<ChartsScreen>
                 ),
                 const SizedBox(height: 32),
               ],
-            );
-          }).toList(),
+            ),
+          ),
+        );
+      }),
         ],
       ),
     );
@@ -738,28 +838,50 @@ class _ChartsScreenState extends State<ChartsScreen>
     }).toList();
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'BMI Trend (Last 30 Days)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppTheme.skyBlue,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'BMI Trend',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tracking your weight & height correlation',
+            style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            height: 250,
+          GlassCard(
+            height: 300,
+            color: AppTheme.skyBlue.withValues(alpha: 0.03),
+            padding: const EdgeInsets.only(top: 24, right: 20, bottom: 10),
             child: LineChart(
               LineChartData(
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
+                    fitInsideHorizontally: true,
+                    fitInsideVertically: true,
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
                         final log = _healthLogs[spot.x.toInt()];
                         return LineTooltipItem(
                           'BMI: ${log.bmi}\n${log.date}',
                           const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+                              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                         );
                       }).toList();
                     },
@@ -769,19 +891,26 @@ class _ChartsScreenState extends State<ChartsScreen>
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: 5,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                    strokeWidth: 1,
+                  ),
                 ),
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 30,
+                      interval: (_healthLogs.length / 5).clamp(1, 10).toDouble(),
                       getTitlesWidget: (value, meta) {
                         final idx = value.toInt();
                         if (idx >= 0 && idx < _healthLogs.length) {
                           return Padding(
-                            padding: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.only(top: 10),
                             child: Text(
                               _healthLogs[idx].date.substring(5),
-                              style: const TextStyle(fontSize: 10),
+                              style: const TextStyle(
+                                  fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
                             ),
                           );
                         }
@@ -792,63 +921,63 @@ class _ChartsScreenState extends State<ChartsScreen>
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 40,
+                      reservedSize: 35,
+                      getTitlesWidget: (value, meta) {
+                        return Text(value.toInt().toString(),
+                            style: const TextStyle(
+                                fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500));
+                      },
                     ),
                   ),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    color: const Color(0xFF00BFA5),
-                    barWidth: 3,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: Colors.white,
-                          strokeWidth: 2,
-                          strokeColor: const Color(0xFF00BFA5),
-                        );
-                      },
+                    gradient: const LinearGradient(
+                      colors: [AppTheme.skyBlue, AppTheme.emeraldGreen],
                     ),
+                    barWidth: 4,
+                    isStrokeCapRound: true,
+                    dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: const Color(0xFF00BFA5).withAlpha(30),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.skyBlue.withValues(alpha: 0.2),
+                          AppTheme.skyBlue.withValues(alpha: 0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
                     ),
                   ),
                 ],
-                // Reference lines for BMI categories
                 extraLinesData: ExtraLinesData(
                   horizontalLines: [
                     HorizontalLine(
                       y: 18.5,
-                      color: Colors.orange.withAlpha(100),
+                      color: Colors.orange.withValues(alpha: 0.3),
                       strokeWidth: 1,
                       dashArray: [5, 5],
                       label: HorizontalLineLabel(
                         show: true,
                         labelResolver: (_) => 'Underweight',
-                        style:
-                            TextStyle(fontSize: 10, color: Colors.orange[300]),
+                        style: TextStyle(fontSize: 9, color: Colors.orange[300]),
                       ),
                     ),
                     HorizontalLine(
                       y: 25,
-                      color: Colors.orange.withAlpha(100),
+                      color: Colors.red.withValues(alpha: 0.3),
                       strokeWidth: 1,
                       dashArray: [5, 5],
                       label: HorizontalLineLabel(
                         show: true,
                         labelResolver: (_) => 'Overweight',
-                        style:
-                            TextStyle(fontSize: 10, color: Colors.orange[300]),
+                        style: TextStyle(fontSize: 9, color: Colors.red[300]),
                       ),
                     ),
                   ],
@@ -856,15 +985,14 @@ class _ChartsScreenState extends State<ChartsScreen>
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          // BMI category legend
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildBmiCategory('< 18.5', 'Underweight', Colors.orange),
-              _buildBmiCategory('18.5-25', 'Normal', const Color(0xFF00BFA5)),
-              _buildBmiCategory('25-30', 'Overweight', Colors.orange),
-              _buildBmiCategory('> 30', 'Obese', Colors.red),
+              _buildBmiCategory('< 18.5', 'Under', AppTheme.warmOrange),
+              _buildBmiCategory('18.5-25', 'Normal', AppTheme.emeraldGreen),
+              _buildBmiCategory('25-30', 'Over', AppTheme.warmOrange),
+              _buildBmiCategory('> 30', 'Obese', Colors.redAccent),
             ],
           ),
         ],
@@ -876,17 +1004,16 @@ class _ChartsScreenState extends State<ChartsScreen>
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: color.withAlpha(20),
-            borderRadius: BorderRadius.circular(8),
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Text(range,
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
         ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
       ],
     );
   }
