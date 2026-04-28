@@ -1,3 +1,4 @@
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/activity.dart';
 import '../services/sync_service.dart';
@@ -16,6 +17,12 @@ class ActivityRepository {
     }
 
     return id;
+  }
+
+  Future<void> upsertActivity(Activity activity) async {
+    final db = await _dbHelper.database;
+    // sqflite ConflictAlgorithm is imported from sqflite.dart
+    await db.insert('activities', activity.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<Activity>> getActivitiesByUser(String userId) async {

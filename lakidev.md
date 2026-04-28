@@ -35,6 +35,31 @@ You went far beyond the standard requirement of data visualization by building a
 *   **Linear Regression:** Added `getPredictiveInsight(int goalId)` inside `GoalRepository` to apply mathematical linear regression representing a rolling 14-day data point analysis logic.
 *   **Human Output:** Unlike normal math tools, your logic processes the `targetValue` and `dailyVelocity` to compare it against the SQL `deadline`, generating natural sounding sentences like *"At your current pace, you might miss the deadline by 2 days."* which is a huge upgrade to the user experience directly handled strictly at your Data access tier. All of this data is passed to the common **Progress Visualization Screen**, keeping logic and UI strictly separated.
 
+### 4. Auto-Merge Goal & Activity Architecture
+To solve the industry-wide problem of overlapping manual and automatic tracking, you engineered an "Auto-Merge" architecture at the Data Layer.
+*   **Dynamic Linking:** When querying the `activities` table, your logic automatically matches the string of the `type` column to the specific goal via the central `Goal.baseType` getter, generating a mathematically unified dataset.
+*   **Conflict Resolution (Industry Standard):** The Goal tracker's `currentValue` natively suffered from a "midnight carry-over" bug because SQLite goals don't track daily timestamps. You solved this permanently at the Database Level: when a user manually updates a Goal, the `GoalRepository` intercepts the input, calculates the difference, and invisibly inserts a timestamped `Activity` record. This guarantees that manual progress is permanently anchored to the correct date.
+*   **Feature 2: Advanced Predictive Insights (Member 3)**
+    *   **Daily Goals:** The Predictive Insights feature bypasses `goal.currentValue` for Daily Goals, directly querying the `activities` table for today's true sum. This completely solves the "midnight carry-over" bug by ensuring AI predictions are 100% historically accurate for the current day.
+    *   **Cumulative Goals:** Uses a lightweight Linear Regression algorithm to calculate the user's velocity based on `createdAt` and `currentValue`. It projects the estimated completion date and returns human-readable encouragement.
+*   **Visual Target Indicators:** Developed the logic that provides dynamic `maxY` rendering and passes the true `targetValue` bounds to the UI layer to render industry-standard dashed horizontal target lines.
+
+### Goal Categorization & Charting Behaviors
+To ensure the mathematical models and the UI charts render correctly, all Goals and Activities are strictly classified into two categories via a central `Goal.baseType` getter (which provides 100% legacy backward compatibility).
+
+**1. Daily Goals**
+*   **Types:** `Sleep`, `Water`, `Diet`, `Steps (Daily)`, `Running (Daily)`, `Custom (Daily)`.
+*   **Logic:** Utilizes a "Lazy-Reset" architecture. Progress is bound strictly to the current 24-hour cycle.
+*   **Goal Insights UI:** Rendered as **separate 30-day Line Charts** under the "Daily Goals (Weekly Trend)" section. Each Daily goal gets its own chart to visualize daily fluctuations.
+
+**2. Cumulative Goals**
+*   **Types:** `Steps (Cumulative)`, `Running (Cumulative)`, `Custom (Cumulative)`, `General`, and any goal not explicitly defined as Daily.
+*   **Logic:** Progress is persistent and historically cumulative until the user reaches the `targetValue`.
+*   **Goal Insights UI:** Grouped together into a **single standard Bar Chart** under "Cumulative Goals (Completion %)". Each cumulative goal is represented as a single progress bar from 0% to 100%.
+
+**3. Activity Timeline Charts**
+*   **UI:** The "Activities" tab renders a **separate 30-day Bar Chart** for *every single unique activity type* the user has logged. It is purely a historical log, ignoring "targets" entirely.
+
 ---
 
 ## 📱 Device Feature Integration (Member 3 Contributions)
@@ -143,9 +168,84 @@ graph TD
 
 ---
 
+## ☁️ How the "Zero-Config" Auto Sync Magic Works (Firestore Integration)
+
+If you are asked, *"When you added `category` and `reminder_time` to SQLite, why didn't you have to write new code for Firebase?"* 
+
+Here is exactly how your Data Layer design is beautifully optimized, making Firebase completely blind and flexible to whatever SQLite feeds it.
+
+### The "Mapping" Strategy
+In Flutter, Firebase Firestore accepts a generic `Map<String, dynamic>`. It does not strictly define columns like SQLite. By designing our local `Goal` model with a `.toMap()` function, **SQLite and Firebase share the exact same translation language**.
+
+When you add a new variable like `category` to `Goal`:
+1. You update the `toMap()` function so it includes `{'category': category}`.
+2. The Repository passes that identical map into both SQLite and Firebase simultaneously. 
+
+Because we decoupled them perfectly, **Firebase blindly accepts the map you provided** and generates the new column automatically on the cloud!
+
+```mermaid
+graph TD
+    A([User Edits Goal in UI]) --> B[Goal.toMap]
+    
+    subgraph "Member 3: Shared Translation"
+    B -->|Returns Map| M[ {'title': 'Run', 'category': 'Running', ...} ]
+    end
+    
+    M -->|"INSERT INTO goals (title, category) VALUES (?, ?)"| SQL[(SQLite Local DB\nSchema Version 6)]
+    M -->|".set( goal.toMap() )"| Sync[SyncService Background]
+    Sync -->|Auto-Generates Field| Fire[(Firebase Firestore\nNo Schema Needed)]
+
+    style M fill:#eee,stroke:#333,stroke-dasharray: 5 5
+    style SQL fill:#f9f,stroke:#333,stroke-width:2px
+    style Fire fill:#bbf,stroke:#333,stroke-width:2px
+```
+
+**Key Viva Taking Point:** "I designed the system so that our local Dart objects act as the Single Source of Truth for schemas. The `.toMap()` method is the universal translator for both SQLite and Firestore `.set()`, giving us Zero-Configuration Cloud Schemas whenever I scale the local tables."
+
+## 📊 Progress Visualization Integration
+While UI layouts technically belong to Member 1, the actual intelligence behind the data charts is powered securely by your Data Layer.
+*   **The Shared Canvas:** The `charts_screen.dart` is a collaborative display page used by all members to visualize their respective backend data points.
+*   **My Contribution (Predictive Cards):** I mapped my `getPredictiveInsight()` function directly into a custom Card view within the third tab (`Goal Insights`). The UI simply renders the text string I provide from the local DB queries, strictly maintaining the separation of Presentation (Member 1) and Logic/Data (Member 3).
+
+---
+
 ## 📝 Developer Notes (Viva Prep)
 - **Primary vs Secondary:** "SQLite is our **Primary** database for speed and offline use; Firebase is our **Secondary** database for cloud backup."
 - **Decoupled Firebase Sync:** "I implemented a decoupled sync pattern where SQLite data is pushed to Firebase Firestore. Sync is triggered automatically on login and manually via pull-to-refresh on the Dashboard."
 - **Web-SQLite Support:** "Standard SQLite requires direct file-system access (blocked by browsers). I implemented a **Native Web Persistence** architecture using conditional imports to ensure the app remains fully functional and performant during browser-based demonstrations without external dependencies."
 - **Predictive Analytics:** "I implemented a linear regression logic in `GoalRepository` to estimate goal completion dates based on current user velocity."
 - **Lazy Loading:** "Implemented to optimize startup performance and memory management (Requirement #7)."
+
+
+Q1: How does the Profile Picture update, and how does it save to SQLite/Firebase?
+Answer: Because SQLite and Firestore don't easily store "files", we cheat.
+
+We use the image_picker package to open the camera or gallery.
+Once the image is picked, we convert the image bytes into a Base64 String (which is just a massive string of random text like "iVBO...=").
+SQLite: We save this massive text string into the profile_picture column (which is a TEXT data type).
+Firebase: Because it's just text now, Firebase treats it like any other word, and saves it in the user document document. When the UI loads, it decodes that text back into an image using MemoryImage(base64Decode(base64String)).
+Q2: How do you fetch existing data into input fields or charts? Is it like a Laravel Controller?
+Answer: In Laravel, you hit a Route -> Controller -> queries DB -> returns View with Data.
+In Flutter, the app is already running, so we use State Management (like setState or Provider). The flow is:
+
+// 1. Screen loads
+@override
+void initState() {
+  super.initState();
+  _loadData();
+}
+
+// 2. Fetch from DB (Like your Laravel Controller)
+Future<void> _loadData() async {
+  // Queries local SQLite
+  final myGoals = await _goalRepo.getGoalsByUser(userId); 
+  
+  // 3. Update the UI
+  setState(() {
+    _goalsList = myGoals; 
+  });
+}
+Screen Loads (initState): The screen starts up.
+Fetch Data (The "Controller" part): It calls a function (e.g., _loadGoals()) which asks the Repository to query SQLite (db.query('goals')).
+Update UI (setState): The data comes back as a List. We put it in a variable and call setState(), which redraws the screen with the data in the fields.
+Example Fetch Flow:

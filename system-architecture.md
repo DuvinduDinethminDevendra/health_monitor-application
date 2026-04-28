@@ -10,14 +10,14 @@ The application follows a **Hybrid Data Layer** architecture. SQLite serves as t
 
 ```mermaid
 graph TD
-    User((User)) --> UI[Flutter UI Layer]
+    User((User)) --> UI[Flutter UI Layer\n(Member 1 & 2)]
     UI --> VM[ViewModels / Providers]
-    VM --> Repo[Repository Layer]
+    VM --> Repo[Repository Layer\n(Member 3)]
     
-    subgraph "Data Layer (Member 3)"
-        Repo --> SQL[(Local SQLite)]
-        Repo --> Sync[Sync Service]
-        Sync --> Fire[(Firebase Cloud)]
+    subgraph "Data Layer (LakiDev - Member 3)"
+        Repo --> SQL[(Local SQLite\nPrimary Storage)]
+        Repo --> Sync[Sync Service\nBackground Task]
+        Sync --> Fire[(Firebase Cloud\nBackup Storage)]
     end
     
     subgraph "Authentication"
@@ -27,14 +27,33 @@ graph TD
 
 ---
 
-## 2. Hybrid Data Synchronization Strategy
-To meet the university requirements for SQLite while adding modern cloud features, we use an **Async Mirroring** strategy:
+## 2. Hybrid Data Synchronization Strategy (The "Zero-Code" Auto-Sync)
+To meet the university requirements for SQLite while adding modern cloud features, we use an **Async Mirroring** strategy built on a unified "Map Translation" architecture. This allows SQLite and Firebase to communicate perfectly without writing complex, rigid cloud schemas.
 
-1.  **Write Path:** When data is created (e.g., a new Goal), it is written to SQLite immediately. A background task is then triggered to mirror this change to Cloud Firestore.
-2.  **Read Path:** The UI always reads from SQLite to ensure zero latency and offline support.
-3.  **Restoration Path:** Upon logging in on a new device, the app pulls the full dataset from Firestore and populates the local SQLite database.
+1.  **Shared Translation Layer:** The Dart Model classes (e.g., `Goal`) contain a `.toMap()` function. This map acts as the Single Source of Truth for both databases.
+2.  **The Complete Data Flow:** Data travels perfectly from `UI > Model (toMap) > Repository > database_helper > SQLite`. 
+    - The `database_helper` ONLY creates the physical table structure.
+    - The `Repository` uses the map from the Model to perform the actual daily inserts into the database.
+3.  **Write Path:** When data is created or updated, the Repository inserts the generated `.toMap()` into SQLite immediately.
+4.  **The Auto-Sync Trigger:** Simultaneously, a background task (`SyncService`) is triggered. It takes that exact same `.toMap()` output and passes it directly to Firebase using `.set()`. 
+5.  **Zero-Configuration Scaling:** If Member 3 adds a new column to SQLite (like `category`), they only update the common `.toMap()` function. SQLite receives the new column, and Firebase *blindly accepts the new map key* and automatically generates a new field in the cloud without any extra Firebase-specific code.
 
----
+```mermaid
+graph TD
+    A([User Saves Goal]) -->|Passes Object| B[GoalRepository\n(Member 3)]
+    
+    subgraph "The 'Zero-Code' Translation Engine"
+    B -->|Calls| M[ Goal.toMap() \n Generates dynamic key-value pairs ]
+    end
+    
+    M -->|"INSERT INTO goals..."| SQL[(SQLite DB\nStrict Schema)]
+    M -->|"syncGoal( goal.toMap() )"| Sync[SyncService\nBackground Async]
+    Sync -->|Auto-Generates Cloud Fields| Fire[(Firebase Firestore\nNo Schema Needed)]
+
+    style M fill:#e1f5fe,stroke:#1565c0,stroke-width:2px,stroke-dasharray: 5 5
+    style SQL fill:#ce93d8,stroke:#4a148c,stroke-width:2px
+    style Fire fill:#ffcc80,stroke:#e65100,stroke-width:2px
+```
 
 ## 3. Performance & UX Optimization: Lazy Loading
 To ensure high performance and low memory consumption (Requirement #7), the architecture utilizes **Lazy Component Initialization**.
@@ -112,5 +131,19 @@ An internal utility that monitors SQLite changes and ensures parity with Firebas
 Wraps `FirebaseAuth` to provide a clean interface for the UI, managing the transition between "Logged Out" and "Logged In" states while triggering the initial data rehydration.
 
 ---
-**Last Updated:** 2026-04-25
+
+## 6. Auto-Merge Goal & Activity Architecture
+To resolve conflicts between Manual User Input (Goals) and Automated Tracking (Activities), the UI Visualization Layer utilizes a Universal Bidirectional Sync Strategy.
+- **Dynamic Linking**: The `charts_screen.dart` dynamically queries the `_activities` list over a 30-day period and matches the `type` string to the specific goal via the central `Goal.baseType` getter, ensuring existing legacy databases don't break.
+- **Feature 2: Advanced Predictive Insights (Member 3)**
+    *   Located in `GoalRepository.getPredictiveInsight()`.
+    *   **Cumulative Goals:** Uses a lightweight Linear Regression algorithm to calculate the user's velocity based on `createdAt` and `currentValue`. It projects the estimated completion date and returns human-readable encouragement.
+    *   **Daily Goals (Lazy-Reset Architecture):** To prevent midnight carry-over bugs, Daily Goal predictions bypass the static `currentValue`. Instead, the engine dynamically queries the `activities` table for the current day's true sum, ensuring the AI feedback is 100% historically accurate for the current 24-hour cycle.
+- **Universal Bidirectional Sync**:
+    *   **Activity ➔ Goal:** Logging an Activity natively updates the `currentValue` of all matching Cumulative Goals, and lazy-resets Daily Goals based on today's accurate sum.
+    *   **Goal ➔ Activity:** Manually updating Goal progress calculates `diff = newProgress - oldProgress` and invisibly inserts a timestamped `Activity` record. This guarantees that manual progress is permanently anchored to the exact date it was entered, preventing midnight bleed-over.
+- **Visual Boundaries**: The system reads the `targetValue` of the Goal to generate dynamic Y-axis maximums and renders an industry-standard dashed horizontal target line, visually uniting the user's manual goals with their daily activity.
+
+---
+**Last Updated:** 2026-04-26
 **Author:** LSR Vidanaarachchi (Member 3)

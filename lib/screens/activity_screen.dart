@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/activity.dart';
 import '../repositories/activity_repository.dart';
+import '../repositories/goal_repository.dart';
+import '../models/goal.dart';
 import '../services/auth_service.dart';
-import 'widgets/error_widget.dart';
-import 'widgets/shimmer_loading.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -18,7 +18,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
   final ActivityRepository _activityRepo = ActivityRepository();
   List<Activity> _activities = [];
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -31,108 +30,94 @@ class _ActivityScreenState extends State<ActivityScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
+    final activities = await _activityRepo.getActivitiesByUser(userId);
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _activities = activities;
+      _isLoading = false;
     });
-
-    try {
-      final activities = await _activityRepo.getActivitiesByUser(userId);
-      if (!mounted) return;
-      setState(() {
-        _activities = activities;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to load activities. Please try again.';
-      });
-    }
   }
 
   void _showAddDialog() {
     final formKey = GlobalKey<FormState>();
     String type = 'steps';
+    final customTypeController = TextEditingController();
     final valueController = TextEditingController();
     final durationController = TextEditingController();
 
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[400],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Log Activity'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: type,
+                    items: const [
+                      DropdownMenuItem(value: 'steps', child: Text('Steps')),
+                      DropdownMenuItem(value: 'workout', child: Text('Workout')),
+                      DropdownMenuItem(value: 'running', child: Text('Running')),
+                      DropdownMenuItem(value: 'cycling', child: Text('Cycling')),
+                      DropdownMenuItem(value: 'swimming', child: Text('Swimming')),
+                      DropdownMenuItem(value: 'yoga', child: Text('Yoga')),
+                      DropdownMenuItem(value: 'sleep', child: Text('Sleep')),
+                      DropdownMenuItem(value: 'custom', child: Text('Custom Goal Metric')),
+                    ],
+                    onChanged: (val) => setDialogState(() => type = val!),
+                    decoration: InputDecoration(
+                      labelText: 'Activity Type',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Log Activity',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    DropdownButtonFormField<String>(
-                      value: type,
-                      items: const [
-                        DropdownMenuItem(value: 'steps', child: Text('Steps')),
-                        DropdownMenuItem(value: 'workout', child: Text('Workout')),
-                        DropdownMenuItem(value: 'running', child: Text('Running')),
-                        DropdownMenuItem(value: 'cycling', child: Text('Cycling')),
-                        DropdownMenuItem(value: 'swimming', child: Text('Swimming')),
-                        DropdownMenuItem(value: 'yoga', child: Text('Yoga')),
-                      ],
-                      onChanged: (val) => setDialogState(() => type = val!),
-                      decoration: InputDecoration(
-                        labelText: 'Activity Type',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
+                  ),
+                  if (type == 'custom') ...[
                     const SizedBox(height: 16),
                     TextFormField(
-                      controller: valueController,
-                      keyboardType: TextInputType.number,
+                      controller: customTypeController,
                       decoration: InputDecoration(
-                        labelText: type == 'steps' ? 'Number of Steps' : 'Distance (km)',
+                        labelText: 'Custom Activity Name',
+                        hintText: 'e.g. Reading, Meditation',
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Required';
-                        if (double.tryParse(v) == null) return 'Enter a valid number';
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                  ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: valueController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: type == 'sleep' 
+                          ? 'Hours Slept'
+                          : type == 'steps' 
+                              ? 'Number of Steps' 
+                              : type == 'custom'
+                                  ? 'Amount achieved'
+                                  : 'Distance (km)',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Required';
+                      if (double.tryParse(v) == null) {
+                        return 'Enter a valid number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  if (type != 'sleep')
                     TextFormField(
                       controller: durationController,
                       keyboardType: TextInputType.number,
@@ -143,54 +128,82 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Required';
-                        if (int.tryParse(v) == null) return 'Enter a valid number';
+                        if (int.tryParse(v) == null) {
+                          return 'Enter a valid number';
+                        }
                         return null;
                       },
                     ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (formKey.currentState!.validate()) {
-                            final userId = Provider.of<AuthService>(context, listen: false)
-                                .currentUser!
-                                .id!;
-                            final activity = Activity(
-                              userId: userId,
-                              type: type,
-                              value: double.parse(valueController.text),
-                              date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                              duration: int.parse(durationController.text),
-                            );
-                            await _activityRepo.insertActivity(activity);
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            _loadActivities();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1A73E8),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Save Activity', style: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final userId =
+                      Provider.of<AuthService>(context, listen: false)
+                          .currentUser!
+                          .id!;
+                  final activity = Activity(
+                    userId: userId,
+                    type: type == 'custom' ? customTypeController.text.trim().toLowerCase() : type,
+                    value: double.parse(valueController.text),
+                    date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                    duration: type == 'sleep' ? 0 : int.parse(durationController.text),
+                  );
+                  await _activityRepo.insertActivity(activity);
+
+                  // Universal Sync: Push this activity natively to the matching Goals!
+                  final goalRepo = GoalRepository();
+                  final goals = await goalRepo.getGoalsByUser(userId);
+                  
+                  for (var goal in goals) {
+                    final typeMatch = goal.baseType;
+                    
+                    if (typeMatch == activity.type.toLowerCase()) {
+                       bool isDaily = goal.category.contains('(Daily)');
+                       double newProgress;
+                       
+                       if (isDaily) {
+                          final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                          final activities = await _activityRepo.getActivitiesByDateRange(userId, dateStr, dateStr);
+                          final todaySum = activities.where((a) => a.type.toLowerCase() == typeMatch).fold(0.0, (sum, a) => sum + a.value);
+                          newProgress = todaySum;
+                       } else {
+                          newProgress = goal.currentValue + activity.value;
+                       }
+                       
+                       await goalRepo.updateProgress(goal.id!, newProgress);
+                       if (newProgress >= goal.targetValue && !goal.isCompleted) {
+                          await goalRepo.markCompleted(goal.id!);
+                       }
+                    }
+                  }
+
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _loadActivities();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A73E8),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );
   }
 
   IconData _getActivityIcon(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'steps':
         return Icons.directions_walk;
       case 'workout':
@@ -203,13 +216,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
         return Icons.pool;
       case 'yoga':
         return Icons.self_improvement;
+      case 'sleep':
+        return Icons.bedtime;
       default:
-        return Icons.directions_run;
+        return Icons.star;
     }
   }
 
   Color _getActivityColor(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'steps':
         return const Color(0xFF1A73E8);
       case 'workout':
@@ -222,24 +237,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
         return const Color(0xFF42A5F5);
       case 'yoga':
         return const Color(0xFFAB47BC);
+      case 'sleep':
+        return const Color(0xFF3949AB);
       default:
-        return Colors.grey;
+        return Colors.teal;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const ShimmerLoading(itemCount: 5);
-    }
-
-    if (_errorMessage != null) {
-      return Scaffold(
-        body: AppErrorWidget(
-          message: _errorMessage!,
-          onRetry: _loadActivities,
-        ),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Scaffold(
@@ -248,27 +256,16 @@ class _ActivityScreenState extends State<ActivityScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A73E8).withAlpha(20),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.directions_run, size: 80, color: Color(0xFF1A73E8)),
-                  ),
-                  const SizedBox(height: 24),
+                  Icon(Icons.directions_run, size: 80, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
                   Text(
                     'No activities logged yet',
-                    style: TextStyle(
-                      fontSize: 20, 
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tap + to log your first activity',
-                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+                    style: TextStyle(color: Colors.grey[400]),
                   ),
                 ],
               ),
@@ -286,10 +283,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: color.withAlpha(30),
-                      child: Icon(_getActivityIcon(activity.type), color: color),
+                      child:
+                          Icon(_getActivityIcon(activity.type), color: color),
                     ),
                     title: Text(
-                      activity.type[0].toUpperCase() + activity.type.substring(1),
+                      activity.type[0].toUpperCase() +
+                          activity.type.substring(1),
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
@@ -316,7 +315,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
               },
             ),
       floatingActionButton: FloatingActionButton(
-        heroTag: 'activity_fab',
         onPressed: _showAddDialog,
         backgroundColor: const Color(0xFF1A73E8),
         child: const Icon(Icons.add, color: Colors.white),
