@@ -1,42 +1,43 @@
 # Health Monitor - UI Architecture & Design System
 
-## Global Theme Concept: "Emerald Glass"
-The application utilizes a **Light Glassmorphism** aesthetic designed to reduce eye strain while feeling premium and deeply integrated with modern mobile OS trends. 
+## Global Theme Concept: "Matte Alabaster & Solid Sapphire" (Updated Pallet 2)
+The application utilizes a premium **Dual-Theme** architecture that prioritizes high-contrast and vibrant visuals over faded aesthetics.
 
-### Core Palette
-To ensure visual harmony, we use a soothing background juxtaposed with vibrant, health-focused accents.
-- **Background Gradient Base**: Soft Warm White (`#FAFAF8`) blending into subtle variations.
-- **Primary Accent (Vue/Emerald Green)**: `#10B981` (Used for primary actions, progress completion, active states).
-- **Secondary Accent (Orange)**: `#F97316` (Used for warnings, secondary metrics like calories, call-to-action highlights).
-- **Tertiary Accent (Sky Blue)**: `#0EA5E9` (Used for water/hydration goals, neutral stats).
-- **Text Primary**: `#1F2937` (Dark Grey/Charcoal for maximum readability without harsh black contrast).
-- **Text Secondary**: `#6B7280` (Muted Grey for subtitles and inactive states).
+- **Light Mode**: A clean, "Matte Alabaster" aesthetic using solid surfaces and high-contrast typography. No faded transparency on primary cards.
+- **Dark Mode**: A sophisticated "Solid Sapphire" aesthetic utilizing deep, vibrant colors and high-contrast glassmorphism that maintains text legibility.
 
-### Component Architecture
+## Core Palette
+All UI elements must strictly adhere to these constants defined in `AppTheme`.
 
-#### 1. GlassCards
-The primary container for all UI elements (Forms, Stats, Lists).
-- **Background**: `Colors.white.withOpacity(0.4)` to `0.6`.
-- **Blur Effect**: `ImageFilter.blur(sigmaX: 12, sigmaY: 12)`.
-- **Border**: `Border.all(color: Colors.white.withOpacity(0.5), width: 1.5)`.
-- **Shadow**: Extremely subtle, large spread shadow (`Colors.black.withOpacity(0.03)`, `blurRadius: 20`).
-- **Border Radius**: Generous rounding (`BorderRadius.circular(24)`).
+- **Alabaster (Background Light)**: `#F5F5F5` - Primary background for light mode.
+- **Sapphire (Background Dark)**: `#0F172A` - Deep, premium blue for dark mode base.
+- **Scooter (Primary Accent)**: `#2F9D94` - Used for primary actions and active navigation.
+- **Blue Lagoon (Secondary Accent)**: `#025F67` - Used for primary buttons and success states.
+- **Warm Orange**: `#F97316` - Used for warnings and specific health metrics.
+- **Sky Blue**: `#0EA5E9` - Used for secondary metrics.
 
-#### 2. Typography
-- Modern, clean sans-serif (default Flutter Roboto or similar).
-- Headers are bold and clean (`FontWeight.w700`).
-- Data numbers are prominently large (`FontWeight.w800`, `fontSize: 28+`).
+## Theme Implementation Rules
 
-#### 3. Navigation
-- **Top Date Picker**: A horizontal week-view calendar residing at the top of the Dashboard. Features a sleek, slightly darker glass container for contrast against the warm background.
-- **Bottom Navigation**: Floating, pill-shaped `BottomNavigationBar` hovering above the bottom edge, using a robust glass effect so the background scrolls underneath it.
+### 1. No Faded Colors
+- **Prohibited**: Low-alpha transparencies (e.g., `alpha: 0.1`) for text or main components.
+- **Required**: High contrast text (`White` on Dark, `Sapphire` on Light).
+- **Vibrancy**: Use color saturation to define hierarchy rather than opacity.
 
-#### 4. Interaction & Feedback
-- Tap actions provide subtle scale/opacity changes.
-- Form inputs feature soft internal shadows or subtle white borders.
-- Floating Action Buttons (FABs) match the primary/secondary accent colors and use soft drop shadows to float above the UI.
+### 2. Glassmorphism (Dark Mode)
+The `GlassCard` widget remains the primary container but with higher vibrancy.
+- **Background**: Slate/Sapphire mix with `0.8+` opacity.
+- **Icons & Text**: Must be `White` or `White70` for maximum legibility.
 
-## File Organization Requirements
-- All glassmorphism utilities (wrappers, gradients) should reside in a centralized file (e.g., `lib/widgets/glass_card.dart`).
-- Screen components should remain strictly UI-focused, delegating logic to existing repositories and providers.
-- **ABSOLUTELY NO BACKEND LOGIC CHANGES**. The UI refactor strictly maps existing data structures into the new visual paradigm.
+### 3. Navigation & Branding
+- **Bottom Navigation**: Solid background in both themes to prevent "faded" footer appearance.
+- **Icons**: Use pallet colors only; avoid grey/muted versions in primary flows.
+
+## Component Architecture
+- **`AppTheme`**: Source of truth for theme definitions.
+- **`GlassCard`**: Reusable high-vibrancy container.
+- **`HorizontalWeekCalendar`**: Solid header date picker.
+
+## Maintenance Protocol
+- Never use generic `Colors.*` unless it's `white` or `transparent`.
+- Always check contrast ratios for text visibility.
+- Ensure all sub-pages (Profile, Activities, Goals) inherit the same high-vibrancy style.

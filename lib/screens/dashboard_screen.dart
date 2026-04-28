@@ -86,21 +86,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showAddMenu() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      elevation: 20,
+      backgroundColor: isDark ? Colors.transparent : Colors.white,
+      elevation: isDark ? 0 : 20,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.sapphire.withValues(alpha: 0.9) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -108,15 +107,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
-            ),
-            const Text(
-              'Quick Add',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             Row(
@@ -125,10 +119,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _buildAddOption(
                   'Activity',
                   Icons.directions_run_rounded,
-                  AppTheme.emeraldGreen,
+                  AppTheme.scooter,
                   () {
                     Navigator.pop(context);
-                    setState(() => _currentIndex = 1);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityScreen()));
                   },
                 ),
                 _buildAddOption(
@@ -137,21 +131,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   AppTheme.warmOrange,
                   () {
                     Navigator.pop(context);
-                    setState(() => _currentIndex = 3);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const GoalsScreen()));
                   },
                 ),
                 _buildAddOption(
-                  'Health Log',
+                  'Health',
                   Icons.monitor_weight_rounded,
                   AppTheme.skyBlue,
                   () {
                     Navigator.pop(context);
-                    setState(() => _currentIndex = 2);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const HealthLogScreen()));
                   },
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -160,6 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildAddOption(
       String label, IconData icon, Color color, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -168,14 +163,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(icon, color: color, size: 30),
+            child: Icon(icon, color: color, size: 28),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : AppTheme.darkCharcoal,
+            ),
           ),
         ],
       ),
@@ -192,48 +191,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       const GoalsScreen(),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(
         index: _currentIndex,
         children: screens,
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-        height: 70,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(35),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.emeraldGreen.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(35),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(35),
-                border: Border.all(
-                    color: AppTheme.caribbeanGreen.withValues(alpha: 0.2), width: 1.5),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(0, Icons.dashboard_rounded, 'Home'),
-                  _buildNavItem(1, Icons.directions_run_rounded, 'Activity'),
-                  _buildAddButton(),
-                  _buildNavItem(2, Icons.bar_chart_rounded, 'Progress'),
-                  _buildNavItem(3, Icons.flag_rounded, 'Goals'),
-                ],
-              ),
-            ),
+        padding: const EdgeInsets.only(bottom: 24, left: 20, right: 20),
+        child: MatteCard(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          borderRadius: 40,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.grid_view_rounded, 'Home'),
+              _buildNavItem(1, Icons.directions_run_rounded, 'Activity'),
+              _buildAddButton(),
+              _buildNavItem(2, Icons.bar_chart_rounded, 'Progress'),
+              _buildNavItem(3, Icons.flag_rounded, 'Goals'),
+            ],
           ),
         ),
       ),
@@ -247,11 +225,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         width: 48,
         height: 48,
         decoration: const BoxDecoration(
-          color: AppTheme.emeraldGreen,
+          color: AppTheme.blueLagoon,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Color(0x4D10B981),
+              color: Color(0x4D025F67),
               blurRadius: 10,
               offset: Offset(0, 4),
             )
@@ -278,25 +256,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _currentIndex == index;
-    final color = isSelected ? AppTheme.caribbeanGreen : AppTheme.mutedGrey;
+    final color = isSelected ? AppTheme.scooter : AppTheme.heather;
     return GestureDetector(
       onTap: () {
         _onItemTapped(index);
         if (index == 0) _loadDashboardData();
       },
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        child: Icon(
-          icon,
-          color: color,
-          size: 26,
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildDashboardHome(String userName) {
     final authService = Provider.of<AuthService>(context, listen: false);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         // Top Horizontal Calendar with Integrated Profile
@@ -319,47 +309,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
 
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: _loadDashboardData,
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 16, bottom: 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Central Progress (DesignIdea1 style - Multi-Metric)
-                  GlassCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Daily Progress',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -1,
-                                    color: AppTheme.darkCharcoal,
-                                  ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MatteCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Daily Progress',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -1,
+                                  color: isDark ? Colors.white : AppTheme.sapphire,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Your health at a glance',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppTheme.darkCharcoal.withValues(alpha: 0.5),
-                                  ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your health at a glance',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white70 : AppTheme.heather,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
@@ -426,10 +412,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 children: [
                                   Text(
                                     _touchedIndex == 1 ? '${_activeGoals}' : (_touchedIndex == 2 ? 'Optimal' : '${_totalSteps}'),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.w900,
-                                      color: AppTheme.darkCharcoal,
+                                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal,
                                       letterSpacing: -1,
                                     ),
                                   ),
@@ -438,7 +424,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,
-                                      color: AppTheme.darkCharcoal.withValues(alpha: 0.4),
+                                      color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal).withValues(alpha: 0.7),
                                       letterSpacing: 1.5,
                                     ),
                                   ),
@@ -549,8 +535,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppTheme.darkCharcoal, Color(0xFF374151)],
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).brightness == Brightness.dark 
+                              ? AppTheme.blueLagoon 
+                              : AppTheme.sapphire,
+                          Theme.of(context).brightness == Brightness.dark 
+                              ? AppTheme.sapphire 
+                              : const Color(0xFF374151)
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -565,7 +558,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.stars_rounded, color: AppTheme.emeraldGreen, size: 32),
+                        const Icon(Icons.stars_rounded, color: AppTheme.scooter, size: 32),
                         const SizedBox(height: 12),
                         Text(
                           'Keep pushing, $userName!',
@@ -593,29 +586,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color,
       {VoidCallback? onTap}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            colors: [
-              color.withValues(alpha: 0.45), // Significantly boosted saturation
-              color.withValues(alpha: 0.2),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          border: Border.all(color: color.withValues(alpha: 0.5), width: 2), // Thicker, more solid border
-        ),
+      child: MatteCard(
         padding: const EdgeInsets.all(16),
+        borderRadius: 24,
+        color: isDark ? color.withValues(alpha: 0.9) : color, // Use high-opacity matte
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -625,12 +608,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.3),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 20), // White icon for better contrast
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, color: Colors.white.withValues(alpha: 0.5), size: 14),
+                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 14),
               ],
             ),
             const SizedBox(height: 20),
@@ -638,18 +621,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               value,
               style: const TextStyle(
                 fontSize: 24,
-                fontWeight: FontWeight.w900, // Even bolder
-                color: AppTheme.darkCharcoal,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
                 letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w700, // Bolder
-                  color: AppTheme.darkCharcoal.withValues(alpha: 0.7)),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white), 
             ),
           ],
         ),
@@ -659,21 +642,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildQuickActionBtn(
       String title, IconData icon, Color color, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
-      child: GlassCard(
+      child: MatteCard(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        color: color.withValues(alpha: 0.1),
+        color: isDark ? AppTheme.sapphire : color.withValues(alpha: 0.1),
         borderRadius: 16,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 22),
+            Icon(icon, color: isDark ? AppTheme.scooter : color, size: 22),
             const SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
-                color: color,
+                color: isDark ? Colors.white : color,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -689,7 +673,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark ? AppTheme.blueLagoon : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(

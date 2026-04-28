@@ -69,40 +69,34 @@ class _ChartsScreenState extends State<ChartsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       appBar: AppBar(
-        title: const Text('Health Insights', 
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: AppTheme.darkCharcoal)),
+        title: Text('Health Insights', 
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
+          preferredSize: const Size.fromHeight(60),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(15),
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
             ),
             child: TabBar(
               controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
               indicator: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: AppTheme.emeraldGreen,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.emeraldGreen.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  )
-                ],
+                color: AppTheme.blueLagoon,
               ),
               labelColor: Colors.white,
-              unselectedLabelColor: AppTheme.mutedGrey,
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
+              unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withValues(alpha: 0.4),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
               tabs: const [
                 Tab(text: 'Activity'),
                 Tab(text: 'Trends'),
@@ -127,6 +121,7 @@ class _ChartsScreenState extends State<ChartsScreen>
 
   // --- Member 3 Feature: Advanced Predictive Insights UI ---
   Widget _buildGoalInsights() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_goals.isEmpty) {
       return const Center(
         child: Text(
@@ -202,9 +197,9 @@ class _ChartsScreenState extends State<ChartsScreen>
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            GlassCard(
+            MatteCard(
               height: 280,
-              color: AppTheme.warmOrange.withValues(alpha: 0.03),
+              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.warmOrange.withValues(alpha: 0.03),
               padding: const EdgeInsets.fromLTRB(10, 24, 24, 10),
               child: BarChart(
                 BarChartData(
@@ -237,7 +232,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                 angle: -0.5,
                                 child: Text(
                                   title.length > 8 ? '${title.substring(0, 8)}...' : title,
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey),
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white60 : AppTheme.mutedGrey),
                                 ),
                               ),
                             );
@@ -254,7 +249,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         getTitlesWidget: (value, meta) {
                           if (value > 100) return const Text('');
                           return Text('${value.toInt()}%',
-                              style: const TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500));
+                              style: TextStyle(fontSize: 10, color: isDark ? Colors.white60 : AppTheme.mutedGrey, fontWeight: FontWeight.w500));
                         },
                       ),
                     ),
@@ -266,7 +261,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     drawVerticalLine: false,
                     horizontalInterval: 25,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                       strokeWidth: 1,
                     ),
                   ),
@@ -291,7 +286,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: 100,
-                            color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                           ),
                         ),
                       ],
@@ -385,7 +380,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                           show: true,
                           drawVerticalLine: false,
                           getDrawingHorizontalLine: (value) => FlLine(
-                              color: Colors.grey.withValues(alpha: 0.05),
+                              color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                               strokeWidth: 1),
                         ),
                         extraLinesData: ExtraLinesData(
@@ -553,32 +548,29 @@ class _ChartsScreenState extends State<ChartsScreen>
                           FutureBuilder<String>(
                             future: _goalRepo.getPredictiveInsight(goal.id!),
                             builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
                                 return const LinearProgressIndicator();
                               }
                               final insight = snapshot.data ?? 'Calculating...';
                               return Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.6),
+                                  color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.alabaster,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                      color: accentColor.withValues(alpha: 0.1)),
+                                  border: Border.all(color: accentColor.withValues(alpha: 0.2)),
                                 ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.auto_graph,
-                                        color: accentColor, size: 20),
+                                    Icon(Icons.auto_graph, color: accentColor, size: 20),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
                                         insight,
                                         style: TextStyle(
-                                          color: accentColor.withValues(alpha: 0.9),
+                                          color: isDark ? Colors.white : accentColor,
                                           fontSize: 13,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.w700,
                                           fontStyle: FontStyle.italic,
                                         ),
                                       ),
@@ -602,6 +594,7 @@ class _ChartsScreenState extends State<ChartsScreen>
   }
 
   Widget _buildActivityChart() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_activities.isEmpty) {
       return Center(
         child: Column(
@@ -704,28 +697,19 @@ class _ChartsScreenState extends State<ChartsScreen>
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: chartMaxY,
-                      color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                     ),
                   ),
                 ],
               ));
             }
 
-            return Container(
+            return MatteCard(
               margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.1),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
+              padding: EdgeInsets.zero,
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 child: Stack(
                   children: [
                     Positioned(
@@ -797,7 +781,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                         : DateFormat('MM/dd').format(date),
                                     style: TextStyle(
                                         fontSize: 10,
-                                        color: AppTheme.darkCharcoal)),
+                                        color: isDark ? Colors.white60 : AppTheme.darkCharcoal)),
                               );
                             },
                           ),
@@ -811,7 +795,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                               return Text(value.toInt().toString(),
                                   style: TextStyle(
                                       fontSize: 10,
-                                      color: AppTheme.darkCharcoal));
+                                      color: isDark ? Colors.white60 : AppTheme.darkCharcoal));
                             },
                           ),
                         ),
@@ -820,7 +804,15 @@ class _ChartsScreenState extends State<ChartsScreen>
                         rightTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false)),
                       ),
-                      gridData: const FlGridData(show: false),
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: chartMaxY / 5,
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                          strokeWidth: 1,
+                        ),
+                      ),
                       borderData: FlBorderData(show: false),
                       barGroups: barGroups,
                     ),
@@ -840,6 +832,7 @@ class _ChartsScreenState extends State<ChartsScreen>
 }
 
   Widget _buildBmiChart() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_healthLogs.isEmpty) {
       return Center(
         child: Column(
@@ -889,9 +882,9 @@ class _ChartsScreenState extends State<ChartsScreen>
             style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           const SizedBox(height: 32),
-          GlassCard(
-            height: 300,
-            color: AppTheme.skyBlue.withValues(alpha: 0.03),
+          MatteCard(
+            height: 280,
+            color: isDark ? const Color(0xFF0A2A3F) : AppTheme.skyBlue.withValues(alpha: 0.03),
             padding: const EdgeInsets.only(top: 24, right: 20, bottom: 10),
             child: LineChart(
               LineChartData(
@@ -916,7 +909,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                   drawVerticalLine: false,
                   horizontalInterval: 5,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppTheme.darkCharcoal.withValues(alpha: 0.05),
+                    color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                     strokeWidth: 1,
                   ),
                 ),
@@ -933,8 +926,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                             padding: const EdgeInsets.only(top: 10),
                             child: Text(
                               _healthLogs[idx].date.substring(5),
-                              style: const TextStyle(
-                                  fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                  fontSize: 10, color: isDark ? Colors.white60 : AppTheme.mutedGrey, fontWeight: FontWeight.w500),
                             ),
                           );
                         }
@@ -948,8 +941,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                       reservedSize: 35,
                       getTitlesWidget: (value, meta) {
                         return Text(value.toInt().toString(),
-                            style: const TextStyle(
-                                fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500));
+                            style: TextStyle(
+                                fontSize: 10, color: isDark ? Colors.white60 : AppTheme.mutedGrey, fontWeight: FontWeight.w500));
                       },
                     ),
                   ),

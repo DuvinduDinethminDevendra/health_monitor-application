@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../models/health_log.dart';
 import '../repositories/health_log_repository.dart';
 import '../services/auth_service.dart';
@@ -40,15 +41,12 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
     final weightController = TextEditingController();
     final heightController = TextEditingController();
     double? previewBmi;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      elevation: 20,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           void updateBmiPreview() {
@@ -63,9 +61,10 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
           }
 
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
             ),
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
@@ -80,50 +79,60 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                 Center(
                   child: Container(
                     width: 40, height: 4,
-                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text('Log Health Data', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal)),
+                Text('Log Health Data', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                 const SizedBox(height: 24),
-                TextFormField(
+                TextField(
                   controller: weightController,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                   decoration: InputDecoration(
                     labelText: 'Weight (kg)',
-                    prefixIcon: const Icon(Icons.monitor_weight_rounded, color: AppTheme.skyBlue),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    labelStyle: TextStyle(color: AppTheme.heather),
+                    prefixIcon: const Icon(Icons.monitor_weight_rounded, color: AppTheme.scooter),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppTheme.scooter)),
                   ),
                   onChanged: (_) => updateBmiPreview(),
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                TextField(
                   controller: heightController,
                   keyboardType: TextInputType.number,
+                  style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                   decoration: InputDecoration(
                     labelText: 'Height (cm)',
-                    prefixIcon: const Icon(Icons.height_rounded, color: AppTheme.skyBlue),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    labelStyle: TextStyle(color: AppTheme.heather),
+                    prefixIcon: const Icon(Icons.height_rounded, color: AppTheme.scooter),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppTheme.scooter)),
                   ),
                   onChanged: (_) => updateBmiPreview(),
                 ),
                 if (previewBmi != null) ...[
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(15),
+                      color: AppTheme.blueLagoon.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.calculate_rounded, color: AppTheme.emeraldGreen),
-                        const SizedBox(width: 12),
-                        Text(
-                          'BMI: $previewBmi',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.emeraldGreen),
-                        ),
+                        Text('BMI Preview', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
+                        Text('$previewBmi', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.blueLagoon)),
                       ],
                     ),
                   ),
@@ -133,23 +142,30 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                   onPressed: () async {
                     if (weightController.text.isEmpty || heightController.text.isEmpty) return;
                     final userId = Provider.of<AuthService>(context, listen: false).currentUser!.id!;
+                    final w = double.parse(weightController.text);
+                    final h = double.parse(heightController.text);
+                    final hm = h / 100;
+                    final bmi = double.parse((w / (hm * hm)).toStringAsFixed(1));
+                    
                     final log = HealthLog(
                       userId: userId,
-                      weight: double.parse(weightController.text),
-                      height: double.parse(heightController.text),
+                      weight: w,
+                      height: h,
+                      bmi: bmi,
+                      date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
                     );
                     await _healthRepo.insertHealthLog(log);
                     if (ctx.mounted) Navigator.pop(ctx);
                     _loadLogs();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.skyBlue,
+                    backgroundColor: AppTheme.blueLagoon,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
                   ),
-                  child: const Text('Save Log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text('Save Health Data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -159,32 +175,45 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
     );
   }
 
-  Color _getBmiColor(double bmi) {
-    if (bmi < 18.5) return AppTheme.warmOrange;
-    if (bmi < 25) return AppTheme.emeraldGreen;
-    if (bmi < 30) return AppTheme.warmOrange;
-    return Colors.redAccent;
+  Color _getBmiColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'underweight':
+        return AppTheme.warmOrange;
+      case 'normal':
+        return AppTheme.scooter;
+      case 'overweight':
+        return AppTheme.warmOrange;
+      default:
+        return Colors.redAccent;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: AppTheme.blueLagoon));
     }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Health Logs', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal, fontSize: 20)),
+        title: Text('Health Logs',
+            style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white : AppTheme.sapphire,
+                fontSize: 20)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.sapphire),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 40),
         child: FloatingActionButton(
           onPressed: _showAddDialog,
-          backgroundColor: AppTheme.skyBlue,
+          backgroundColor: AppTheme.blueLagoon,
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
@@ -193,21 +222,21 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.monitor_weight_rounded,
+                  Icon(Icons.monitor_heart_rounded,
                       size: 80,
-                      color: AppTheme.mutedGrey.withValues(alpha: 0.2)),
+                      color: AppTheme.heather.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'No health logs yet',
                     style: TextStyle(
                         fontSize: 18,
-                        color: AppTheme.darkCharcoal,
+                        color: isDark ? Colors.white : AppTheme.sapphire,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the + button to log your health metrics',
-                    style: TextStyle(color: AppTheme.mutedGrey),
+                    'Tap the + button to log your vitals',
+                    style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
               ),
@@ -217,84 +246,89 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
               itemCount: _logs.length,
               itemBuilder: (context, index) {
                 final log = _logs[index];
-                final bmiColor = _getBmiColor(log.bmi);
-                return Container(
+                final color = _getBmiColor(log.bmiCategory);
+                return MatteCard(
                   margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: bmiColor.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                  padding: const EdgeInsets.all(16),
+                  color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.health_and_safety_rounded,
+                          color: color,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              log.bmiCategory,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                color: isDark ? Colors.white : AppTheme.sapphire,
+                              ),
+                            ),
+                            Text(
+                              '${log.weight} kg • ${log.height} cm',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : AppTheme.heather,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              log.date,
+                              style: TextStyle(
+                                color: isDark ? Colors.white38 : Colors.grey[400],
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${log.bmi}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                              color: color,
+                            ),
+                          ),
+                          Text(
+                            'BMI',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? Colors.white38 : Colors.grey[400],
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(Icons.delete_outline_rounded,
+                            color: Colors.redAccent.withValues(alpha: 0.5),
+                            size: 18),
+                        onPressed: () async {
+                          await _healthRepo.deleteHealthLog(log.id!);
+                          _loadLogs();
+                        },
                       ),
                     ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 0, top: 0, bottom: 0, width: 6,
-                          child: Container(color: bmiColor),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 52, height: 52,
-                                decoration: BoxDecoration(
-                                  color: bmiColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  log.bmi.toString(),
-                                  style: TextStyle(fontWeight: FontWeight.w800, color: bmiColor, fontSize: 16),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      log.bmiCategory.toUpperCase(),
-                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: bmiColor, letterSpacing: 1.2),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${log.weight} kg • ${log.height} cm',
-                                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.darkCharcoal),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    log.date,
-                                    style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete_outline_rounded, color: Colors.redAccent.withValues(alpha: 0.5), size: 20),
-                                    onPressed: () async {
-                                      await _healthRepo.deleteHealthLog(log.id!);
-                                      _loadLogs();
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 );
               },

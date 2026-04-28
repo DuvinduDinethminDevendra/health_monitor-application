@@ -137,15 +137,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AuthService>(context).currentUser;
+    final authService = Provider.of<AuthService>(context);
+    final user = authService.currentUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Smart Profile',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         backgroundColor: Colors.transparent,
-        foregroundColor: AppTheme.darkCharcoal,
+        foregroundColor: isDark ? Colors.white : AppTheme.darkCharcoal,
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -210,44 +212,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 16),
                     Text(
                       user.email,
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 16, 
+                        color: isDark ? Colors.white70 : Colors.grey[700],
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    // Editable Interests
-                    const Text('Your Interests',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 8),
+                      // Theme Toggle Section
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark 
+                              ? AppTheme.scooter.withValues(alpha: 0.1) 
+                              : AppTheme.blueLagoon.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Theme.of(context).brightness == Brightness.dark 
+                                ? AppTheme.scooter.withValues(alpha: 0.2) 
+                                : AppTheme.blueLagoon.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Theme.of(context).brightness == Brightness.dark 
+                                      ? Icons.dark_mode_rounded 
+                                      : Icons.light_mode_rounded,
+                                  color: Theme.of(context).brightness == Brightness.dark 
+                                      ? AppTheme.scooter 
+                                      : AppTheme.blueLagoon,
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Dark Appearance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                    Text(
+                                      isDark ? 'Solid Matte Sapphire' : 'Solid Matte Alabaster',
+                                      style: TextStyle(fontSize: 10, color: isDark ? Colors.white60 : Colors.grey[600]),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Switch.adaptive(
+                              value: isDark,
+                              onChanged: (_) => authService.toggleTheme(),
+                              activeThumbColor: AppTheme.scooter,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      
+                      Text('Your Interests', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                      const SizedBox(height: 16),
                       Wrap(
-                        spacing: 8.0,
-                        runSpacing: 8.0,
+                        spacing: 8, runSpacing: 8,
                         alignment: WrapAlignment.center,
-                        children: _availableTopics.map((topic) {
+                        children: (user.interests ?? []).map((topic) {
                           final isSelected = _selectedInterests.contains(topic);
                           return FilterChip(
-                            label: Text(
-                              topic,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isSelected ? Colors.white : AppTheme.darkCharcoal,
-                              ),
-                            ),
+                            label: Text(topic),
                             selected: isSelected,
-                            selectedColor: AppTheme.emeraldGreen,
-                            backgroundColor: AppTheme.glassWhite,
-                            checkmarkColor: Colors.white,
-                          onSelected: (bool selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedInterests.add(topic);
-                              } else {
-                                _selectedInterests.remove(topic);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) _selectedInterests.add(topic);
+                                else _selectedInterests.remove(topic);
+                              });
+                            },
+                            selectedColor: AppTheme.scooter,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppTheme.sapphire),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     const SizedBox(height: 32),
 
                     // Name
@@ -256,6 +301,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: InputDecoration(
                         labelText: 'Full Name',
                         prefixIcon: const Icon(Icons.person_outline),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
+                        ),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),

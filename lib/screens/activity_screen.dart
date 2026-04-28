@@ -39,69 +39,57 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   IconData _getActivityIcon(String type) {
     switch (type.toLowerCase()) {
-      case 'steps':
-        return Icons.directions_walk;
-      case 'workout':
-        return Icons.fitness_center;
-      case 'running':
-        return Icons.directions_run;
-      case 'cycling':
-        return Icons.directions_bike;
-      case 'swimming':
-        return Icons.pool;
-      case 'yoga':
-        return Icons.self_improvement;
-      case 'sleep':
-        return Icons.bedtime;
-      default:
-        return Icons.star;
+      case 'steps': return Icons.directions_walk_rounded;
+      case 'workout': return Icons.fitness_center_rounded;
+      case 'running': return Icons.directions_run_rounded;
+      case 'cycling': return Icons.directions_bike_rounded;
+      case 'swimming': return Icons.pool_rounded;
+      case 'yoga': return Icons.self_improvement_rounded;
+      case 'sleep': return Icons.bedtime_rounded;
+      default: return Icons.star_rounded;
     }
   }
 
   Color _getActivityColor(String type) {
     switch (type.toLowerCase()) {
-      case 'steps':
-        return AppTheme.skyBlue;
-      case 'workout':
-        return AppTheme.warmOrange;
-      case 'running':
-        return AppTheme.warmOrange;
-      case 'cycling':
-        return AppTheme.emeraldGreen;
-      case 'swimming':
-        return AppTheme.skyBlue;
-      case 'yoga':
-        return AppTheme.emeraldGreen;
-      case 'sleep':
-        return AppTheme.darkCharcoal;
-      default:
-        return AppTheme.emeraldGreen;
+      case 'steps': return AppTheme.scooter;
+      case 'workout': return AppTheme.warmOrange;
+      case 'running': return AppTheme.warmOrange;
+      case 'cycling': return AppTheme.blueLagoon;
+      case 'swimming': return AppTheme.skyBlue;
+      case 'yoga': return AppTheme.scooter;
+      case 'sleep': return AppTheme.sapphire;
+      default: return AppTheme.blueLagoon;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: AppTheme.blueLagoon));
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('My Activities',
+        title: Text('Activities',
             style: TextStyle(
                 fontWeight: FontWeight.w900,
-                color: AppTheme.darkCharcoal,
-                fontSize: 20)),
+                color: isDark ? Colors.white : AppTheme.sapphire,
+                fontSize: 22,
+                letterSpacing: -1)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.sapphire),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 40),
         child: FloatingActionButton(
           onPressed: _showAddDialog,
-          backgroundColor: AppTheme.emeraldGreen,
+          backgroundColor: AppTheme.blueLagoon,
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
@@ -112,19 +100,19 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 children: [
                   Icon(Icons.directions_run_rounded,
                       size: 80,
-                      color: AppTheme.mutedGrey.withValues(alpha: 0.2)),
+                      color: AppTheme.heather.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'No activities logged yet',
                     style: TextStyle(
                         fontSize: 18,
-                        color: AppTheme.darkCharcoal,
+                        color: isDark ? Colors.white : AppTheme.sapphire,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tap the + button to log your first activity',
-                    style: TextStyle(color: AppTheme.mutedGrey),
+                    style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
               ),
@@ -135,106 +123,62 @@ class _ActivityScreenState extends State<ActivityScreen> {
               itemBuilder: (context, index) {
                 final activity = _activities[index];
                 final color = _getActivityColor(activity.type);
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Stack(
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: MatteCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
                       children: [
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 6,
-                          child: Container(color: color),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(_getActivityIcon(activity.type), color: Colors.white, size: 28),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: color.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(_getActivityIcon(activity.type),
-                                    color: color, size: 24),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      activity.type.toUpperCase(),
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
-                                          color: color,
-                                          letterSpacing: 1.2),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      activity.type.toLowerCase() == 'steps'
-                                          ? '${activity.value.toInt()} steps'
-                                          : '${activity.value} km',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.darkCharcoal),
-                                    ),
-                                  ],
+                              Text(
+                                activity.type.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: color,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    activity.date,
-                                    style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppTheme.mutedGrey),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${activity.duration} min',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.darkCharcoal
-                                          .withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                ],
+                              const SizedBox(height: 4),
+                              Text(
+                                '${activity.value.toInt()} ${activity.unit}',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? Colors.white : AppTheme.sapphire,
+                                ),
                               ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: Icon(Icons.delete_outline_rounded,
-                                    color:
-                                        Colors.redAccent.withValues(alpha: 0.5),
-                                    size: 20),
-                                onPressed: () async {
-                                  await _activityRepo
-                                      .deleteActivity(activity.id!);
-                                  _loadActivities();
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat('MMM dd, hh:mm a').format(DateTime.parse(activity.date)),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white38 : AppTheme.heather,
+                                ),
                               ),
                             ],
                           ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline_rounded, color: Colors.redAccent.withValues(alpha: 0.5)),
+                          onPressed: () async {
+                            await _activityRepo.deleteActivity(activity.id!);
+                            _loadActivities();
+                          },
                         ),
                       ],
                     ),
@@ -246,22 +190,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   void _showAddDialog() {
-    final typeController = TextEditingController(text: 'Running');
     final valueController = TextEditingController();
     final durationController = TextEditingController();
+    final typeController = TextEditingController(text: 'Steps');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      elevation: 20,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.sapphire : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: isDark ? Border.all(color: Colors.white12, width: 2) : null,
         ),
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
@@ -275,127 +217,91 @@ class _ActivityScreenState extends State<ActivityScreen> {
           children: [
             Center(
               child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2)),
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Log New Activity',
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.darkCharcoal)),
+            Text('Log Activity', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
             const SizedBox(height: 24),
-            // Custom Industry Standard Selector
-            GestureDetector(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.white,
-                  shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-                  builder: (ctx) => Container(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('Select Activity Type', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                        const SizedBox(height: 24),
-                        Expanded(
-                          child: GridView.count(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
+            
+            // Modern Activity Type Selector
+            StatefulBuilder(
+              builder: (context, setModalState) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Select Type', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.heather, letterSpacing: 1.2)),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 90,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: ['Steps', 'Workout', 'Running', 'Cycling', 'Swimming', 'Yoga', 'Sleep'].map((type) => GestureDetector(
+                        onTap: () => setModalState(() => typeController.text = type),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 85,
+                          margin: const EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            color: typeController.text == type ? AppTheme.blueLagoon : (isDark ? Colors.white10 : Colors.grey[100]),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: typeController.text == type ? AppTheme.scooter : Colors.transparent, width: 2),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              'Running', 'Cycling', 'Swimming', 'Workout', 'Yoga', 'Steps', 'Sleep'
-                            ].map((type) => GestureDetector(
-                              onTap: () {
-                                setState(() => typeController.text = type);
-                                Navigator.pop(ctx);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: typeController.text == type ? AppTheme.caribbeanGreen.withValues(alpha: 0.1) : Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: typeController.text == type ? AppTheme.caribbeanGreen : Colors.transparent, width: 2),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(_getActivityIcon(type), color: typeController.text == type ? AppTheme.caribbeanGreen : Colors.grey[600]),
-                                    const SizedBox(height: 8),
-                                    Text(type, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: typeController.text == type ? AppTheme.caribbeanGreen : Colors.grey[600])),
-                                  ],
-                                ),
-                              ),
-                            )).toList(),
+                              Icon(_getActivityIcon(type), color: typeController.text == type ? AppTheme.blueLagoon : (isDark ? Colors.white38 : Colors.grey[600])),
+                              const SizedBox(height: 8),
+                              Text(type, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: typeController.text == type ? AppTheme.blueLagoon : (isDark ? Colors.white38 : Colors.grey[600]))),
+                            ],
                           ),
                         ),
-                      ],
+                      )).toList(),
                     ),
                   ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.category_rounded, color: AppTheme.caribbeanGreen),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Activity Type', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                          Text(typeController.text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
-                  ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            
+            const SizedBox(height: 24),
             TextField(
               controller: valueController,
               keyboardType: TextInputType.number,
+              style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
               decoration: InputDecoration(
-                labelText: 'Value (km / steps)',
-                prefixIcon: const Icon(Icons.add_chart_rounded,
-                    color: AppTheme.emeraldGreen),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                labelText: 'Value (km / steps / units)',
+                labelStyle: TextStyle(color: AppTheme.heather),
+                prefixIcon: const Icon(Icons.add_chart_rounded, color: AppTheme.scooter),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppTheme.scooter)),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: durationController,
               keyboardType: TextInputType.number,
+              style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
               decoration: InputDecoration(
                 labelText: 'Duration (min)',
-                prefixIcon: const Icon(Icons.timer_rounded,
-                    color: AppTheme.emeraldGreen),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                labelStyle: TextStyle(color: AppTheme.heather),
+                prefixIcon: const Icon(Icons.timer_rounded, color: AppTheme.scooter),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppTheme.scooter)),
               ),
             ),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () async {
-                if (valueController.text.isEmpty ||
-                    durationController.text.isEmpty) return;
-                final userId = Provider.of<AuthService>(context, listen: false)
-                    .currentUser!
-                    .id!;
+                if (valueController.text.isEmpty || durationController.text.isEmpty) return;
+                final userId = Provider.of<AuthService>(context, listen: false).currentUser!.id!;
                 final activity = Activity(
                   userId: userId,
                   type: typeController.text,
@@ -408,15 +314,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 _loadActivities();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.emeraldGreen,
+                backgroundColor: AppTheme.blueLagoon,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
-              child: const Text('Save Activity',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text('Save Activity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

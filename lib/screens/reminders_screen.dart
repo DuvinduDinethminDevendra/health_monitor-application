@@ -89,25 +89,22 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Smart Reminders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+        title: Text('Smart Reminders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: isDark ? Colors.white : AppTheme.sapphire)),
         backgroundColor: Colors.transparent,
-        foregroundColor: AppTheme.darkCharcoal,
+        foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
         elevation: 0,
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          GlassCard(
+          MatteCard(
             padding: const EdgeInsets.all(24),
-            gradient: LinearGradient(
-              colors: [AppTheme.emeraldGreen.withValues(alpha: 0.8), AppTheme.emeraldGreen],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: AppTheme.emeraldGreen,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -122,17 +119,17 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                const Text(
                   'Set daily reminders to maintain your healthy lifestyle',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                  style: TextStyle(color: Colors.white70),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'Daily Schedules',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.darkCharcoal),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire),
           ),
           const SizedBox(height: 16),
           ..._reminders.map((reminder) => _buildReminderCard(reminder)),
@@ -142,9 +139,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
   }
 
   Widget _buildReminderCard(_Reminder reminder) {
-    return GlassCard(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return MatteCard(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
       child: Row(
         children: [
           Container(
@@ -161,12 +160,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(reminder.title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.darkCharcoal)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : AppTheme.sapphire)),
                 const SizedBox(height: 2),
                 Text(
                   _formatTime(reminder.hour, reminder.minute),
-                  style: TextStyle(fontSize: 14, color: AppTheme.mutedGrey),
+                  style: TextStyle(fontSize: 14, color: isDark ? Colors.white60 : AppTheme.heather),
                 ),
               ],
             ),

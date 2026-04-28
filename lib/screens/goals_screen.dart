@@ -116,26 +116,30 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: AppTheme.blueLagoon));
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('My Goals',
+        title: Text('Health Goals',
             style: TextStyle(
-                fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal, fontSize: 20)),
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white : AppTheme.sapphire,
+                fontSize: 20)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.sapphire),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 40),
         child: FloatingActionButton(
-          heroTag: 'goals_fab_main',
           onPressed: () => _showAddEditBottomSheet(),
-          backgroundColor: AppTheme.emeraldGreen,
+          backgroundColor: AppTheme.blueLagoon,
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
@@ -144,259 +148,189 @@ class _GoalsScreenState extends State<GoalsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.flag_outlined, size: 80, color: Colors.grey[400]),
+                  Icon(Icons.flag_rounded,
+                      size: 80,
+                      color: AppTheme.heather.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
                   Text(
-                    'No goals set yet\nStart tracking your progress!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    'No goals set yet',
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: isDark ? Colors.white : AppTheme.sapphire,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap the + button to set your first goal',
+                    style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.only(
-                  bottom: 100, left: 16, right: 16, top: 16),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
               itemCount: _goals.length,
               itemBuilder: (context, index) {
-                final goal = _goals[index];
-                return _buildGoalCard(goal);
+                return _buildGoalCard(
+                  goal: _goals[index],
+                  onEdit: () =>
+                      _showAddEditBottomSheet(existingGoal: _goals[index]),
+                  onDelete: () async {
+                    await _goalRepo.deleteGoal(_goals[index].id!);
+                    _loadGoals();
+                  },
+                  onUpdateProgress: (val) => _updateProgress(_goals[index], val),
+                );
               },
             ),
     );
   }
 
-  Widget _buildGoalCard(Goal goal) {
-    final progress = goal.progressPercent / 100;
-    final isCompleted = goal.isCompleted || progress >= 1.0;
-
-    // Premium Category Mappings
-    IconData watermarkIcon = Icons.flag_rounded;
-    Color accentColor = AppTheme.skyBlue;
+  Widget _buildGoalCard({
+    required Goal goal,
+    required VoidCallback onEdit,
+    required VoidCallback onDelete,
+    required Function(double) onUpdateProgress,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = (goal.currentValue / goal.targetValue).clamp(0.0, 1.0);
+    final isCompleted = goal.currentValue >= goal.targetValue;
+    Color accentColor = AppTheme.scooter; 
 
     final category = goal.category.toLowerCase();
     if (category.contains('sleep')) {
-      watermarkIcon = Icons.nights_stay_rounded;
-      accentColor = AppTheme.darkCharcoal;
+      accentColor = AppTheme.scooter;
     } else if (category.contains('water')) {
-      watermarkIcon = Icons.water_drop_rounded;
       accentColor = AppTheme.skyBlue;
     } else if (category.contains('step') || category.contains('walk')) {
-      watermarkIcon = Icons.directions_run_rounded;
-      accentColor = AppTheme.emeraldGreen;
+      accentColor = AppTheme.blueLagoon;
     } else if (category.contains('diet') || category.contains('food')) {
-      watermarkIcon = Icons.restaurant_rounded;
       accentColor = AppTheme.warmOrange;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+    return MatteCard(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  goal.category.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_rounded, size: 20),
+                    onPressed: onEdit,
+                    color: isDark ? Colors.white60 : AppTheme.heather,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                    onPressed: onDelete,
+                    color: Colors.redAccent,
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Stack(
-          children: [
-            // Side indicator
-            Positioned(
-              left: 0, top: 0, bottom: 0, width: 8,
-              child: Container(color: accentColor),
+          const SizedBox(height: 12),
+          Text(
+            goal.title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: isDark ? Colors.white : AppTheme.sapphire,
+              letterSpacing: -0.5,
             ),
-            // Watermark
-            Positioned(
-              right: -10, top: -10,
-              child: Icon(watermarkIcon, size: 100, color: accentColor.withValues(alpha: 0.05)),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : AppTheme.sapphire,
+                ),
+              ),
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  color: accentColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: isDark ? Colors.white12 : Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+              minHeight: 12,
             ),
-            InkWell(
-              onTap: () => _showAddEditBottomSheet(existingGoal: goal),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: accentColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            goal.category.toUpperCase(),
-                            style: TextStyle(
-                              color: accentColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                        if (goal.reminderTime != null &&
-                            goal.reminderTime!.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppTheme.glassWhite,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.alarm,
-                                    size: 14,
-                                    color:
-                                        AppTheme.darkCharcoal.withValues(alpha: 0.7)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  goal.reminderTime!,
-                                  style: TextStyle(
-                                      color: AppTheme.darkCharcoal,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        // Circular Progress with Premium Look
-                        SizedBox(
-                          width: 65,
-                          height: 65,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              CircularProgressIndicator(
-                                value: 1.0,
-                                strokeWidth: 4,
-                                backgroundColor: Colors.transparent,
-                                color: AppTheme.glassBorder,
-                              ),
-                              CircularProgressIndicator(
-                                value: progress,
-                                strokeWidth: 7,
-                                strokeCap: StrokeCap.round,
-                                backgroundColor: Colors.transparent,
-                                color: isCompleted
-                                    ? AppTheme.emeraldGreen
-                                    : accentColor,
-                              ),
-                              Center(
-                                child: isCompleted
-                                    ? Icon(Icons.check_circle,
-                                        color: AppTheme.emeraldGreen, size: 32)
-                                    : Text(
-                                        '${(progress * 100).toInt()}%',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 14,
-                                          color: AppTheme.darkCharcoal
-                                              .withValues(alpha: 0.8),
-                                        ),
-                                      ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        // Goal Details
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                goal.title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                  color: AppTheme.darkCharcoal,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                '${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}',
-                                style: TextStyle(
-                                  color: AppTheme.mutedGrey,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Deadline: ${DateFormat('MMM dd').format(DateTime.parse(goal.deadline))}',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Quick Action button
-                    if (!isCompleted)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: () => _showProgressDialog(goal),
-                          icon: Icon(Icons.add_circle_outline,
-                              size: 18, color: accentColor),
-                          label: Text(
-                            'Log Progress',
-                            style: TextStyle(
-                                color: accentColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13),
-                          ),
-                          style: TextButton.styleFrom(
-                            backgroundColor: accentColor.withValues(alpha: 0.08),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                          ),
-                        ),
-                      ),
-                  ],
+          ),
+          const SizedBox(height: 20),
+          if (!isCompleted)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _showProgressDialog(goal),
+                icon: Icon(Icons.add_circle_outline, size: 18, color: accentColor),
+                label: Text(
+                  'Log Progress',
+                  style: TextStyle(
+                    color: accentColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: accentColor.withValues(alpha: 0.08),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
   void _showProgressDialog(Goal goal) {
     final controller = TextEditingController(text: goal.currentValue.toString());
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
         ),
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
@@ -411,23 +345,30 @@ class _GoalsScreenState extends State<GoalsScreen> {
             Center(
               child: Container(
                 width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 24),
-            Text('Update ${goal.title}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal)),
+            Text('Update ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
             const SizedBox(height: 12),
             Text('Current: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
-              style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14)),
+              style: TextStyle(color: AppTheme.heather, fontSize: 14, fontWeight: FontWeight.w600)),
             const SizedBox(height: 24),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
               autofocus: true,
+              style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
               decoration: InputDecoration(
                 labelText: 'New Current Value (${goal.unit})',
-                prefixIcon: const Icon(Icons.edit_road_rounded, color: AppTheme.emeraldGreen),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                labelStyle: TextStyle(color: AppTheme.heather),
+                prefixIcon: const Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppTheme.scooter)),
               ),
             ),
             const SizedBox(height: 32),
@@ -438,7 +379,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 Navigator.pop(ctx);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.emeraldGreen,
+                backgroundColor: AppTheme.blueLagoon,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -564,60 +505,61 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
         left: 24,
         right: 24,
-        top: 24,
+        top: 32,
       ),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Pull Handle Indicator
               Center(
                 child: Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10)),
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                widget.existingGoal == null ? 'Create New Goal' : 'Edit Goal',
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+              Text(widget.existingGoal == null ? 'Create New Goal' : 'Edit Goal', 
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
               const SizedBox(height: 24),
 
               TextFormField(
                 controller: _titleController,
+                style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                 decoration: InputDecoration(
                   labelText: 'Goal Title',
-                  prefixIcon: const Icon(Icons.flag_outlined),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  labelStyle: TextStyle(color: AppTheme.heather),
+                  prefixIcon: const Icon(Icons.flag_outlined, color: AppTheme.scooter),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: AppTheme.scooter)),
                 ),
                 validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
               ),
               const SizedBox(height: 16),
 
-              // Custom Industry Standard Selector for Goals
               GestureDetector(
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: Colors.white,
+                    backgroundColor: isDark ? AppTheme.sapphire : Colors.white,
                     shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
                     builder: (ctx) => Container(
@@ -625,9 +567,11 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Select Goal Category', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                          Text('Select Goal Category', 
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                           const SizedBox(height: 24),
-                          Expanded(
+                          SizedBox(
+                            height: 400,
                             child: ListView.separated(
                               itemCount: _categories.length,
                               separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -642,7 +586,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                                   leading: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? AppTheme.caribbeanGreen : Colors.grey[100],
+                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
@@ -651,14 +595,13 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                                       cat.contains('Sleep') ? Icons.bedtime_rounded :
                                       cat.contains('Water') ? Icons.water_drop_rounded :
                                       cat.contains('Diet') ? Icons.restaurant_rounded : Icons.flag_rounded,
-                                      color: isSelected ? Colors.white : Colors.grey[600],
+                                      color: isSelected ? Colors.white : (isDark ? Colors.white38 : Colors.grey[600]),
                                       size: 20,
                                     ),
                                   ),
-                                  title: Text(cat, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? AppTheme.caribbeanGreen : AppTheme.darkCharcoal)),
-                                  trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppTheme.caribbeanGreen) : null,
+                                  title: Text(cat, style: TextStyle(fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600, color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white70 : AppTheme.sapphire))),
+                                  trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppTheme.blueLagoon) : null,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  tileColor: isSelected ? AppTheme.caribbeanGreen.withValues(alpha: 0.05) : Colors.transparent,
                                 );
                               },
                             ),
@@ -671,37 +614,26 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey[200]!),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.category_rounded, color: AppTheme.caribbeanGreen),
+                      const Icon(Icons.category_rounded, color: AppTheme.blueLagoon),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Category / Tracking Type', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                            Text(_selectedCategory, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            Text('Category / Tracking Type', style: TextStyle(fontSize: 12, color: AppTheme.heather)),
+                            Text(_selectedCategory, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
                           ],
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.heather),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  'Industry Standard Note:\n- Daily goals (e.g. 10,000 steps) reset every day.\n- Cumulative goals track total progress over time.',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic),
                 ),
               ),
               const SizedBox(height: 16),
@@ -712,11 +644,17 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                     child: TextFormField(
                       controller: _targetController,
                       keyboardType: TextInputType.number,
+                      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
                         labelText: 'Target Value',
-                        prefixIcon: const Icon(Icons.track_changes),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        labelStyle: TextStyle(color: AppTheme.heather),
+                        prefixIcon: const Icon(Icons.track_changes, color: AppTheme.scooter),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: AppTheme.scooter)),
                       ),
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
@@ -726,11 +664,16 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                     flex: 1,
                     child: TextFormField(
                       controller: _unitController,
+                      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
                         labelText: 'Unit',
-                        hintText: 'e.g., km, kg',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        labelStyle: TextStyle(color: AppTheme.heather),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: AppTheme.scooter)),
                       ),
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
@@ -745,12 +688,12 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                     child: OutlinedButton.icon(
                       onPressed: _pickDate,
                       icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(
-                          DateFormat('MMM dd, yyyy').format(_selectedDeadline)),
+                      label: Text(DateFormat('MMM dd, yyyy').format(_selectedDeadline)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
+                        side: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                     ),
                   ),
@@ -762,8 +705,9 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       label: Text(_selectedReminderTime ?? 'Set Reminder'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
+                        side: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                     ),
                   ),
@@ -774,16 +718,15 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
               ElevatedButton(
                 onPressed: _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00BFA5),
+                  backgroundColor: AppTheme.blueLagoon,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
                 ),
                 child: Text(
                   widget.existingGoal == null ? 'Create Goal' : 'Save Changes',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

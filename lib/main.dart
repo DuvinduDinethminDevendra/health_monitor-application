@@ -36,17 +36,21 @@ class HealthMonitorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AuthService(),
-      child: MaterialApp(
-        title: 'Health Monitor',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: Consumer<AuthService>(
-          builder: (context, authService, _) {
-            return authService.isLoggedIn
+      child: Consumer<AuthService>(
+        builder: (context, authService, _) {
+          return MaterialApp(
+            title: 'Health Monitor',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: authService.isDarkMode 
+                ? ThemeMode.dark 
+                : ThemeMode.light,
+            home: authService.isLoggedIn
                 ? const DashboardScreen()
-                : const LoginScreen();
-          },
-        ),
+                : const LoginScreen(),
+          );
+        },
       ),
     );
   }

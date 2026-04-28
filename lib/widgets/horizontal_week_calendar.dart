@@ -27,6 +27,21 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
   late ScrollController _scrollController;
   late DateTime _startDate;
   final int _dayCount = 30;
+  ImageProvider? _cachedImage;
+  String? _lastProfilePicture;
+
+  ImageProvider? _getProfileImage() {
+    if (widget.profilePicture == null || widget.profilePicture!.isEmpty) {
+      _cachedImage = null;
+      _lastProfilePicture = null;
+      return null;
+    }
+    if (widget.profilePicture != _lastProfilePicture) {
+      _lastProfilePicture = widget.profilePicture;
+      _cachedImage = MemoryImage(base64Decode(widget.profilePicture!));
+    }
+    return _cachedImage;
+  }
 
   @override
   void initState() {
@@ -73,10 +88,10 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.emeraldGreen,
+            colorScheme: ColorScheme.light(
+              primary: AppTheme.blueLagoon,
               onPrimary: Colors.white,
-              onSurface: AppTheme.darkCharcoal,
+              onSurface: AppTheme.sapphire,
             ),
           ),
           child: child!,
@@ -94,13 +109,27 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? AppTheme.scooter : AppTheme.blueLagoon;
+    final headerBg = isDark ? AppTheme.sapphire : AppTheme.alabaster;
+    final textColor = isDark ? Colors.white : AppTheme.sapphire;
+    final subTextColor = isDark ? Colors.white70 : AppTheme.sapphire.withValues(alpha: 0.6);
+
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkCharcoal.withValues(alpha: 0.95),
+        color: headerBg,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(35),
           bottomRight: Radius.circular(35),
         ),
+        boxShadow: [
+          if (!isDark) 
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
       ),
       child: SafeArea(
         bottom: false,
@@ -119,25 +148,26 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                       Text(
                         'Hello, ${widget.userName}',
                         style: TextStyle(
-                          color: AppTheme.emeraldGreen.withValues(alpha: 0.8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
                         ),
                       ),
+                      const SizedBox(height: 2),
                       GestureDetector(
                         onTap: _selectFullDate,
                         child: Row(
                           children: [
                             Text(
                               DateFormat('MMMM, yyyy').format(widget.selectedDate),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                              style: TextStyle(
+                                color: subTextColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 20),
+                            Icon(Icons.keyboard_arrow_down_rounded, color: subTextColor, size: 18),
                           ],
                         ),
                       ),
@@ -149,16 +179,14 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.emeraldGreen, width: 2),
+                        border: Border.all(color: primaryColor, width: 2),
                       ),
                       child: CircleAvatar(
                         radius: 16,
-                        backgroundColor: Colors.white10,
-                        backgroundImage: (widget.profilePicture != null && widget.profilePicture!.isNotEmpty)
-                            ? MemoryImage(base64Decode(widget.profilePicture!))
-                            : null,
+                        backgroundColor: isDark ? AppTheme.blueLagoon : Colors.white,
+                        backgroundImage: _getProfileImage(),
                         child: (widget.profilePicture == null || widget.profilePicture!.isEmpty)
-                            ? const Icon(Icons.person, color: Colors.white, size: 18)
+                            ? Icon(Icons.person, color: isDark ? Colors.white : AppTheme.sapphire, size: 18)
                             : null,
                       ),
                     ),
@@ -193,12 +221,12 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                           duration: const Duration(milliseconds: 250),
                           width: 50,
                           decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.caribbeanGreen : AppTheme.bangladeshGreen.withValues(alpha: 0.3),
+                            color: isSelected ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: isSelected ? [
                               BoxShadow(
-                                color: AppTheme.caribbeanGreen.withValues(alpha: 0.4),
-                                blurRadius: 12,
+                                color: primaryColor.withValues(alpha: 0.3),
+                                blurRadius: 10,
                                 offset: const Offset(0, 4),
                               )
                             ] : null,
@@ -209,7 +237,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                               Text(
                                 DateFormat('E').format(date).substring(0, 1),
                                 style: TextStyle(
-                                  color: isSelected ? AppTheme.richBlack : AppTheme.antiFlashWhite.withValues(alpha: 0.5),
+                                  color: isSelected ? Colors.white : (isDark ? Colors.white60 : AppTheme.sapphire.withValues(alpha: 0.5)),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -218,7 +246,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                               Text(
                                 date.day.toString(),
                                 style: TextStyle(
-                                  color: isSelected ? AppTheme.richBlack : AppTheme.antiFlashWhite,
+                                  color: isSelected ? Colors.white : (isDark ? Colors.white : AppTheme.sapphire),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
                                 ),

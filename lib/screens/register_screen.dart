@@ -23,18 +23,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
-  // Spotify-style interests
   final List<String> _availableTopics = [
-    'Fitness',
-    'Diet',
-    'Meditation',
-    'Hydration',
-    'Weight Loss',
-    'Muscle Gain',
-    'Sleep',
-    'Running',
-    'Yoga',
-    'Healthy Habits'
+    'Fitness', 'Diet', 'Meditation', 'Hydration', 
+    'Weight Loss', 'Muscle Gain', 'Sleep', 'Running', 
+    'Yoga', 'Healthy Habits'
   ];
   final List<String> _selectedTopics = [];
 
@@ -50,207 +42,94 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _nextPage() {
     if (_formKey.currentState!.validate()) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
   }
 
-  void _previousPage() {
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
+  void _previousPage() => _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
 
-  Future<void> _registerAndSaveTopics() async {
+  Future<void> _register() async {
     if (_selectedTopics.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please select at least one topic!'),
-            backgroundColor: Colors.orange),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select at least one topic!'), backgroundColor: Colors.orange));
       return;
     }
-
     setState(() => _isLoading = true);
-
     final authService = Provider.of<AuthService>(context, listen: false);
     final error = await authService.register(
       _emailController.text.trim(),
       _passwordController.text,
       _nameController.text.trim(),
     );
-
     if (error != null) {
       setState(() => _isLoading = false);
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Registration Failed'),
-            content: Text(error),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('OK'),
-              ),
-            ],
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
-        _previousPage(); // Go back to fix errors
-      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+      _previousPage();
       return;
     }
-
-    // Wait briefly for onAuthStateChanged to sync user to SQLite
     await Future.delayed(const Duration(milliseconds: 1000));
-
     if (mounted) {
-      final currentUser =
-          Provider.of<AuthService>(context, listen: false).currentUser;
-      if (currentUser != null) {
-        await Provider.of<AuthService>(context, listen: false)
-            .updateUserProfile(
-                currentUser.copyWith(interests: _selectedTopics));
-      }
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        (route) => false,
-      );
+      final user = authService.currentUser;
+      if (user != null) await authService.updateUserProfile(user.copyWith(interests: _selectedTopics));
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const DashboardScreen()), (route) => false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.backgroundLight,
-              AppTheme.emeraldGreen.withValues(alpha: 0.05),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.darkCharcoal),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Text(
-                      'Create Account',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.darkCharcoal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildCredentialsPage(),
-                    _buildTopicsPage(),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        color: isDark ? AppTheme.backgroundDark : AppTheme.alabaster,
+        child: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildCredentialsPage(isDark),
+            _buildTopicsPage(isDark),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildCredentialsPage() {
+  Widget _buildCredentialsPage(bool isDark) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: GlassCard(
-          padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(24),
+        child: MatteCard(
+          padding: const EdgeInsets.all(32),
+          color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Join Us!',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.emeraldGreen,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Start your health journey today',
-                  style: TextStyle(fontSize: 16, color: AppTheme.mutedGrey),
-                ),
+                Icon(Icons.person_add_rounded, size: 64, color: AppTheme.scooter),
+                const SizedBox(height: 16),
+                Text('Create Account', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
                 const SizedBox(height: 32),
-                _buildTextField(_nameController, 'Full Name', Icons.person_outline_rounded),
+                _buildField(_nameController, 'Full Name', Icons.person_outline, isDark),
                 const SizedBox(height: 16),
-                _buildTextField(_emailController, 'Email Address', Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress),
+                _buildField(_emailController, 'Email Address', Icons.email_outlined, isDark),
                 const SizedBox(height: 16),
-                _buildTextField(_passwordController, 'Password', Icons.lock_outline_rounded,
-                    isPassword: true,
-                    obscure: _obscurePassword,
-                    onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
+                _buildField(_passwordController, 'Password', Icons.lock_outline, isDark, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
                 const SizedBox(height: 16),
-                _buildTextField(_confirmPasswordController, 'Confirm Password', Icons.lock_outline_rounded,
-                    isPassword: true,
-                    obscure: _obscureConfirm,
-                    onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
+                _buildField(_confirmPasswordController, 'Confirm Password', Icons.lock_outline, isDark, obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
                 const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _nextPage,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    backgroundColor: AppTheme.emeraldGreen,
-                    elevation: 8,
-                    shadowColor: AppTheme.emeraldGreen.withValues(alpha: 0.3),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Already have an account? ', style: TextStyle(color: AppTheme.mutedGrey)),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(color: AppTheme.emeraldGreen, fontWeight: FontWeight.bold),
-                      ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    onPressed: _nextPage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.blueLagoon,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
                     ),
-                  ],
+                    child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                  ),
                 ),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text("Already have an account? Login", style: TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.bold))),
               ],
             ),
           ),
@@ -259,128 +138,75 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon,
-      {TextInputType? keyboardType, bool isPassword = false, bool? obscure, VoidCallback? onToggle}) {
+  Widget _buildField(TextEditingController controller, String label, IconData icon, bool isDark, {bool? obscure, VoidCallback? onToggle}) {
     return TextFormField(
       controller: controller,
       obscureText: obscure ?? false,
-      keyboardType: keyboardType,
+      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppTheme.emeraldGreen),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(obscure! ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                    color: AppTheme.mutedGrey),
-                onPressed: onToggle,
-              )
-            : null,
+        labelStyle: TextStyle(color: isDark ? Colors.white38 : AppTheme.heather),
+        prefixIcon: Icon(icon, color: AppTheme.scooter),
+        suffixIcon: onToggle != null ? IconButton(icon: Icon(obscure! ? Icons.visibility_off : Icons.visibility, color: AppTheme.heather), onPressed: onToggle) : null,
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppTheme.emeraldGreen, width: 2),
-        ),
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
       ),
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Please enter $label';
-        if (label.contains('Email')) {
-          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-          if (!emailRegex.hasMatch(v)) return 'Enter a valid email';
-        }
-        if (label == 'Password' && v.length < 6) return 'Password too short';
-        return null;
-      },
+      validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
     );
   }
 
-  Widget _buildTopicsPage() {
+  Widget _buildTopicsPage(bool isDark) {
     return Center(
-      child: GlassCard(
-        margin: const EdgeInsets.all(24.0),
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Your Interests',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.emeraldGreen),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Select what matters most to you',
-              style: TextStyle(fontSize: 16, color: AppTheme.mutedGrey),
-            ),
-            const SizedBox(height: 32),
-            Wrap(
-              spacing: 10.0,
-              runSpacing: 10.0,
-              children: _availableTopics.map((topic) {
-                final isSelected = _selectedTopics.contains(topic);
-                return FilterChip(
-                  label: Text(topic),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : AppTheme.darkCharcoal,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedTopics.add(topic);
-                      } else {
-                        _selectedTopics.remove(topic);
-                      }
-                    });
-                  },
-                  selectedColor: AppTheme.emeraldGreen,
-                  checkmarkColor: Colors.white,
-                  backgroundColor: Colors.white.withValues(alpha: 0.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 40),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: _isLoading ? null : _previousPage,
-                  child: const Text('Back',
-                      style: TextStyle(fontSize: 16, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _registerAndSaveTopics,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      backgroundColor: AppTheme.emeraldGreen,
-                      elevation: 8,
-                      shadowColor: AppTheme.emeraldGreen.withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: MatteCard(
+          padding: const EdgeInsets.all(32),
+          color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Your Interests', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
+              const SizedBox(height: 8),
+              Text('Select what matters to you', style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600])),
+              const SizedBox(height: 32),
+              Wrap(
+                spacing: 8, runSpacing: 8,
+                children: _availableTopics.map((t) {
+                  final sel = _selectedTopics.contains(t);
+                  return FilterChip(
+                    label: Text(t),
+                    selected: sel,
+                    onSelected: (s) => setState(() => s ? _selectedTopics.add(t) : _selectedTopics.remove(t)),
+                    selectedColor: AppTheme.scooter,
+                    checkmarkColor: Colors.white,
+                    labelStyle: TextStyle(color: sel ? Colors.white : (isDark ? Colors.white70 : AppTheme.sapphire), fontWeight: sel ? FontWeight.bold : FontWeight.normal),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 40),
+              Row(
+                children: [
+                  TextButton(onPressed: _isLoading ? null : _previousPage, child: const Text('Back', style: TextStyle(color: AppTheme.heather, fontWeight: FontWeight.bold))),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.blueLagoon,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Get Started', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                      ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                        : const Text('Get Started',
-                            style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -75,9 +75,11 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                   final color = _cardColors[index % _cardColors.length];
                   final icon = _tipIcons[index % _tipIcons.length];
 
-                  return GlassCard(
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  return MatteCard(
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: EdgeInsets.zero,
+                    color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(24),
                       onTap: () => _showTipDetail(tip, color),
@@ -100,10 +102,10 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                 children: [
                                   Text(
                                     tip.title,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 16,
-                                      color: AppTheme.darkCharcoal,
+                                      color: isDark ? Colors.white : AppTheme.sapphire,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -112,7 +114,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                     style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
-                                        color: AppTheme.darkCharcoal.withValues(alpha: 0.5)),
+                                        color: isDark ? Colors.white60 : AppTheme.heather),
                                   ),
                                 ],
                               ),
