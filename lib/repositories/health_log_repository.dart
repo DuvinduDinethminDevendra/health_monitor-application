@@ -20,6 +20,16 @@ class HealthLogRepository {
     return await insertLog(log);
   }
 
+  Future<int> updateHealthLog(HealthLog log) async {
+    final db = await _dbHelper.database;
+    return await db.update(
+      'health_logs',
+      log.toMap(),
+      where: 'id = ?',
+      whereArgs: [log.id],
+    );
+  }
+
   Future<List<HealthLog>> getLogsByUser(String userId) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query(

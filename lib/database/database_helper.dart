@@ -32,7 +32,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -81,6 +81,17 @@ class DatabaseHelper {
       await db.execute("ALTER TABLE reminders ADD COLUMN repeat_days TEXT NOT NULL DEFAULT '1111111'");
       await db.execute('ALTER TABLE reminders ADD COLUMN vibration INTEGER NOT NULL DEFAULT 1');
       await db.execute("ALTER TABLE reminders ADD COLUMN sound_name TEXT NOT NULL DEFAULT 'default'");
+    }
+    if (oldVersion < 8) {
+      await db.execute('ALTER TABLE health_logs ADD COLUMN tags TEXT');
+      await db.execute('ALTER TABLE health_logs ADD COLUMN notes TEXT');
+    }
+    if (oldVersion < 9) {
+      await db.execute("ALTER TABLE health_logs ADD COLUMN unit TEXT NOT NULL DEFAULT 'metric'");
+      await db.execute('ALTER TABLE health_logs ADD COLUMN waist REAL');
+      await db.execute('ALTER TABLE health_logs ADD COLUMN hip REAL');
+      await db.execute('ALTER TABLE health_logs ADD COLUMN chest REAL');
+      await db.execute('ALTER TABLE health_logs ADD COLUMN body_fat REAL');
     }
   }
 
@@ -140,6 +151,13 @@ class DatabaseHelper {
         height REAL,
         bmi REAL,
         date TEXT,
+        tags TEXT,
+        notes TEXT,
+        unit TEXT NOT NULL DEFAULT 'metric',
+        waist REAL,
+        hip REAL,
+        chest REAL,
+        body_fat REAL,
         sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
