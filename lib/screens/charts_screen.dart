@@ -154,12 +154,18 @@ class _ChartsScreenState extends State<ChartsScreen>
           cat.contains('(daily)');
     }).toList();
 
+    final now = DateTime.now();
     final cumulativeGoals = _goals.where((g) {
       final cat = g.category.toLowerCase();
-      return !(cat == 'sleep' ||
+      final isCumulative = !(cat == 'sleep' ||
           cat == 'water' ||
           cat == 'diet' ||
           cat.contains('(daily)'));
+      if (!isCumulative) return false;
+      
+      // Filter out goals where deadline has passed
+      final deadline = DateTime.parse(g.deadline);
+      return deadline.isAfter(now);
     }).toList();
 
     return SingleChildScrollView(
@@ -208,9 +214,10 @@ class _ChartsScreenState extends State<ChartsScreen>
                     touchTooltipData: BarTouchTooltipData(
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final goal = cumulativeGoals[groupIndex];
+                        final deadlineStr = DateFormat('MMM dd').format(DateTime.parse(goal.deadline));
                         return BarTooltipItem(
-                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}\n${rod.toY.toInt()}%',
-                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}\nDeadline: $deadlineStr\n${rod.toY.toInt()}%',
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                         );
                       },
                     ),

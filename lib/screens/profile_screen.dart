@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -141,10 +142,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Smart Profile'),
+        title: const Text('Smart Profile',
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         backgroundColor: Colors.transparent,
         foregroundColor: AppTheme.darkCharcoal,
         elevation: 0,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            onPressed: () async {
+              await Provider.of<AuthService>(context, listen: false).logout();
+              if (mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: user == null
           ? const Center(child: Text("User not found."))

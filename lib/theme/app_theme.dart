@@ -24,14 +24,14 @@ class AppTheme {
       onSurface: darkCharcoal,
     ),
     textTheme: const TextTheme(
-      displayLarge: TextStyle(color: darkCharcoal, fontWeight: FontWeight.bold),
-      displayMedium:
-          TextStyle(color: darkCharcoal, fontWeight: FontWeight.bold),
-      bodyLarge: TextStyle(color: darkCharcoal),
-      bodyMedium: TextStyle(color: darkCharcoal),
-      bodySmall: TextStyle(color: mutedGrey),
+      displayLarge: TextStyle(color: darkCharcoal, fontWeight: FontWeight.w900, letterSpacing: -1.5),
+      displayMedium: TextStyle(color: darkCharcoal, fontWeight: FontWeight.w900, letterSpacing: -1),
+      headlineMedium: TextStyle(color: darkCharcoal, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+      bodyLarge: TextStyle(color: darkCharcoal, letterSpacing: -0.2),
+      bodyMedium: TextStyle(color: darkCharcoal, letterSpacing: -0.2),
+      bodySmall: TextStyle(color: mutedGrey, letterSpacing: -0.1),
     ),
-    fontFamily: 'Roboto',
+    fontFamily: 'Inter', // Modern premium sans-serif feel
   );
 }
 

@@ -32,6 +32,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double _latestBmi = 0;
   String _bmiCategory = 'N/A';
   DateTime _selectedDate = DateTime.now();
+  int _touchedIndex = -1;
 
   @override
   void initState() {
@@ -248,11 +249,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  final ScrollController _scrollController = ScrollController();
+
+  void _onItemTapped(int index) {
+    if (index == _currentIndex) {
+      // If home is already selected and tapped again, reset the view
+      if (index == 0 && _scrollController.hasClients) {
+        _scrollController.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeOutBack);
+      }
+    }
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() => _currentIndex = index);
+        _onItemTapped(index);
         if (index == 0) _loadDashboardData();
       },
       child: Container(
@@ -293,6 +308,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: RefreshIndicator(
             onRefresh: _loadDashboardData,
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.only(
                   left: 16, right: 16, top: 16, bottom: 100),
@@ -348,6 +364,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               PieChart(
                                 PieChartData(
+                                  pieTouchData: PieTouchData(
+                                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                      setState(() {
+                                        if (!event.isInterestedForInteractions ||
+                                            pieTouchResponse == null ||
+                                            pieTouchResponse.touchedSection == null) {
+                                          _touchedIndex = -1;
+                                          return;
+                                        }
+                                        _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                                      });
+                                    },
+                                  ),
                                   sectionsSpace: 0,
                                   centerSpaceRadius: 70,
                                   startDegreeOffset: -90,
@@ -355,7 +384,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     PieChartSectionData(
                                       value: 70,
                                       color: AppTheme.emeraldGreen,
-                                      radius: 20,
+                                      radius: _touchedIndex == 0 ? 30 : 20,
                                       showTitle: false,
                                       badgeWidget: _buildPieBadge(Icons.directions_run_rounded, AppTheme.emeraldGreen),
                                       badgePositionPercentageOffset: 1,
@@ -363,13 +392,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     PieChartSectionData(
                                       value: 15,
                                       color: AppTheme.warmOrange,
-                                      radius: 16,
+                                      radius: _touchedIndex == 1 ? 25 : 16,
                                       showTitle: false,
                                     ),
                                     PieChartSectionData(
                                       value: 15,
                                       color: AppTheme.skyBlue,
-                                      radius: 12,
+                                      radius: _touchedIndex == 2 ? 22 : 12,
                                       showTitle: false,
                                     ),
                                   ],
@@ -379,7 +408,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '8,432',
+                                    _touchedIndex == 1 ? _activeGoals.toString() : (_touchedIndex == 2 ? 'Optimal' : '8,432'),
                                     style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.w900,
@@ -388,9 +417,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'STEPS TODAY',
+                                    _touchedIndex == 1 ? 'ACTIVE GOALS' : (_touchedIndex == 2 ? 'HEALTH STATE' : 'STEPS TODAY'),
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w800,
                                       color: AppTheme.darkCharcoal.withValues(alpha: 0.4),
                                       letterSpacing: 1.5,
@@ -515,13 +544,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
             colors: [
-              color.withValues(alpha: 0.15),
-              color.withValues(alpha: 0.05),
+              color.withValues(alpha: 0.25),
+              color.withValues(alpha: 0.1),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(

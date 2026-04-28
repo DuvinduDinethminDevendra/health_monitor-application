@@ -384,41 +384,67 @@ class _GoalsScreenState extends State<GoalsScreen> {
   }
 
   void _showProgressDialog(Goal goal) {
-    final controller =
-        TextEditingController(text: goal.currentValue.toString());
-    showDialog(
+    final controller = TextEditingController(text: goal.currentValue.toString());
+
+    showModalBottomSheet(
       context: context,
-      useRootNavigator: true,
-      builder: (context) => AlertDialog(
-        title: Text('Update ${goal.title}'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Current ${goal.unit}',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final val = double.tryParse(controller.text) ?? goal.currentValue;
-              _updateProgress(goal, val);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A73E8),
-                foregroundColor: Colors.white),
-            child: const Text('Save'),
-          ),
-        ],
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
+          left: 24,
+          right: 24,
+          top: 32,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Update ${goal.title}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal)),
+            const SizedBox(height: 12),
+            Text('Current: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
+              style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14)),
+            const SizedBox(height: 24),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'New Current Value (${goal.unit})',
+                prefixIcon: const Icon(Icons.edit_road_rounded, color: AppTheme.emeraldGreen),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                final val = double.tryParse(controller.text) ?? goal.currentValue;
+                _updateProgress(goal, val);
+                Navigator.pop(ctx);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.emeraldGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+              child: const Text('Save Progress', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
   }

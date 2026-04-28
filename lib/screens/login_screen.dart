@@ -86,37 +86,54 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.health_and_safety_rounded,
-                          size: 64,
-                          color: AppTheme.emeraldGreen,
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.health_and_safety_rounded,
+                            size: 48,
+                            color: AppTheme.emeraldGreen,
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         const Text(
                           'Health Monitor',
                           style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.emeraldGreen,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1.5,
+                            color: AppTheme.darkCharcoal,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Sign in to your account',
+                          'Your journey to wellness starts here',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
                             color: AppTheme.mutedGrey,
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 40),
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                           decoration: InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: const Icon(Icons.email_outlined),
+                            labelText: 'Email Address',
+                            prefixIcon: const Icon(Icons.email_rounded, color: AppTheme.emeraldGreen),
+                            filled: true,
+                            fillColor: Colors.white.withValues(alpha: 0.5),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
                             ),
                           ),
                           validator: (value) {
