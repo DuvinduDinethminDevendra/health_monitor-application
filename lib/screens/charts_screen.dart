@@ -12,7 +12,8 @@ import '../models/health_log.dart';
 import '../models/goal.dart';
 
 class ChartsScreen extends StatefulWidget {
-  const ChartsScreen({super.key});
+  final int initialIndex;
+  const ChartsScreen({super.key, this.initialIndex = 0});
 
   @override
   State<ChartsScreen> createState() => _ChartsScreenState();
@@ -30,7 +31,7 @@ class _ChartsScreenState extends State<ChartsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialIndex);
     _loadData();
   }
 
@@ -140,8 +141,21 @@ class _ChartsScreenState extends State<ChartsScreen>
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
-            SizedBox(
+            Container(
               height: 250,
+              padding: const EdgeInsets.fromLTRB(10, 20, 20, 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey[100]!),
+              ),
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
@@ -169,7 +183,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 title.length > 8 ? '${title.substring(0, 8)}...' : title,
-                                style: const TextStyle(fontSize: 10),
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
                               ),
                             );
                           }
@@ -177,8 +191,15 @@ class _ChartsScreenState extends State<ChartsScreen>
                         },
                       ),
                     ),
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: true, reservedSize: 40, interval: 25),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true, 
+                        reservedSize: 40, 
+                        interval: 25,
+                        getTitlesWidget: (value, meta) {
+                          return Text('${value.toInt()}%', style: const TextStyle(fontSize: 10, color: Colors.grey));
+                        }
+                      ),
                     ),
                     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -190,9 +211,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                     horizontalInterval: 25,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: Colors.grey.withValues(alpha: 0.3),
+                        color: Colors.grey.withOpacity(0.1),
                         strokeWidth: 1,
-                        dashArray: [5, 5],
                       );
                     },
                   ),
@@ -209,12 +229,12 @@ class _ChartsScreenState extends State<ChartsScreen>
                         BarChartRodData(
                           toY: percent,
                           color: palette[index % palette.length],
-                          width: 20,
+                          width: 22,
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: 100,
-                            color: Colors.grey[200],
+                            color: Colors.grey[100],
                           ),
                         ),
                       ],
@@ -272,8 +292,21 @@ class _ChartsScreenState extends State<ChartsScreen>
                 children: [
                   Text('${goal.title} (${goal.unit})', style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  SizedBox(
+                  Container(
                     height: 150,
+                    padding: const EdgeInsets.fromLTRB(10, 15, 20, 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.grey[100]!),
+                    ),
                     child: LineChart(
                       LineChartData(
                         minX: 0,
@@ -296,18 +329,22 @@ class _ChartsScreenState extends State<ChartsScreen>
                             },
                           ),
                         ),
-                        gridData: FlGridData(show: true, drawVerticalLine: false),
+                        gridData: FlGridData(
+                          show: true, 
+                          drawVerticalLine: false,
+                          getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.05), strokeWidth: 1),
+                        ),
                         extraLinesData: ExtraLinesData(
                           horizontalLines: [
                             HorizontalLine(
                               y: goal.targetValue,
-                              color: Colors.redAccent.withOpacity(0.8),
-                              strokeWidth: 2,
-                              dashArray: [5, 5], // Industry standard dashed line
+                              color: Colors.redAccent.withOpacity(0.6),
+                              strokeWidth: 1.5,
+                              dashArray: [5, 5],
                               label: HorizontalLineLabel(
                                 show: true,
-                                labelResolver: (line) => 'Goal: ${goal.targetValue}',
-                                style: const TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                                labelResolver: (line) => 'Goal',
+                                style: const TextStyle(color: Colors.redAccent, fontSize: 9, fontWeight: FontWeight.bold),
                                 padding: const EdgeInsets.only(left: 4, bottom: 4),
                               ),
                             )
@@ -317,16 +354,16 @@ class _ChartsScreenState extends State<ChartsScreen>
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 6, // 30 days / 5 labels = interval of 6
+                              interval: 6,
                               getTitlesWidget: (value, meta) {
-                                if (value % 1 != 0) return const Text(''); // Prevent duplicates
+                                if (value % 1 != 0) return const Text('');
                                 final daysAgo = 29 - value.toInt();
                                 final date = now.subtract(Duration(days: daysAgo));
                                 return Padding(
-                                  padding: const EdgeInsets.only(top: 8),
+                                  padding: const EdgeInsets.only(top: 4),
                                   child: Text(
                                     daysAgo == 0 ? 'Today' : DateFormat('MM/dd').format(date), 
-                                    style: const TextStyle(fontSize: 10)
+                                    style: const TextStyle(fontSize: 9, color: Colors.grey)
                                   ),
                                 );
                               },
@@ -335,9 +372,9 @@ class _ChartsScreenState extends State<ChartsScreen>
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true, 
-                              reservedSize: 40,
+                              reservedSize: 35,
                               getTitlesWidget: (value, meta) {
-                                return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                                return Text(value.toInt().toString(), style: const TextStyle(fontSize: 9, color: Colors.grey));
                               }
                             ),
                           ),
@@ -354,11 +391,11 @@ class _ChartsScreenState extends State<ChartsScreen>
                             isStrokeCapRound: true,
                             dotData: FlDotData(
                               show: true,
-                              checkToShowDot: (spot, barData) => spot.x == 29 || spot.y > 0, // Show dots only if data exists or today
+                              checkToShowDot: (spot, barData) => spot.x == 29 || spot.y > 0,
                             ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: color.withOpacity(0.15),
+                              color: color.withOpacity(0.1),
                             ),
                           ),
                         ],
@@ -378,64 +415,129 @@ class _ChartsScreenState extends State<ChartsScreen>
           ),
           const SizedBox(height: 12),
           ..._goals.map((goal) {
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            // Premium Category Mappings (Reuse Goal Screen Aesthetic)
+            IconData watermarkIcon = Icons.flag;
+            Color cardColor = Colors.white;
+            Color accentColor = const Color(0xFF1A73E8);
+
+            final category = goal.category.toLowerCase();
+            if (category.contains('sleep')) {
+              watermarkIcon = Icons.nights_stay;
+              cardColor = const Color(0xFFE8EAF6);
+              accentColor = const Color(0xFF3F51B5);
+            } else if (category.contains('water')) {
+              watermarkIcon = Icons.water_drop;
+              cardColor = const Color(0xFFE1F5FE);
+              accentColor = const Color(0xFF0288D1);
+            } else if (category.contains('step') || category.contains('walk')) {
+              watermarkIcon = Icons.directions_run;
+              cardColor = const Color(0xFFE8F5E9);
+              accentColor = const Color(0xFF2E7D32);
+            } else if (category.contains('diet') || category.contains('food')) {
+              watermarkIcon = Icons.restaurant;
+              cardColor = const Color(0xFFFFF3E0);
+              accentColor = const Color(0xFFEF6C00);
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            goal.title,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
-                        Chip(
-                          label: Text(goal.category),
-                          backgroundColor: const Color(0xFFE3F2FD),
-                          labelStyle: const TextStyle(color: Color(0xFF1565C0), fontSize: 12),
-                        ),
-                      ],
+                    // Watermark
+                    Positioned(
+                      right: -15,
+                      top: -15,
+                      child: Icon(
+                        watermarkIcon,
+                        size: 100,
+                        color: accentColor.withOpacity(0.07),
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    FutureBuilder<String>(
-                      future: _goalRepo.getPredictiveInsight(goal.id!),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const LinearProgressIndicator();
-                        }
-                        final insight = snapshot.data ?? 'Calculating...';
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(Icons.auto_graph, color: Color(0xFFFB8C00), size: 20),
-                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  insight,
+                                  goal.title,
                                   style: const TextStyle(
-                                    color: Color(0xFFE65100),
-                                    fontStyle: FontStyle.italic,
+                                      fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: accentColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  goal.category.toUpperCase(),
+                                  style: TextStyle(
+                                    color: accentColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                    letterSpacing: 1.1,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      },
-                    )
+                          const SizedBox(height: 16),
+                          FutureBuilder<String>(
+                            future: _goalRepo.getPredictiveInsight(goal.id!),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const LinearProgressIndicator();
+                              }
+                              final insight = snapshot.data ?? 'Calculating...';
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: accentColor.withOpacity(0.1)),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.auto_graph, color: accentColor, size: 20),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        insight,
+                                        style: TextStyle(
+                                          color: accentColor.withOpacity(0.9),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          )
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -116,34 +116,33 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('My Goals'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black87,
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChartsScreen()),
-              );
-            },
-            icon: const Icon(Icons.show_chart, color: Color(0xFF1A73E8)),
-            label: const Text(
-              'View Charts',
-              style: TextStyle(color: Color(0xFF1A73E8), fontWeight: FontWeight.bold),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(left: 32),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              heroTag: 'charts_fab',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChartsScreen(initialIndex: 2)),
+                );
+              },
+              backgroundColor: const Color(0xFF1A73E8),
+              child: const Icon(Icons.show_chart, color: Colors.white),
             ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddEditBottomSheet(),
-        backgroundColor: const Color(0xFF00BFA5),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Add Goal',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            FloatingActionButton.extended(
+              heroTag: 'add_goal_fab',
+              onPressed: () => _showAddEditBottomSheet(),
+              backgroundColor: const Color(0xFF00BFA5),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Add Goal',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
       body: _goals.isEmpty
           ? Center(
@@ -162,7 +161,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             )
           : ListView.builder(
               padding: const EdgeInsets.only(
-                  bottom: 80, left: 16, right: 16, top: 16),
+                  bottom: 100, left: 16, right: 16, top: 16),
               itemCount: _goals.length,
               itemBuilder: (context, index) {
                 final goal = _goals[index];
@@ -176,130 +175,203 @@ class _GoalsScreenState extends State<GoalsScreen> {
     final progress = goal.progressPercent / 100;
     final isCompleted = goal.isCompleted || progress >= 1.0;
 
-    return Card(
+    // Premium Category Mappings
+    IconData watermarkIcon = Icons.flag;
+    Color cardColor = Colors.white;
+    Color accentColor = const Color(0xFF1A73E8);
+
+    final category = goal.category.toLowerCase();
+    if (category.contains('sleep')) {
+      watermarkIcon = Icons.nights_stay;
+      cardColor = const Color(0xFFE8EAF6); // Very light indigo
+      accentColor = const Color(0xFF3F51B5);
+    } else if (category.contains('water')) {
+      watermarkIcon = Icons.water_drop;
+      cardColor = const Color(0xFFE1F5FE); // Very light blue
+      accentColor = const Color(0xFF0288D1);
+    } else if (category.contains('step') || category.contains('walk')) {
+      watermarkIcon = Icons.directions_run;
+      cardColor = const Color(0xFFE8F5E9); // Very light green
+      accentColor = const Color(0xFF2E7D32);
+    } else if (category.contains('diet') || category.contains('food')) {
+      watermarkIcon = Icons.restaurant;
+      cardColor = const Color(0xFFFFF3E0); // Very light orange
+      accentColor = const Color(0xFFEF6C00);
+    }
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => _showAddEditBottomSheet(existingGoal: goal),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Chip(
-                    label: Text(goal.category),
-                    backgroundColor: const Color(0xFFE3F2FD),
-                    labelStyle: const TextStyle(
-                        color: Color(0xFF1A73E8),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12),
-                  ),
-                  if (goal.reminderTime != null &&
-                      goal.reminderTime!.isNotEmpty)
-                    Row(
-                      children: [
-                        const Icon(Icons.alarm, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(goal.reminderTime!,
-                            style: TextStyle(
-                                color: Colors.grey[700], fontSize: 12)),
-                      ],
-                    ),
-                ],
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Watermark Icon
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Icon(
+                watermarkIcon,
+                size: 120,
+                color: accentColor.withOpacity(0.08),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  // Circular Progress Indicator
-                  SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Stack(
-                      fit: StackFit.expand,
+            ),
+            InkWell(
+              onTap: () => _showAddEditBottomSheet(existingGoal: goal),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 6,
-                          backgroundColor: Colors.grey[200],
-                          color: isCompleted
-                              ? Colors.green
-                              : const Color(0xFF1A73E8),
-                        ),
-                        Center(
-                          child: isCompleted
-                              ? const Icon(Icons.check,
-                                  color: Colors.green, size: 30)
-                              : Text(
-                                  '${(progress * 100).toInt()}%',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  // Goal Information
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          goal.title,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            decoration:
-                                isCompleted ? TextDecoration.lineThrough : null,
-                            color: isCompleted ? Colors.grey : Colors.black87,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            goal.category.toUpperCase(),
+                            style: TextStyle(
+                              color: accentColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                              letterSpacing: 1.2,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today,
-                                size: 14, color: Colors.orange),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Due: ${DateFormat('MMM dd, yyyy').format(DateTime.parse(goal.deadline))}',
-                              style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500),
+                        if (goal.reminderTime != null && goal.reminderTime!.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                Icon(Icons.alarm, size: 14, color: Colors.grey[700]),
+                                const SizedBox(width: 4),
+                                Text(
+                                  goal.reminderTime!,
+                                  style: TextStyle(color: Colors.grey[800], fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        // Circular Progress with Premium Look
+                        SizedBox(
+                          width: 65,
+                          height: 65,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CircularProgressIndicator(
+                                value: 1.0,
+                                strokeWidth: 4,
+                                backgroundColor: Colors.transparent,
+                                color: Colors.white.withOpacity(0.3),
+                              ),
+                              CircularProgressIndicator(
+                                value: progress,
+                                strokeWidth: 7,
+                                strokeCap: StrokeCap.round,
+                                backgroundColor: Colors.white.withOpacity(0.4),
+                                color: isCompleted ? Colors.green[600] : accentColor,
+                              ),
+                              Center(
+                                child: isCompleted
+                                    ? Icon(Icons.check_circle, color: Colors.green[700], size: 32)
+                                    : Text(
+                                        '${(progress * 100).toInt()}%',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 14,
+                                          color: accentColor,
+                                        ),
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        // Goal Details
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                goal.title,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: Colors.black.withOpacity(0.85),
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}',
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Deadline: ${DateFormat('MMM dd').format(DateTime.parse(goal.deadline))}',
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Quick action buttons
-              if (!isCompleted)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton.icon(
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Update Progress'),
-                      onPressed: () => _showProgressDialog(goal),
-                    ),
+                    const SizedBox(height: 16),
+                    // Quick Action button
+                    if (!isCompleted)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () => _showProgressDialog(goal),
+                          icon: Icon(Icons.add_circle_outline, size: 18, color: accentColor),
+                          label: Text(
+                            'Log Progress',
+                            style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          style: TextButton.styleFrom(
+                            backgroundColor: accentColor.withOpacity(0.08),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -365,8 +437,6 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
   DateTime _selectedDeadline = DateTime.now().add(const Duration(days: 7));
   String _selectedCategory = 'Steps (Daily)';
   String? _selectedReminderTime;
-  String _customTrackingMethod = 'Cumulative'; // Default for custom
-
   final List<String> _categories = [
     'Steps (Daily)',
     'Steps (Cumulative)',
