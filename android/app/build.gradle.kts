@@ -9,7 +9,7 @@ plugins {
 android {
     namespace = "com.descenders.healthtracker"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.2.12479018"
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
