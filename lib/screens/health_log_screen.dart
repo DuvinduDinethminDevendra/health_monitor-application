@@ -416,6 +416,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
               },
             ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'health_log_fab',
         onPressed: _showAddDialog,
         backgroundColor: const Color(0xFF00BFA5),
         child: const Icon(Icons.add, color: Colors.white),

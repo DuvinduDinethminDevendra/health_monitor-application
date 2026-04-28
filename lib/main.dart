@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'providers/health_tips_provider.dart';
@@ -11,9 +12,27 @@ import 'screens/health_tips_screen.dart';
 import 'screens/charts_screen.dart';
 import 'screens/reminders_screen.dart';
 
+import 'package:flutter/foundation.dart'; // Added for kIsWeb
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService().initialize();
+  
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyCZY-5wkEEifTbIW0Fa9WgZCmgh0mDvKMY',
+        authDomain: 'health-tracker-app-deffb.firebaseapp.com',
+        appId: '1:127072635312:web:80697f9c6c45fd7eedae75',
+        messagingSenderId: '127072635312',
+        projectId: 'health-tracker-app-deffb',
+        storageBucket: 'health-tracker-app-deffb.firebasestorage.app',
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
+  
   runApp(const HealthMonitorApp());
 }
 
@@ -40,8 +59,6 @@ class HealthMonitorApp extends StatelessWidget {
           appBarTheme: const AppBarTheme(
             centerTitle: true,
             elevation: 0,
-            backgroundColor: Color(0xFF1A73E8),
-            foregroundColor: Colors.white,
           ),
           cardTheme: CardThemeData(
             elevation: 2,

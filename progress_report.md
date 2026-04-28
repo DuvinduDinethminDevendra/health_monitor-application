@@ -38,6 +38,14 @@
     *   **Loading Indicators:** Showing `CircularProgressIndicator` during database queries or (future) API calls.
     *   **Lazy Loading / Pagination:** If `health_log` or `activity` tables get large, ensuring the use of `ListView.builder` optimally, potentially adding pagination.
 
+## 8. Member 3 Feature Enhancements (In Progress)
+*   **Step 1: Advanced Profile Management (Data Layer Upgrade):**
+    *   **Completed:** Expanded the SQLite Database `users` table (v4 -> v5) and `User` model to support `age`, `gender`, `height`, `weight`, and local `profile_picture` storage (Base64). Added `updateUserProfile` into `AuthService` to persist local changes securely.
+*   **Step 2: Advanced Goals & Time-Based Reminders:**
+    *   **Completed:** Migrated the `goals` table to Schema V6 to natively store `category` and `reminder_time`. Upgraded the notification system in `GoalRepository` to dynamically pull category specific congratulations. 
+*   **Step 3: The "Predictive Insights" Engine:**
+    *   **Completed:** Re-engineered the Linear Regression function locally within SQLite's Dart abstraction. Added a `getPredictiveInsight` function that transforms mathematical velocity into human-readable analysis strings native to the database layer.
+
 ---
 
 ## 🚀 Action Items (Next Steps)

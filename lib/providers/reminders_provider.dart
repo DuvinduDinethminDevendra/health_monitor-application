@@ -30,12 +30,12 @@ class RemindersProvider with ChangeNotifier {
     // Seed initial reminders if the database is empty
     if (_reminders.isEmpty) {
       final initialReminders = [
-        Reminder(id: 1, title: 'Morning Workout', body: 'Time for your daily exercise routine!', hour: 7, minute: 0),
-        Reminder(id: 2, title: 'Drink Water', body: 'Stay hydrated! Take a glass of water now.', hour: 9, minute: 0),
-        Reminder(id: 3, title: 'Log Your Meals', body: 'Don\'t forget to log what you ate today.', hour: 12, minute: 30),
-        Reminder(id: 4, title: 'Take a Walk', body: 'Get some fresh air! A 15-minute walk is great for your health.', hour: 15, minute: 0),
-        Reminder(id: 5, title: 'Log Your Weight', body: 'Time to track your weight and BMI progress.', hour: 18, minute: 0),
-        Reminder(id: 6, title: 'Bedtime Reminder', body: 'Time to wind down. A good night\'s sleep is essential!', hour: 22, minute: 0),
+        Reminder(id: 1, title: 'Morning Workout', body: 'Scheduled daily exercise and physical conditioning.', hour: 7, minute: 0),
+        Reminder(id: 2, title: 'Hydration Check', body: 'Daily hydration goal reminder. Please consume water.', hour: 9, minute: 0),
+        Reminder(id: 3, title: 'Nutrition Log', body: 'Reminder to record your recent meals and nutritional intake.', hour: 12, minute: 30),
+        Reminder(id: 4, title: 'Mobility Break', body: 'Scheduled time for a short walk to maintain physical activity.', hour: 15, minute: 0),
+        Reminder(id: 5, title: 'Weight Tracking', body: 'Please log your current weight and body metrics.', hour: 18, minute: 0),
+        Reminder(id: 6, title: 'Sleep Schedule', body: 'Evening wind-down period to ensure optimal rest.', hour: 22, minute: 0),
       ];
 
       for (var r in initialReminders) {
@@ -68,10 +68,10 @@ class RemindersProvider with ChangeNotifier {
         // Confirmation notification — always uses banner (it's just a heads-up)
         await _notificationService.showNotification(
           id: updatedReminder.id + 10000,
-          title: '✅ ${updatedReminder.title}',
+          title: 'Reminder Enabled: ${updatedReminder.title}',
           body: updatedReminder.alertStyle == AlertStyle.alarm
-              ? '⏰ ALARM mode set! Daily at ${_formatTime(updatedReminder.hour, updatedReminder.minute)}. Lock your screen to test.'
-              : '🔔 Banner reminder set for ${_formatTime(updatedReminder.hour, updatedReminder.minute)}.',
+              ? 'Alarm schedule active. Set for daily execution at ${_formatTime(updatedReminder.hour, updatedReminder.minute)}.'
+              : 'Banner notification scheduled for ${_formatTime(updatedReminder.hour, updatedReminder.minute)}.',
         );
         // Actual daily schedule — uses the chosen alert style (alarm or banner)
         await _notificationService.scheduleDaily(

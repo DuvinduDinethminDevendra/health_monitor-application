@@ -1,21 +1,25 @@
 class Goal {
-  final int? id;
-  final int userId;
+  final int? id; // SQLite auto-increment ID
+  final String userId; // Firebase UID
   final String title;
+  final String category; // e.g., 'Running', 'Diet', 'Water', 'General'
   final double targetValue;
   final double currentValue;
   final String unit;
   final String deadline;
+  final String? reminderTime; // e.g., '08:00 AM'
   final bool isCompleted;
 
   Goal({
     this.id,
     required this.userId,
     required this.title,
+    this.category = 'General',
     required this.targetValue,
     this.currentValue = 0,
     required this.unit,
     required this.deadline,
+    this.reminderTime,
     this.isCompleted = false,
   });
 
@@ -29,10 +33,12 @@ class Goal {
       'id': id,
       'user_id': userId,
       'title': title,
+      'category': category,
       'target_value': targetValue,
       'current_value': currentValue,
       'unit': unit,
       'deadline': deadline,
+      'reminder_time': reminderTime,
       'is_completed': isCompleted ? 1 : 0,
     };
   }
@@ -40,34 +46,40 @@ class Goal {
   factory Goal.fromMap(Map<String, dynamic> map) {
     return Goal(
       id: map['id'] as int?,
-      userId: map['user_id'] as int,
+      userId: map['user_id'] as String,
       title: map['title'] as String,
+      category: map['category'] as String? ?? 'General',
       targetValue: (map['target_value'] as num).toDouble(),
       currentValue: (map['current_value'] as num).toDouble(),
       unit: map['unit'] as String,
       deadline: map['deadline'] as String,
+      reminderTime: map['reminder_time'] as String?,
       isCompleted: (map['is_completed'] as int) == 1,
     );
   }
 
   Goal copyWith({
     int? id,
-    int? userId,
+    String? userId,
     String? title,
+    String? category,
     double? targetValue,
     double? currentValue,
     String? unit,
     String? deadline,
+    String? reminderTime,
     bool? isCompleted,
   }) {
     return Goal(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       title: title ?? this.title,
+      category: category ?? this.category,
       targetValue: targetValue ?? this.targetValue,
       currentValue: currentValue ?? this.currentValue,
       unit: unit ?? this.unit,
       deadline: deadline ?? this.deadline,
+      reminderTime: reminderTime ?? this.reminderTime,
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }

@@ -395,6 +395,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               },
             ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'goals_fab',
         onPressed: () => _showAddEditDialog(),
         backgroundColor: const Color(0xFFFB8C00),
         child: const Icon(Icons.add, color: Colors.white),

@@ -216,105 +216,164 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             // ═══════════════════════════════════════════════════
-            // ── TIME PICKER ──
+            // ── TIME PICKER (Hero) ──
             // ═══════════════════════════════════════════════════
-            _sectionLabel('Time'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               onTap: _pickTime,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 28),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFAB47BC), Color(0xFF7E57C2)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Center(
                   child: Column(
                     children: [
                       Text(
                         _formatTime(_selectedTime),
                         style: const TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 2,
+                          fontSize: 60,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1.5,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Tap to change',
-                        style: TextStyle(color: Colors.white60, fontSize: 13),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap to change time',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── TITLE & MESSAGE ──
             // ═══════════════════════════════════════════════════
             _sectionLabel('Details'),
             const SizedBox(height: 8),
-            TextFormField(
-              controller: _titleController,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: 'Title',
-                hintText: 'e.g. Take Vitamins',
-                prefixIcon: const Icon(Icons.label_outline),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
+              child: TextFormField(
+                controller: _titleController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  labelText: 'Title',
+                  hintText: 'e.g. Take Vitamins',
+                  prefixIcon: const Icon(Icons.label_outline, color: Colors.grey),
+                  border: InputBorder.none,
+                ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
+              ),
             ),
             const SizedBox(height: 14),
-            TextFormField(
-              controller: _bodyController,
-              textCapitalization: TextCapitalization.sentences,
-              maxLines: 2,
-              decoration: InputDecoration(
-                labelText: 'Message (optional)',
-                hintText: 'e.g. Don\'t skip your daily vitamins!',
-                prefixIcon: const Icon(Icons.message_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _bodyController,
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  labelText: 'Message (optional)',
+                  hintText: 'e.g. Don\'t skip your daily vitamins!',
+                  prefixIcon: const Icon(Icons.message_outlined, color: Colors.grey),
+                  border: InputBorder.none,
+                ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── ALERT STYLE ──
             // ═══════════════════════════════════════════════════
             _sectionLabel('Alert Style'),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _alertStyleCard(
-                    icon: Icons.notifications_outlined,
-                    label: 'Banner',
-                    subtitle: 'Quiet notification',
-                    style: AlertStyle.banner,
-                    accent: accent,
+            Container(
+              height: 56,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _alertStyle = AlertStyle.banner),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: _alertStyle == AlertStyle.banner ? accent : Colors.transparent,
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: _alertStyle == AlertStyle.banner ? [
+                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                          ] : [],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Banner',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _alertStyle == AlertStyle.banner ? Colors.white : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _alertStyleCard(
-                    icon: Icons.alarm,
-                    label: 'Alarm',
-                    subtitle: 'Pop-up with sound',
-                    style: AlertStyle.alarm,
-                    accent: const Color(0xFFE53935),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _alertStyle = AlertStyle.alarm),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: _alertStyle == AlertStyle.alarm ? accent : Colors.transparent,
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: _alertStyle == AlertStyle.alarm ? [
+                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                          ] : [],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Alarm',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _alertStyle == AlertStyle.alarm ? Colors.white : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── REPEAT DAYS ──
@@ -334,14 +393,14 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   onTap: () => setState(() => _repeatDays[i] = !_repeatDays[i]),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    width: 42,
-                    height: 42,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: active ? accent : Colors.grey.withAlpha(25),
+                      color: active ? accent.withOpacity(0.1) : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: active ? accent : Colors.grey.withAlpha(60),
-                        width: 1.5,
+                        color: active ? accent.withOpacity(0.1) : Colors.grey.withOpacity(0.3),
+                        width: 1,
                       ),
                     ),
                     child: Center(
@@ -350,7 +409,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: active ? Colors.white : Colors.grey[600],
+                          color: active ? accent : Colors.grey[500],
                         ),
                       ),
                     ),
@@ -358,7 +417,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 );
               }),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── SOUND ──
@@ -384,17 +443,24 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                     ],
                   ),
                   selected: isActive,
-                  selectedColor: accent,
+                  selectedColor: accent.withOpacity(0.1),
+                  backgroundColor: Colors.transparent,
+                  showCheckmark: false,
                   labelStyle: TextStyle(
-                    color: isActive ? Colors.white : Colors.grey[700],
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                    color: isActive ? accent : Colors.grey[600],
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                   ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    side: BorderSide(
+                      color: isActive ? Colors.transparent : Colors.grey.withOpacity(0.3),
+                    ),
+                  ),
                   onSelected: (_) => setState(() => _soundName = opt['value'] as String),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── VIBRATION ──
@@ -475,56 +541,14 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   Widget _sectionLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFFAB47BC),
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: Colors.grey[600],
         letterSpacing: 0.5,
       ),
     );
   }
 
-  Widget _alertStyleCard({
-    required IconData icon,
-    required String label,
-    required String subtitle,
-    required AlertStyle style,
-    required Color accent,
-  }) {
-    final isActive = _alertStyle == style;
-    return GestureDetector(
-      onTap: () => setState(() => _alertStyle = style),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-        decoration: BoxDecoration(
-          color: isActive ? accent.withAlpha(20) : Colors.grey.withAlpha(15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isActive ? accent : Colors.grey.withAlpha(50),
-            width: isActive ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: isActive ? accent : Colors.grey, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isActive ? accent : Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }

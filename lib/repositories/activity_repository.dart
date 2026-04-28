@@ -1,15 +1,24 @@
 import '../database/database_helper.dart';
 import '../models/activity.dart';
+import '../services/sync_service.dart';
 
 class ActivityRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  SyncService get _syncService => SyncService();
 
-  Future<int> insertActivity(Activity activity) async {
+  Future<int> insertActivity(Activity activity, {bool skipSync = false}) async {
     final db = await _dbHelper.database;
-    return await db.insert('activities', activity.toMap());
+    final id = await db.insert('activities', activity.toMap());
+
+    if (!skipSync) {
+      final newActivity = activity.copyWith(id: id);
+      _syncService.syncActivity(newActivity);
+    }
+
+    return id;
   }
 
-  Future<List<Activity>> getActivitiesByUser(int userId) async {
+  Future<List<Activity>> getActivitiesByUser(String userId) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'activities',
@@ -20,7 +29,7 @@ class ActivityRepository {
     return maps.map((map) => Activity.fromMap(map)).toList();
   }
 
-  Future<List<Activity>> getActivitiesByDate(int userId, String date) async {
+  Future<List<Activity>> getActivitiesByDate(String userId, String date) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'activities',
@@ -32,7 +41,7 @@ class ActivityRepository {
   }
 
   Future<List<Activity>> getActivitiesByDateRange(
-      int userId, String startDate, String endDate) async {
+      String userId, String startDate, String endDate) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'activities',
@@ -45,18 +54,42 @@ class ActivityRepository {
 
   Future<int> updateActivity(Activity activity) async {
     final db = await _dbHelper.database;
-    return await db.update(
+    final count = await db.update(
       'activities',
       activity.toMap(),
       where: 'id = ?',
       whereArgs: [activity.id],
     );
+
+    _syncService.syncActivity(activity);
+
+    return count;
   }
 
   Future<int> deleteActivity(int id) async {
     final db = await _dbHelper.database;
     return await db.delete(
       'activities',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Activity>> getUnsyncedActivities(String userId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'activities',
+      where: 'user_id = ? AND sync_status = 0',
+      whereArgs: [userId],
+    );
+    return maps.map((map) => Activity.fromMap(map)).toList();
+  }
+
+  Future<void> updateSyncStatus(int id, int status) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'activities',
+      {'sync_status': status},
       where: 'id = ?',
       whereArgs: [id],
     );

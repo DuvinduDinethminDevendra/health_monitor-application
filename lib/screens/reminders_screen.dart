@@ -91,6 +91,7 @@ class RemindersScreen extends StatelessWidget {
         final isSelecting = provider.isSelecting;
 
         return Scaffold(
+          backgroundColor: Colors.grey[50],
           appBar: AppBar(
             title: isSelecting
                 ? Text('${provider.selectedIds.length} selected')
@@ -117,6 +118,7 @@ class RemindersScreen extends StatelessWidget {
           floatingActionButton: isSelecting
               ? null
               : FloatingActionButton.extended(
+                  heroTag: 'reminders_fab',
                   onPressed: () => _navigateToEdit(context),
                   backgroundColor: const Color(0xFFAB47BC),
                   foregroundColor: Colors.white,
@@ -157,37 +159,23 @@ class RemindersScreen extends StatelessWidget {
                   ),
                   children: [
                     if (!isSelecting) ...[
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFAB47BC), Color(0xFF7E57C2)],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Column(
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 4.0),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.notifications_active, color: Colors.white, size: 32),
-                            SizedBox(height: 12),
                             Text(
                               'Stay On Track',
-                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
                             ),
-                            SizedBox(height: 4),
+                            SizedBox(height: 8),
                             Text(
                               'Enable reminders to maintain healthy habits',
-                              style: TextStyle(color: Colors.white70),
+                              style: TextStyle(color: Colors.grey, fontSize: 16),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Daily Reminders',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
                     ],
                     ...provider.reminders.map(
                       (reminder) => _buildReminderCard(context, provider, reminder),
@@ -259,104 +247,109 @@ class RemindersScreen extends StatelessWidget {
           );
         }
       },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: isSelected
-              ? const BorderSide(color: Colors.redAccent, width: 2)
-              : BorderSide.none,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.red.withAlpha(15) : Colors.white,
+          borderRadius: BorderRadius.circular(24.0),
+          border: isSelected ? Border.all(color: Colors.redAccent, width: 2) : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 24.0,
+              offset: const Offset(0, 10.0),
+            ),
+          ],
         ),
-        color: isSelected ? Colors.red.withAlpha(15) : null,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24.0),
           onTap: isSelecting
               ? () => provider.toggleSelection(reminder.id)
               : () => _navigateToEdit(context, reminder: reminder),
           onLongPress: () => provider.toggleSelection(reminder.id),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Row(
               children: [
                 if (isSelecting)
                   Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.only(right: 16),
                     child: Icon(
                       isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
                       color: isSelected ? Colors.redAccent : Colors.grey,
                     ),
-                  )
-                else
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: color.withAlpha(30),
-                    child: Icon(icon, color: color, size: 22),
                   ),
-                if (!isSelecting) const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              reminder.title,
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                            ),
-                          ),
-                          if (isCustom && !isSelecting)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: color.withAlpha(20),
-                                borderRadius: BorderRadius.circular(6),
+                  child: Opacity(
+                    opacity: reminder.isEnabled ? 1.0 : 0.4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              _formatTime(reminder.hour, reminder.minute),
+                              style: const TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w300,
+                                letterSpacing: -1.5,
+                                color: Colors.black87,
                               ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(icon, color: color, size: 14),
+                            const SizedBox(width: 6),
+                            Flexible(
                               child: Text(
-                                'Custom',
-                                style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
+                                reminder.title,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
-                          const SizedBox(width: 4),
-                          Text(
-                            _formatTime(reminder.hour, reminder.minute),
-                            style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-                          ),
-                          const SizedBox(width: 10),
-                          Icon(
-                            reminder.alertStyle == AlertStyle.alarm
-                                ? Icons.alarm
-                                : Icons.notifications_outlined,
-                            size: 14,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            reminder.alertStyle == AlertStyle.alarm ? 'Alarm' : 'Banner',
-                            style: TextStyle(fontSize: 11, color: Colors.grey[400]),
-                          ),
-                        ],
-                      ),
-                    ],
+                            if (isCustom && !isSelecting) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: color.withAlpha(15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Custom',
+                                  style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                if (!isSelecting)
+                if (!isSelecting) ...[
+                  const SizedBox(width: 16),
                   Switch(
                     value: reminder.isEnabled,
-                    activeColor: color,
+                    activeColor: const Color(0xFFAB47BC),
                     onChanged: (value) async {
                       await provider.toggleReminder(reminder, value);
                       if (value && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${reminder.title} reminder enabled'),
-                            backgroundColor: color,
+                            backgroundColor: const Color(0xFFAB47BC),
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
@@ -364,8 +357,10 @@ class RemindersScreen extends StatelessWidget {
                       }
                     },
                   ),
+                ],
               ],
             ),
+          ),
           ),
         ),
       ),
