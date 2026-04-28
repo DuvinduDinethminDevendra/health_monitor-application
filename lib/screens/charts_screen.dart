@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'dart:math' as math;
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
 import '../repositories/goal_repository.dart';

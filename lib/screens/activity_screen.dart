@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../models/activity.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/goal_repository.dart';
-import '../models/goal.dart';
 import '../services/auth_service.dart';
 
 class ActivityScreen extends StatefulWidget {
@@ -62,13 +61,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     initialValue: type,
                     items: const [
                       DropdownMenuItem(value: 'steps', child: Text('Steps')),
-                      DropdownMenuItem(value: 'workout', child: Text('Workout')),
-                      DropdownMenuItem(value: 'running', child: Text('Running')),
-                      DropdownMenuItem(value: 'cycling', child: Text('Cycling')),
-                      DropdownMenuItem(value: 'swimming', child: Text('Swimming')),
+                      DropdownMenuItem(
+                          value: 'workout', child: Text('Workout')),
+                      DropdownMenuItem(
+                          value: 'running', child: Text('Running')),
+                      DropdownMenuItem(
+                          value: 'cycling', child: Text('Cycling')),
+                      DropdownMenuItem(
+                          value: 'swimming', child: Text('Swimming')),
                       DropdownMenuItem(value: 'yoga', child: Text('Yoga')),
                       DropdownMenuItem(value: 'sleep', child: Text('Sleep')),
-                      DropdownMenuItem(value: 'custom', child: Text('Custom Goal Metric')),
+                      DropdownMenuItem(
+                          value: 'custom', child: Text('Custom Goal Metric')),
                     ],
                     onChanged: (val) => setDialogState(() => type = val!),
                     decoration: InputDecoration(
@@ -98,10 +102,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     controller: valueController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: type == 'sleep' 
+                      labelText: type == 'sleep'
                           ? 'Hours Slept'
-                          : type == 'steps' 
-                              ? 'Number of Steps' 
+                          : type == 'steps'
+                              ? 'Number of Steps'
                               : type == 'custom'
                                   ? 'Amount achieved'
                                   : 'Distance (km)',
@@ -152,37 +156,46 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           .id!;
                   final activity = Activity(
                     userId: userId,
-                    type: type == 'custom' ? customTypeController.text.trim().toLowerCase() : type,
+                    type: type == 'custom'
+                        ? customTypeController.text.trim().toLowerCase()
+                        : type,
                     value: double.parse(valueController.text),
                     date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                    duration: type == 'sleep' ? 0 : int.parse(durationController.text),
+                    duration: type == 'sleep'
+                        ? 0
+                        : int.parse(durationController.text),
                   );
                   await _activityRepo.insertActivity(activity);
 
                   // Universal Sync: Push this activity natively to the matching Goals!
                   final goalRepo = GoalRepository();
                   final goals = await goalRepo.getGoalsByUser(userId);
-                  
+
                   for (var goal in goals) {
                     final typeMatch = goal.baseType;
-                    
+
                     if (typeMatch == activity.type.toLowerCase()) {
-                       bool isDaily = goal.category.contains('(Daily)');
-                       double newProgress;
-                       
-                       if (isDaily) {
-                          final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-                          final activities = await _activityRepo.getActivitiesByDateRange(userId, dateStr, dateStr);
-                          final todaySum = activities.where((a) => a.type.toLowerCase() == typeMatch).fold(0.0, (sum, a) => sum + a.value);
-                          newProgress = todaySum;
-                       } else {
-                          newProgress = goal.currentValue + activity.value;
-                       }
-                       
-                       await goalRepo.updateProgress(goal.id!, newProgress);
-                       if (newProgress >= goal.targetValue && !goal.isCompleted) {
-                          await goalRepo.markCompleted(goal.id!);
-                       }
+                      bool isDaily = goal.category.contains('(Daily)');
+                      double newProgress;
+
+                      if (isDaily) {
+                        final dateStr =
+                            DateFormat('yyyy-MM-dd').format(DateTime.now());
+                        final activities = await _activityRepo
+                            .getActivitiesByDateRange(userId, dateStr, dateStr);
+                        final todaySum = activities
+                            .where((a) => a.type.toLowerCase() == typeMatch)
+                            .fold(0.0, (sum, a) => sum + a.value);
+                        newProgress = todaySum;
+                      } else {
+                        newProgress = goal.currentValue + activity.value;
+                      }
+
+                      await goalRepo.updateProgress(goal.id!, newProgress);
+                      if (newProgress >= goal.targetValue &&
+                          !goal.isCompleted) {
+                        await goalRepo.markCompleted(goal.id!);
+                      }
                     }
                   }
 

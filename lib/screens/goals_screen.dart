@@ -58,11 +58,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
     );
   }
 
-  Future<void> _deleteGoal(Goal goal) async {
-    await _goalRepo.deleteGoal(goal.id!);
-    _loadGoals();
-  }
-
   String _getBaseType(Goal goal) {
     if (goal.category.startsWith('Custom')) {
       return goal.title.toLowerCase();
@@ -437,6 +432,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
   DateTime _selectedDeadline = DateTime.now().add(const Duration(days: 7));
   String _selectedCategory = 'Steps (Daily)';
   String? _selectedReminderTime;
+
   final List<String> _categories = [
     'Steps (Daily)',
     'Steps (Cumulative)',
@@ -448,13 +444,6 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
     'Custom (Daily)',
     'Custom (Cumulative)'
   ];
-
-  String _getBaseType(Goal goal) {
-    if (goal.category.startsWith('Custom')) {
-      return goal.title.toLowerCase();
-    }
-    return goal.category.replaceAll(' (Daily)', '').replaceAll(' (Cumulative)', '').toLowerCase();
-  }
 
   @override
   void initState() {
@@ -598,7 +587,8 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                   style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
                 ),
               ),
-              const SizedBox(height: 16),              Row(
+              const SizedBox(height: 16),
+              Row(
                 children: [
                   Expanded(
                     flex: 2,
