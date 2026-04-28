@@ -8,11 +8,13 @@ class HorizontalWeekCalendar extends StatefulWidget {
   final ValueChanged<DateTime> onDateSelected;
   final VoidCallback? onProfileTap;
   final String? profilePicture;
+  final String userName;
 
   const HorizontalWeekCalendar({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
+    required this.userName,
     this.onProfileTap,
     this.profilePicture,
   });
@@ -107,26 +109,39 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  GestureDetector(
-                    onTap: _selectFullDate,
-                    child: Row(
-                      children: [
-                        Text(
-                          DateFormat('MMMM, yyyy').format(widget.selectedDate),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hello, ${widget.userName}',
+                        style: TextStyle(
+                          color: AppTheme.emeraldGreen.withValues(alpha: 0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 20),
-                      ],
-                    ),
+                      ),
+                      GestureDetector(
+                        onTap: _selectFullDate,
+                        child: Row(
+                          children: [
+                            Text(
+                              DateFormat('MMMM, yyyy').format(widget.selectedDate),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 20),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   GestureDetector(
                     onTap: widget.onProfileTap,
@@ -152,9 +167,11 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
               ),
             ),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 55,
-              child: ListView.builder(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                height: 55,
+                child: ListView.builder(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 itemCount: _dayCount,
@@ -207,6 +224,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                     ),
                   );
                 },
+                ),
               ),
             ),
             const SizedBox(height: 20),

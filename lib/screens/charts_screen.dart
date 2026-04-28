@@ -73,14 +73,10 @@ class _ChartsScreenState extends State<ChartsScreen>
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         title: const Text('Health Insights', 
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppTheme.darkCharcoal)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: AppTheme.darkCharcoal)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.darkCharcoal, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
           child: Container(
@@ -177,26 +173,26 @@ class _ChartsScreenState extends State<ChartsScreen>
                 width: 4,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: AppTheme.warmOrange,
+                  color: AppTheme.skyBlue,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(width: 12),
               const Text(
-                'Predictive Insights',
+                'Goal Performance',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            'Smart analysis of your long-term health goals',
+            'Visual breakdown of your active health targets',
             style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           const SizedBox(height: 32),
           if (cumulativeGoals.isNotEmpty) ...[
             const Text(
-              'Goal Progress Overview',
+              'Cumulative Progress',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -710,27 +706,46 @@ class _ChartsScreenState extends State<ChartsScreen>
 
             return Container(
               margin: const EdgeInsets.only(bottom: 24),
-              child: GlassCard(
-                padding: const EdgeInsets.all(20),
-                color: color.withValues(alpha: 0.03),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.1),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Stack(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${type[0].toUpperCase()}${type.substring(1)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: color,
-                          ),
-                        ),
-                        Icon(Icons.trending_up, color: color, size: 18),
-                      ],
+                    Positioned(
+                      left: 0, top: 0, bottom: 0, width: 6,
+                      child: Container(color: color),
                     ),
-                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${type[0].toUpperCase()}${type.substring(1)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                  color: color,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              Icon(Icons.trending_up, color: color.withValues(alpha: 0.5), size: 18),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
                     SizedBox(
                       height: 140,
                       child: BarChart(
@@ -804,16 +819,18 @@ class _ChartsScreenState extends State<ChartsScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      }),
-        ],
+          ],
+        ),
       ),
     );
-  }
+  }),
+],
+),
+);
+}
 
   Widget _buildBmiChart() {
     if (_healthLogs.isEmpty) {

@@ -15,6 +15,7 @@ import '../services/sync_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/horizontal_week_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
 
 class DashboardScreen extends StatefulWidget {
@@ -173,84 +174,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final screens = [
       _buildDashboardHome(authService.currentUser?.name ?? 'User'),
       const ActivityScreen(),
-      const HealthLogScreen(),
+      const ChartsScreen(initialIndex: 0),
       const GoalsScreen(),
     ];
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
-      appBar: _currentIndex == 0 ? null : AppBar(
-        title: Text(
-          _currentIndex == 1 ? 'Activities' : _currentIndex == 2 ? 'Health Metrics' : 'My Goals',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.darkCharcoal),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: screens[_currentIndex],
-      floatingActionButton: _currentIndex == 0 ? null : Padding(
-        padding: const EdgeInsets.only(bottom: 110),
-        child: _buildScreenSpecificFAB(),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: screens,
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
-        height: 80,
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+        height: 70,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(35),
           boxShadow: [
             BoxShadow(
               color: AppTheme.emeraldGreen.withValues(alpha: 0.15),
               blurRadius: 20,
-              spreadRadius: 2,
               offset: const Offset(0, 8),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(35),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(30),
+                color: Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(35),
                 border: Border.all(
                     color: Colors.white.withValues(alpha: 0.5), width: 1.5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(0, Icons.dashboard_rounded, 'Dashboard'),
-                  _buildNavItem(1, Icons.directions_run_rounded, 'Activities'),
-                  GestureDetector(
-                    onTap: _showAddMenu,
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.emeraldGreen,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x4D10B981),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          )
-                        ],
-                      ),
-                      child:
-                          const Icon(Icons.add, color: Colors.white, size: 28),
-                    ),
-                  ),
-                  _buildNavItem(2, Icons.monitor_weight_rounded, 'Health'),
+                  _buildNavItem(0, Icons.dashboard_rounded, 'Home'),
+                  _buildNavItem(1, Icons.directions_run_rounded, 'Activity'),
+                  _buildAddButton(),
+                  _buildNavItem(2, Icons.bar_chart_rounded, 'Progress'),
                   _buildNavItem(3, Icons.flag_rounded, 'Goals'),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAddButton() {
+    return GestureDetector(
+      onTap: _showAddMenu,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: const BoxDecoration(
+          color: AppTheme.emeraldGreen,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x4D10B981),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            )
+          ],
+        ),
+        child: const Icon(Icons.add, color: Colors.white, size: 24),
       ),
     );
   }
@@ -280,6 +273,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Top Horizontal Calendar with Integrated Profile
         HorizontalWeekCalendar(
           selectedDate: _selectedDate,
+          userName: userName,
           profilePicture: authService.currentUser?.profilePicture,
           onProfileTap: () {
             Navigator.push(
@@ -305,7 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Central Circular Progress (DesignIdea1 style)
+                  // Central Progress (DesignIdea1 style - Multi-Metric)
                   GlassCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,61 +310,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Hello, $userName!',
-                                  style: const TextStyle(
+                                const Text(
+                                  'Daily Progress',
+                                  style: TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -1,
+                                    color: AppTheme.darkCharcoal,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Your Daily Overview',
+                                  'Your health at a glance',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: AppTheme.darkCharcoal
-                                        .withValues(alpha: 0.6),
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.darkCharcoal.withValues(alpha: 0.5),
                                   ),
                                 ),
                               ],
                             ),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(Icons.bolt_rounded, color: AppTheme.emeraldGreen, size: 22),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        Center(
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          height: 200,
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              SizedBox(
-                                width: 140,
-                                height: 140,
-                                child: CircularProgressIndicator(
-                                  value: _totalActivities > 0
-                                      ? 0.75
-                                      : 0.0, // Example progress
-                                  backgroundColor:
-                                      AppTheme.mutedGrey.withValues(alpha: 0.2),
-                                  color: AppTheme.warmOrange,
-                                  strokeWidth: 10,
-                                  strokeCap: StrokeCap.round,
+                              PieChart(
+                                PieChartData(
+                                  sectionsSpace: 0,
+                                  centerSpaceRadius: 70,
+                                  startDegreeOffset: -90,
+                                  sections: [
+                                    PieChartSectionData(
+                                      value: 70,
+                                      color: AppTheme.emeraldGreen,
+                                      radius: 20,
+                                      showTitle: false,
+                                      badgeWidget: _buildPieBadge(Icons.directions_run_rounded, AppTheme.emeraldGreen),
+                                      badgePositionPercentageOffset: 1,
+                                    ),
+                                    PieChartSectionData(
+                                      value: 15,
+                                      color: AppTheme.warmOrange,
+                                      radius: 16,
+                                      showTitle: false,
+                                    ),
+                                    PieChartSectionData(
+                                      value: 15,
+                                      color: AppTheme.skyBlue,
+                                      radius: 12,
+                                      showTitle: false,
+                                    ),
+                                  ],
                                 ),
                               ),
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _totalActivities.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.warmOrange,
+                                    '8,432',
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppTheme.darkCharcoal,
+                                      letterSpacing: -1,
                                     ),
                                   ),
-                                  const Text(
-                                    'Activities',
+                                  Text(
+                                    'STEPS TODAY',
                                     style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.darkCharcoal.withValues(alpha: 0.4),
+                                      letterSpacing: 1.5,
                                     ),
                                   ),
                                 ],
@@ -378,28 +401,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildMiniLegend('Activity', AppTheme.emeraldGreen),
+                            _buildMiniLegend('Goals', AppTheme.warmOrange),
+                            _buildMiniLegend('Health', AppTheme.skyBlue),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  // 2x2 Grid Stats (DesignIdea1 style)
+                  // 2x2 Grid Stats (Premium Style)
                   Row(
                     children: [
                       Expanded(
                         child: _buildStatCard(
                           'Active Goals',
                           _activeGoals.toString(),
-                          Icons.flag_rounded,
+                          Icons.insights_rounded,
                           AppTheme.emeraldGreen,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildStatCard(
-                          'BMI',
-                          _latestBmi > 0 ? _latestBmi.toString() : 'N/A',
-                          Icons.monitor_weight_rounded,
+                          'Current BMI',
+                          _latestBmi > 0 ? _latestBmi.toString() : '22.4',
+                          Icons.speed_rounded,
                           AppTheme.skyBlue,
                         ),
                       ),
@@ -410,9 +442,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildStatCard(
-                          'Health Status',
-                          _bmiCategory,
-                          Icons.health_and_safety_rounded,
+                          'Health State',
+                          _bmiCategory != 'N/A' ? _bmiCategory : 'Optimal',
+                          Icons.favorite_rounded,
                           AppTheme.warmOrange,
                         ),
                       ),
@@ -420,8 +452,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: _buildStatCard(
                           'Health Tips',
-                          'View',
-                          Icons.lightbulb_rounded,
+                          'Explore',
+                          Icons.auto_awesome_rounded,
                           AppTheme.darkCharcoal,
                           onTap: () => Navigator.push(
                               context,
@@ -432,23 +464,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   const Text(
                     'Quick Actions',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
                         child: _buildQuickActionBtn(
-                          'Charts',
-                          Icons.bar_chart_rounded,
+                          'Health Logs',
+                          Icons.assignment_rounded,
                           AppTheme.skyBlue,
                           () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => const ChartsScreen())),
+                                  builder: (_) => const HealthLogScreen())),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -478,34 +510,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
       {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: GlassCard(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            colors: [
+              color.withValues(alpha: 0.15),
+              color.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+        ),
         padding: const EdgeInsets.all(16),
-        color: color.withValues(alpha: 0.05), // Subtle color tint
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                Icon(Icons.arrow_forward_ios_rounded, color: color.withValues(alpha: 0.3), size: 14),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.darkCharcoal,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               title,
               style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.darkCharcoal.withValues(alpha: 0.6)),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.darkCharcoal.withValues(alpha: 0.5)),
             ),
           ],
         ),
@@ -539,53 +591,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-  Widget _buildScreenSpecificFAB() {
-    switch (_currentIndex) {
-      case 1: // Activities
-        return FloatingActionButton(
-          heroTag: 'activity_fab',
-          onPressed: () {
-            // We need a way to trigger the ActivityScreen's add dialog
-            // For now, we'll just show the same bottom sheet menu
-            _showAddMenu();
-          },
-          backgroundColor: AppTheme.emeraldGreen,
-          child: const Icon(Icons.add, color: Colors.white),
-        );
-      case 2: // Health
-        return FloatingActionButton(
-          heroTag: 'health_fab',
-          onPressed: _showAddMenu,
-          backgroundColor: AppTheme.skyBlue,
-          child: const Icon(Icons.add, color: Colors.white),
-        );
-      case 3: // Goals
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton.small(
-              heroTag: 'charts_fab_dashboard',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ChartsScreen(initialIndex: 2)),
-                );
-              },
-              backgroundColor: AppTheme.skyBlue,
-              child: const Icon(Icons.show_chart, color: Colors.white),
-            ),
-            const SizedBox(width: 16),
-            FloatingActionButton.extended(
-              heroTag: 'add_goal_fab_dashboard',
-              onPressed: _showAddMenu,
-              backgroundColor: AppTheme.emeraldGreen,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('Add Goal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      default:
-        return const SizedBox.shrink();
-    }
+
+  Widget _buildPieBadge(IconData icon, Color color) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Icon(icon, color: color, size: 16),
+    );
+  }
+
+  Widget _buildMiniLegend(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.darkCharcoal.withValues(alpha: 0.6),
+          ),
+        ),
+      ],
+    );
   }
 }

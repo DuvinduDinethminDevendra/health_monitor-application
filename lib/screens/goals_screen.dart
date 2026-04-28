@@ -7,7 +7,6 @@ import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
-import 'charts_screen.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -44,6 +43,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _GoalBottomSheet(
         existingGoal: existingGoal,
@@ -118,6 +118,24 @@ class _GoalsScreenState extends State<GoalsScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text('My Goals',
+            style: TextStyle(
+                fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal, fontSize: 20)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 40),
+        child: FloatingActionButton(
+          heroTag: 'goals_fab_main',
+          onPressed: () => _showAddEditBottomSheet(),
+          backgroundColor: AppTheme.emeraldGreen,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
       body: _goals.isEmpty
           ? Center(
               child: Column(
@@ -169,20 +187,31 @@ class _GoalsScreenState extends State<GoalsScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: GlassCard(
-        padding: EdgeInsets.zero,
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
         child: Stack(
           children: [
-            // Watermark Icon
+            // Side indicator
             Positioned(
-              right: -20,
-              top: -20,
-              child: Icon(
-                watermarkIcon,
-                size: 120,
-                color: accentColor.withValues(alpha: 0.08),
-              ),
+              left: 0, top: 0, bottom: 0, width: 8,
+              child: Container(color: accentColor),
+            ),
+            // Watermark
+            Positioned(
+              right: -10, top: -10,
+              child: Icon(watermarkIcon, size: 100, color: accentColor.withValues(alpha: 0.05)),
             ),
             InkWell(
               onTap: () => _showAddEditBottomSheet(existingGoal: goal),
@@ -359,6 +388,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
         TextEditingController(text: goal.currentValue.toString());
     showDialog(
       context: context,
+      useRootNavigator: true,
       builder: (context) => AlertDialog(
         title: Text('Update ${goal.title}'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -370,6 +400,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        actionsPadding: const EdgeInsets.only(right: 16, bottom: 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
