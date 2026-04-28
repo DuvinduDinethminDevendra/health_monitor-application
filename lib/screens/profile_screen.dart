@@ -135,6 +135,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showInterestsPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return MatteCard(
+            padding: const EdgeInsets.all(32),
+            borderRadius: 40,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.heather.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text('Manage Interests', 
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                const SizedBox(height: 8),
+                Text('Tailor your health experience', 
+                  style: TextStyle(color: isDark ? Colors.white60 : AppTheme.heather, fontSize: 14)),
+                const SizedBox(height: 32),
+                Wrap(
+                  spacing: 10, runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: _availableTopics.map((topic) {
+                    final isSelected = _selectedInterests.contains(topic);
+                    return ChoiceChip(
+                      label: Text(topic),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setModalState(() {
+                          if (selected) {
+                            _selectedInterests.add(topic);
+                          } else {
+                            _selectedInterests.remove(topic);
+                          }
+                        });
+                        setState(() {}); // Update the main profile screen
+                      },
+                      selectedColor: AppTheme.scooter,
+                      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppTheme.sapphire),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.scooter,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Save & Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        }
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
@@ -274,24 +356,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Wrap(
                         spacing: 8, runSpacing: 8,
                         alignment: WrapAlignment.center,
-                        children: (user.interests ?? []).map((topic) {
-                          final isSelected = _selectedInterests.contains(topic);
-                          return FilterChip(
-                            label: Text(topic),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                if (selected) _selectedInterests.add(topic);
-                                else _selectedInterests.remove(topic);
-                              });
-                            },
-                            selectedColor: AppTheme.scooter,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppTheme.sapphire),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          );
-                        }).toList(),
+                        children: [
+                          ..._selectedInterests.map((topic) {
+                            return Chip(
+                              label: Text(topic),
+                              backgroundColor: AppTheme.scooter.withValues(alpha: 0.1),
+                              labelStyle: const TextStyle(
+                                color: AppTheme.scooter,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                              side: BorderSide(color: AppTheme.scooter.withValues(alpha: 0.3)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            );
+                          }).toList(),
+                          ActionChip(
+                            avatar: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Colors.white),
+                            label: const Text('Add More'),
+                            onPressed: _showInterestsPicker,
+                            backgroundColor: AppTheme.blueLagoon,
+                            labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ],
                       ),
                     const SizedBox(height: 32),
 
