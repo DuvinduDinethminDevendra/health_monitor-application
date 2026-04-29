@@ -6,6 +6,8 @@ import 'services/notification_service.dart';
 import 'providers/health_tips_provider.dart';
 import 'providers/reminders_provider.dart';
 import 'providers/activity_provider.dart';
+import 'providers/health_log_provider.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -48,6 +50,8 @@ class HealthMonitorApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HealthTipsProvider()),
         ChangeNotifierProvider(create: (_) => RemindersProvider()),
         ChangeNotifierProvider(create: (_) => ActivityProvider()),
+        ChangeNotifierProvider(create: (_) => HealthLogProvider()),
+
       ],
       child: MaterialApp(
         title: 'Health Monitor',
