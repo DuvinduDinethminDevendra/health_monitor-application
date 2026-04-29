@@ -113,7 +113,7 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
               children: [
                 _buildCard(
                   child: DropdownButtonFormField<String>(
-                    initialValue: _type,
+                    value: _type,
                     decoration: const InputDecoration(labelText: 'Activity Type'),
                     items: _types.map((String value) {
                       return DropdownMenuItem<String>(
