@@ -16,7 +16,7 @@ class EditReminderScreen extends StatefulWidget {
 class _EditReminderScreenState extends State<EditReminderScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _bodyController;
-  late TimeOfDay _selectedTime;
+  late List<TimeOfDay> _selectedTimes;
   late AlertStyle _alertStyle;
   late List<bool> _repeatDays; // Mon–Sun, 7 items
   late bool _vibration;
@@ -41,9 +41,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     final r = widget.reminder;
     _titleController = TextEditingController(text: r?.title ?? '');
     _bodyController = TextEditingController(text: r?.body ?? '');
-    _selectedTime = r != null
-        ? TimeOfDay(hour: r.hour, minute: r.minute)
-        : TimeOfDay.now();
+    _selectedTimes = r != null && r.times.isNotEmpty
+        ? r.times.map((t) => TimeOfDay(hour: t['hour']!, minute: t['minute']!)).toList()
+        : [TimeOfDay.now()];
     _alertStyle = r?.alertStyle ?? AlertStyle.banner;
     _repeatDays = _parseDays(r?.repeatDays ?? '1111111');
     _vibration = r?.vibration ?? true;
@@ -92,10 +92,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     return names.join(', ');
   }
 
-  Future<void> _pickTime() async {
+  Future<void> _pickTime({int? index}) async {
     final picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: index != null ? _selectedTimes[index] : TimeOfDay.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -109,7 +109,23 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       },
     );
     if (picked != null) {
-      setState(() => _selectedTime = picked);
+      setState(() {
+        if (index != null) {
+          _selectedTimes[index] = picked;
+        } else {
+          _selectedTimes.add(picked);
+        }
+      });
+    }
+  }
+
+  void _removeTime(int index) {
+    if (_selectedTimes.length > 1) {
+      setState(() => _selectedTimes.removeAt(index));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must have at least one time scheduled.')),
+      );
     }
   }
 
@@ -121,13 +137,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     final body = _bodyController.text.trim().isNotEmpty
         ? _bodyController.text.trim()
         : 'Time for: $title';
+    final mappedTimes = _selectedTimes.map((t) => {'hour': t.hour, 'minute': t.minute}).toList();
 
     if (_isCreateMode) {
       await provider.addReminder(
         title: title,
         body: body,
-        hour: _selectedTime.hour,
-        minute: _selectedTime.minute,
+        times: mappedTimes,
         alertStyle: _alertStyle,
         repeatDays: _encodeDays(),
         vibration: _vibration,
@@ -137,8 +153,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       final updated = widget.reminder!.copyWith(
         title: title,
         body: body,
-        hour: _selectedTime.hour,
-        minute: _selectedTime.minute,
+        times: mappedTimes,
         alertStyle: _alertStyle,
         repeatDays: _encodeDays(),
         vibration: _vibration,
@@ -151,7 +166,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_isCreateMode
-              ? '"$title" scheduled for ${_formatTime(_selectedTime)}'
+              ? '"$title" scheduled'
               : '"$title" updated'),
           backgroundColor: const Color(0xFFAB47BC),
           behavior: SnackBarBehavior.floating,
@@ -216,33 +231,46 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             // ═══════════════════════════════════════════════════
-            // ── TIME PICKER (Hero) ──
+            // ── SCHEDULE TIMES ──
             // ═══════════════════════════════════════════════════
-            const SizedBox(height: 10),
-            InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: _pickTime,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        _formatTime(_selectedTime),
-                        style: const TextStyle(
-                          fontSize: 60,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tap to change time',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
+            _sectionLabel('Schedule'),
+            const SizedBox(height: 8),
+            ...List.generate(_selectedTimes.length, (index) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16.0),
+                  border: Border.all(color: accent.withOpacity(0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  title: Text(
+                    _formatTime(_selectedTimes[index]),
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w300, letterSpacing: -1.0),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
+                    onPressed: () => _removeTime(index),
+                  ),
+                  onTap: () => _pickTime(index: index),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              );
+            }),
+            const SizedBox(height: 4),
+            Center(
+              child: TextButton.icon(
+                onPressed: () => _pickTime(),
+                icon: const Icon(Icons.add, color: accent),
+                label: const Text('Add Time', style: TextStyle(color: accent, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 32),

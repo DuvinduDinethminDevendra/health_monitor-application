@@ -291,7 +291,9 @@ class RemindersScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              _formatTime(reminder.hour, reminder.minute),
+                              reminder.times.isEmpty
+                                  ? 'No time'
+                                  : _formatTime(reminder.times.first['hour']!, reminder.times.first['minute']!),
                               style: const TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.w300,
@@ -299,6 +301,24 @@ class RemindersScreen extends StatelessWidget {
                                 color: Colors.black87,
                               ),
                             ),
+                            if (reminder.times.length > 1) ...[
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '+ ${reminder.times.length - 1} more',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[700],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 6),

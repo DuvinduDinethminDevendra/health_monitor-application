@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Alert style for a reminder notification.
 enum AlertStyle { banner, alarm }
 
@@ -5,8 +7,7 @@ class Reminder {
   final int id;
   final String title;
   final String body;
-  final int hour;
-  final int minute;
+  final List<Map<String, int>> times;
   final bool isEnabled;
   final AlertStyle alertStyle;
   final String repeatDays; // 7-char bitmask Mon→Sun, e.g. '1111111'
@@ -17,8 +18,7 @@ class Reminder {
     required this.id,
     required this.title,
     required this.body,
-    required this.hour,
-    required this.minute,
+    required this.times,
     this.isEnabled = false,
     this.alertStyle = AlertStyle.banner,
     this.repeatDays = '1111111',
@@ -31,8 +31,7 @@ class Reminder {
       'id': id,
       'title': title,
       'body': body,
-      'hour': hour,
-      'minute': minute,
+      'times': jsonEncode(times),
       'is_enabled': isEnabled ? 1 : 0,
       'alert_style': alertStyle == AlertStyle.alarm ? 'alarm' : 'banner',
       'repeat_days': repeatDays,
@@ -42,12 +41,24 @@ class Reminder {
   }
 
   factory Reminder.fromMap(Map<String, dynamic> map) {
+    List<Map<String, int>> parsedTimes = [];
+    if (map.containsKey('times') && map['times'] != null && map['times'].toString().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(map['times'] as String) as List;
+        parsedTimes = decoded.map((e) => Map<String, int>.from(e as Map)).toList();
+      } catch (e) {
+        parsedTimes = [];
+      }
+    } else if (map.containsKey('hour') && map.containsKey('minute')) {
+      // Legacy fallback migration
+      parsedTimes = [{'hour': map['hour'] as int, 'minute': map['minute'] as int}];
+    }
+
     return Reminder(
       id: map['id'] as int,
       title: map['title'] as String,
       body: map['body'] as String,
-      hour: map['hour'] as int,
-      minute: map['minute'] as int,
+      times: parsedTimes,
       isEnabled: (map['is_enabled'] as int) == 1,
       alertStyle: (map['alert_style'] as String?) == 'alarm'
           ? AlertStyle.alarm
@@ -62,8 +73,7 @@ class Reminder {
     int? id,
     String? title,
     String? body,
-    int? hour,
-    int? minute,
+    List<Map<String, int>>? times,
     bool? isEnabled,
     AlertStyle? alertStyle,
     String? repeatDays,
@@ -74,8 +84,7 @@ class Reminder {
       id: id ?? this.id,
       title: title ?? this.title,
       body: body ?? this.body,
-      hour: hour ?? this.hour,
-      minute: minute ?? this.minute,
+      times: times ?? this.times,
       isEnabled: isEnabled ?? this.isEnabled,
       alertStyle: alertStyle ?? this.alertStyle,
       repeatDays: repeatDays ?? this.repeatDays,

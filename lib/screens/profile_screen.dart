@@ -257,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            initialValue: _selectedGender,
+                            value: _selectedGender,
                             decoration: InputDecoration(
                               labelText: 'Gender',
                               prefixIcon: const Icon(Icons.transgender),

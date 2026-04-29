@@ -59,7 +59,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    initialValue: type,
+                    value: type,
                     items: const [
                       DropdownMenuItem(value: 'steps', child: Text('Steps')),
                       DropdownMenuItem(value: 'workout', child: Text('Workout')),

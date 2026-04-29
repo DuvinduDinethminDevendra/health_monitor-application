@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/health_tips_provider.dart';
 import '../services/health_tips_service.dart';
+import '../services/auth_service.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'dart:ui';
 
@@ -302,7 +303,15 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
 
   Widget _buildTagChips(BuildContext context) {
     final provider = context.watch<HealthTipsProvider>();
-    final tags = ['Favorites', 'Recent', 'Trending', 'Fitness', 'Nutrition', 'Sleep', 'Mental Health'];
+    final authService = context.watch<AuthService>();
+    final userInterests = authService.currentUser?.interests;
+    
+    List<String> dynamicTags = ['Fitness', 'Nutrition', 'Sleep', 'Mental Health'];
+    if (userInterests != null && userInterests.isNotEmpty) {
+      dynamicTags = userInterests;
+    }
+    
+    final tags = ['Favorites', 'Recent', 'Trending', ...dynamicTags];
     
     return SizedBox(
       height: 50,

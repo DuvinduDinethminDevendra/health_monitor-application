@@ -32,7 +32,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -92,6 +92,9 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE health_logs ADD COLUMN hip REAL');
       await db.execute('ALTER TABLE health_logs ADD COLUMN chest REAL');
       await db.execute('ALTER TABLE health_logs ADD COLUMN body_fat REAL');
+    }
+    if (oldVersion < 10) {
+      await db.execute("ALTER TABLE reminders ADD COLUMN times TEXT NOT NULL DEFAULT '[]'");
     }
   }
 
@@ -168,8 +171,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY,
         title TEXT NOT NULL,
         body TEXT NOT NULL,
-        hour INTEGER NOT NULL,
-        minute INTEGER NOT NULL,
+        times TEXT NOT NULL DEFAULT '[]',
         is_enabled INTEGER NOT NULL DEFAULT 0,
         alert_style TEXT NOT NULL DEFAULT 'banner',
         repeat_days TEXT NOT NULL DEFAULT '1111111',

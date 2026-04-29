@@ -30,12 +30,12 @@ class RemindersProvider with ChangeNotifier {
     // Seed initial reminders if the database is empty
     if (_reminders.isEmpty) {
       final initialReminders = [
-        Reminder(id: 1, title: 'Morning Workout', body: 'Scheduled daily exercise and physical conditioning.', hour: 7, minute: 0),
-        Reminder(id: 2, title: 'Hydration Check', body: 'Daily hydration goal reminder. Please consume water.', hour: 9, minute: 0),
-        Reminder(id: 3, title: 'Nutrition Log', body: 'Reminder to record your recent meals and nutritional intake.', hour: 12, minute: 30),
-        Reminder(id: 4, title: 'Mobility Break', body: 'Scheduled time for a short walk to maintain physical activity.', hour: 15, minute: 0),
-        Reminder(id: 5, title: 'Weight Tracking', body: 'Please log your current weight and body metrics.', hour: 18, minute: 0),
-        Reminder(id: 6, title: 'Sleep Schedule', body: 'Evening wind-down period to ensure optimal rest.', hour: 22, minute: 0),
+        Reminder(id: 1, title: 'Morning Workout', body: 'Scheduled daily exercise and physical conditioning.', times: [{'hour': 7, 'minute': 0}]),
+        Reminder(id: 2, title: 'Hydration Check', body: 'Daily hydration goal reminder. Please consume water.', times: [{'hour': 9, 'minute': 0}, {'hour': 13, 'minute': 0}, {'hour': 18, 'minute': 0}]),
+        Reminder(id: 3, title: 'Nutrition Log', body: 'Reminder to record your recent meals and nutritional intake.', times: [{'hour': 12, 'minute': 30}]),
+        Reminder(id: 4, title: 'Mobility Break', body: 'Scheduled time for a short walk to maintain physical activity.', times: [{'hour': 15, 'minute': 0}]),
+        Reminder(id: 5, title: 'Weight Tracking', body: 'Please log your current weight and body metrics.', times: [{'hour': 18, 'minute': 0}]),
+        Reminder(id: 6, title: 'Sleep Schedule', body: 'Evening wind-down period to ensure optimal rest.', times: [{'hour': 22, 'minute': 0}]),
       ];
 
       for (var r in initialReminders) {
@@ -66,24 +66,28 @@ class RemindersProvider with ChangeNotifier {
       debugPrint('[RemindersProvider] Alert style: ${updatedReminder.alertStyle}');
       if (granted) {
         // Confirmation notification — always uses banner (it's just a heads-up)
+        final timeStrings = updatedReminder.times.map((t) => _formatTime(t['hour']!, t['minute']!)).join(', ');
         await _notificationService.showNotification(
           id: updatedReminder.id + 10000,
           title: 'Reminder Enabled: ${updatedReminder.title}',
           body: updatedReminder.alertStyle == AlertStyle.alarm
-              ? 'Alarm schedule active. Set for daily execution at ${_formatTime(updatedReminder.hour, updatedReminder.minute)}.'
-              : 'Banner notification scheduled for ${_formatTime(updatedReminder.hour, updatedReminder.minute)}.',
+              ? 'Alarm schedule active. Set for: $timeStrings.'
+              : 'Banner notification scheduled for: $timeStrings.',
         );
         // Actual daily schedule — uses the chosen alert style (alarm or banner)
-        await _notificationService.scheduleDaily(
-          id: updatedReminder.id,
-          title: updatedReminder.title,
-          body: updatedReminder.body,
-          hour: updatedReminder.hour,
-          minute: updatedReminder.minute,
-          alertStyle: updatedReminder.alertStyle,
-          vibration: updatedReminder.vibration,
-          soundName: updatedReminder.soundName,
-        );
+        for (var i = 0; i < updatedReminder.times.length; i++) {
+          final time = updatedReminder.times[i];
+          await _notificationService.scheduleDaily(
+            id: (updatedReminder.id * 100) + i,
+            title: updatedReminder.title,
+            body: updatedReminder.body,
+            hour: time['hour']!,
+            minute: time['minute']!,
+            alertStyle: updatedReminder.alertStyle,
+            vibration: updatedReminder.vibration,
+            soundName: updatedReminder.soundName,
+          );
+        }
       } else {
         debugPrint('[RemindersProvider] Permission DENIED — reverting');
         if (index != -1) {
@@ -93,7 +97,7 @@ class RemindersProvider with ChangeNotifier {
         }
       }
     } else {
-      await _notificationService.cancelNotification(reminder.id);
+      await _cancelAllForReminder(reminder.id);
     }
   }
 
@@ -107,21 +111,23 @@ class RemindersProvider with ChangeNotifier {
 
     await _repository.updateReminder(updated);
 
+    await _cancelAllForReminder(updated.id);
+
     // Reschedule if enabled
     if (updated.isEnabled) {
-      await _notificationService.cancelNotification(updated.id);
-      await _notificationService.scheduleDaily(
-        id: updated.id,
-        title: updated.title,
-        body: updated.body,
-        hour: updated.hour,
-        minute: updated.minute,
-        alertStyle: updated.alertStyle,
-        vibration: updated.vibration,
-        soundName: updated.soundName,
-      );
-    } else {
-      await _notificationService.cancelNotification(updated.id);
+      for (var i = 0; i < updated.times.length; i++) {
+        final time = updated.times[i];
+        await _notificationService.scheduleDaily(
+          id: (updated.id * 100) + i,
+          title: updated.title,
+          body: updated.body,
+          hour: time['hour']!,
+          minute: time['minute']!,
+          alertStyle: updated.alertStyle,
+          vibration: updated.vibration,
+          soundName: updated.soundName,
+        );
+      }
     }
   }
 
@@ -129,8 +135,7 @@ class RemindersProvider with ChangeNotifier {
   Future<Reminder> addReminder({
     required String title,
     required String body,
-    required int hour,
-    required int minute,
+    required List<Map<String, int>> times,
     AlertStyle alertStyle = AlertStyle.banner,
     String repeatDays = '1111111',
     bool vibration = true,
@@ -145,8 +150,7 @@ class RemindersProvider with ChangeNotifier {
       id: newId,
       title: title,
       body: body,
-      hour: hour,
-      minute: minute,
+      times: times,
       isEnabled: true,
       alertStyle: alertStyle,
       repeatDays: repeatDays,
@@ -160,16 +164,19 @@ class RemindersProvider with ChangeNotifier {
 
     final granted = await _notificationService.requestPermissions();
     if (granted) {
-      await _notificationService.scheduleDaily(
-        id: newReminder.id,
-        title: newReminder.title,
-        body: newReminder.body,
-        hour: newReminder.hour,
-        minute: newReminder.minute,
-        alertStyle: newReminder.alertStyle,
-        vibration: newReminder.vibration,
-        soundName: newReminder.soundName,
-      );
+      for (var i = 0; i < newReminder.times.length; i++) {
+        final time = newReminder.times[i];
+        await _notificationService.scheduleDaily(
+          id: (newReminder.id * 100) + i,
+          title: newReminder.title,
+          body: newReminder.body,
+          hour: time['hour']!,
+          minute: time['minute']!,
+          alertStyle: newReminder.alertStyle,
+          vibration: newReminder.vibration,
+          soundName: newReminder.soundName,
+        );
+      }
     }
 
     return newReminder;
@@ -177,7 +184,7 @@ class RemindersProvider with ChangeNotifier {
 
   // ── Delete single ──
   Future<void> deleteReminder(Reminder reminder) async {
-    await _notificationService.cancelNotification(reminder.id);
+    await _cancelAllForReminder(reminder.id);
     await _repository.deleteReminder(reminder.id);
     _reminders.removeWhere((r) => r.id == reminder.id);
     _selectedIds.remove(reminder.id);
@@ -207,7 +214,7 @@ class RemindersProvider with ChangeNotifier {
   Future<int> deleteSelected() async {
     final toDelete = _reminders.where((r) => _selectedIds.contains(r.id)).toList();
     for (final r in toDelete) {
-      await _notificationService.cancelNotification(r.id);
+      await _cancelAllForReminder(r.id);
       await _repository.deleteReminder(r.id);
     }
     _reminders.removeWhere((r) => _selectedIds.contains(r.id));
@@ -222,5 +229,12 @@ class RemindersProvider with ChangeNotifier {
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
     final displayMinute = minute.toString().padLeft(2, '0');
     return '$displayHour:$displayMinute $period';
+  }
+
+  Future<void> _cancelAllForReminder(int reminderId) async {
+    // We cancel up to 20 sub-IDs to ensure no orphaned alarms exist if the user reduced the number of times.
+    for (var i = 0; i < 20; i++) {
+      await _notificationService.cancelNotification((reminderId * 100) + i);
+    }
   }
 }
