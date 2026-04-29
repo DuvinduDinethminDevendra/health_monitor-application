@@ -32,7 +32,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
+
       version: 10,
+
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -202,7 +204,33 @@ class DatabaseHelper {
         image_url TEXT
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE step_records(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        date TEXT,
+        step_count INTEGER,
+        goal INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE workout_records(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        workout_type TEXT,
+        duration_mins INTEGER,
+        calories_burned INTEGER,
+        logged_at TEXT,
+        notes TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
   }
+
+
 
   Future<void> close() async {
     final db = await database;
