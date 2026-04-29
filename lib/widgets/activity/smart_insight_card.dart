@@ -41,7 +41,7 @@ class SmartInsightCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Smart Insight',
                   style: TextStyle(
                     fontSize: 12,
@@ -49,12 +49,12 @@ class SmartInsightCard extends StatelessWidget {
                     color: ActivityTheme.primaryBlue,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: ActivityTheme.textPrimary,
+                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                     height: 1.4,
                   ),
                 ),

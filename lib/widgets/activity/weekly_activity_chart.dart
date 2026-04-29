@@ -21,12 +21,12 @@ class WeeklyActivityChart extends StatelessWidget {
         height: 200,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: ActivityTheme.cardBackground,
+          color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
           borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         ),
-        child: const Text(
+        child: Text(
           'No activity data for the last 7 days.',
-          style: TextStyle(color: ActivityTheme.textSecondary),
+          style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
         ),
       );
     }
@@ -78,7 +78,7 @@ class WeeklyActivityChart extends StatelessWidget {
       height: 240,
       padding: const EdgeInsets.only(top: 24, right: 16, left: 0, bottom: 16),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         boxShadow: [
           BoxShadow(
@@ -104,8 +104,8 @@ class WeeklyActivityChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       DateFormat('E').format(date).substring(0, 1),
-                      style: const TextStyle(
-                        color: ActivityTheme.textSecondary,
+                      style: TextStyle(
+                        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -122,8 +122,8 @@ class WeeklyActivityChart extends StatelessWidget {
                   if (value == 0) return const SizedBox.shrink();
                   return Text(
                     NumberFormat.compact().format(value),
-                    style: const TextStyle(
-                      color: ActivityTheme.textSecondary,
+                    style: TextStyle(
+                      color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
                       fontSize: 10,
                     ),
                     textAlign: TextAlign.center,

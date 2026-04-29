@@ -97,9 +97,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.sapphire.withValues(alpha: 0.9) : Colors.white,
+          color: isDark ? AppTheme.sapphire.withOpacity(0.9) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
+          border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -108,7 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.grey[300],
+                color: isDark ? Colors.white.withOpacity(0.2) : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -145,7 +145,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
           ],
         ),
       ),
@@ -162,12 +162,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             label,
             style: TextStyle(
@@ -335,7 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   color: isDark ? Colors.white : AppTheme.sapphire,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 'Your health at a glance',
                                 style: TextStyle(
@@ -349,7 +349,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
+                                color: AppTheme.emeraldGreen.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: const Icon(Icons.bolt_rounded, color: AppTheme.emeraldGreen, size: 22),
@@ -424,7 +424,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,
-                                      color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal).withValues(alpha: 0.7),
+                                      color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal).withOpacity(0.7),
                                       letterSpacing: 1.5,
                                     ),
                                   ),
@@ -496,10 +496,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
-                  const Text(
+                  SizedBox(height: 24),
+                  Text(
                     'Quick Actions',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.darkCharcoal),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -529,7 +529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   // "Name on Bottom" card
                   Container(
                     width: double.infinity,
@@ -550,7 +550,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
+                          color: Colors.black.withOpacity(0.2),
                           blurRadius: 15,
                           offset: const Offset(0, 8),
                         )
@@ -575,7 +575,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'Your health journey is looking great.',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: Colors.white.withOpacity(0.6),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -598,7 +598,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: MatteCard(
         padding: const EdgeInsets.all(16),
         borderRadius: 24,
-        color: isDark ? color.withValues(alpha: 0.9) : color, // Use high-opacity matte
+        color: isDark ? color.withOpacity(0.9) : color, // Use high-opacity matte
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -608,7 +608,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: Colors.white, size: 20),
@@ -629,7 +629,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: Colors.white), 
@@ -647,13 +647,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       onTap: onTap,
       child: MatteCard(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        color: isDark ? AppTheme.sapphire : color.withValues(alpha: 0.1),
+        color: isDark ? AppTheme.sapphire : color.withOpacity(0.1),
         borderRadius: 16,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: isDark ? AppTheme.scooter : color, size: 22),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
@@ -677,7 +677,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.2),
+            color: color.withOpacity(0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -688,6 +688,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMiniLegend(String label, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Container(
@@ -698,13 +699,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: AppTheme.darkCharcoal.withValues(alpha: 0.6),
+            color: isDark ? Colors.white70 : AppTheme.darkCharcoal.withOpacity(0.6),
           ),
         ),
       ],

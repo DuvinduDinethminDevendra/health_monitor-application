@@ -34,7 +34,7 @@ class _ActivityLoadingSkeletonState extends State<ActivityLoadingSkeleton>
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: ActivityTheme.textSecondary.withAlpha(50),
+        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)).withAlpha(50),
         borderRadius: BorderRadius.circular(8),
       ),
     );

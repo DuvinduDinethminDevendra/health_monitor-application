@@ -268,7 +268,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     final elapsed   = _stopwatch.elapsed;
 
     return Scaffold(
-      backgroundColor: ActivityTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -292,9 +292,9 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               _buildRoutePlaceholder(),
               const SizedBox(height: 20),
               _buildControlButtons(),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _buildInsightStrip(),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
             ],
           ),
         ),
@@ -306,13 +306,13 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: ActivityTheme.cardBackground,
+      backgroundColor: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
       elevation: 0,
-      iconTheme: const IconThemeData(color: ActivityTheme.textPrimary),
-      title: const Text(
+      iconTheme: IconThemeData(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A))),
+      title: Text(
         'Workout Session',
         style: TextStyle(
-          color: ActivityTheme.textPrimary,
+          color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -357,7 +357,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             Container(
               width: 10,
               height: 10,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Color(0xFF4ADE80),
                 shape: BoxShape.circle,
               ),
@@ -371,7 +371,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         boxShadow: [
           BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4)),
@@ -381,10 +381,10 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         children: [
           Text(
             _formatHMS(elapsed),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 52,
               fontWeight: FontWeight.bold,
-              color: ActivityTheme.textPrimary,
+              color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
               fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
@@ -411,7 +411,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         boxShadow: [
           BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4)),
@@ -443,16 +443,16 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                       children: [
                         Text(
                           steps.toString(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 34,
                             fontWeight: FontWeight.bold,
-                            color: ActivityTheme.textPrimary,
+                            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                             height: 1.0,
                           ),
                         ),
-                        const Text(
+                        Text(
                           'session steps',
-                          style: TextStyle(fontSize: 12, color: ActivityTheme.textSecondary),
+                          style: TextStyle(fontSize: 12, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
                         ),
                         const SizedBox(height: 12),
                       ],
@@ -553,7 +553,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 6, offset: const Offset(0, 2)),
@@ -562,20 +562,20 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       child: Row(
         children: [
           Icon(icon, color: color, size: 22),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: ActivityTheme.textSecondary)),
-                const SizedBox(height: 2),
+                Text(label, style: TextStyle(fontSize: 11, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
+                SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: ActivityTheme.textPrimary,
+                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -591,17 +591,17 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         border: Border.all(color: Colors.grey.withAlpha(40)),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.map_outlined, color: ActivityTheme.textSecondary, size: 22),
+          Icon(Icons.map_outlined, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)), size: 22),
           SizedBox(width: 12),
           Text(
             'Route tracking not enabled',
-            style: TextStyle(color: ActivityTheme.textSecondary, fontSize: 14),
+            style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)), fontSize: 14),
           ),
         ],
       ),
@@ -674,14 +674,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.auto_awesome, color: ActivityTheme.primaryBlue, size: 20),
-          const SizedBox(width: 10),
+          Icon(Icons.auto_awesome, color: ActivityTheme.primaryBlue, size: 20),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               _insightText,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: ActivityTheme.textPrimary,
+                color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                 height: 1.4,
               ),
             ),

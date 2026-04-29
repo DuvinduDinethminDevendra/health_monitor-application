@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'theme/app_theme.dart';import 'services/auth_service.dart';
+import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'providers/health_tips_provider.dart';
 import 'providers/reminders_provider.dart';
@@ -16,6 +16,8 @@ import 'screens/charts_screen.dart';
 import 'screens/reminders_screen.dart';
 
 import 'package:flutter/foundation.dart'; // Added for kIsWeb
+import 'theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,19 +46,41 @@ class HealthMonitorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthService(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => HealthTipsProvider()),
+        ChangeNotifierProvider(create: (_) => RemindersProvider()),
+        ChangeNotifierProvider(create: (_) => ActivityProvider()),
+        ChangeNotifierProvider(create: (_) => HealthLogProvider()),
+
+      ],
       child: Consumer<AuthService>(
-        builder: (context, authService, _) => MaterialApp(
-          title: 'Health Monitor',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: authService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: authService.isLoggedIn
-              ? const DashboardScreen()
-              : const LoginScreen(),
-        ),
+        builder: (context, authService, _) {
+          return MaterialApp(
+            title: 'Health Monitor',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: authService.isDarkMode 
+                ? ThemeMode.dark 
+                : ThemeMode.light,
+            locale: authService.locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: authService.isLoggedIn
+                ? const DashboardScreen()
+                : const LoginScreen(),
+            routes: {
+              '/login': (context) => const LoginScreen(),
+              '/register': (context) => const RegisterScreen(),
+              '/dashboard': (context) => const DashboardScreen(),
+              '/health-tips': (context) => const HealthTipsScreen(),
+              '/charts': (context) => const ChartsScreen(),
+              '/reminders': (context) => const RemindersScreen(),
+            },
+          );
+        },
       ),
     );
   }

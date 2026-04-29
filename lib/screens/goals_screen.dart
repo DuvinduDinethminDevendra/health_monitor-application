@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../models/goal.dart';
 import '../models/activity.dart';
@@ -19,31 +20,61 @@ class _GoalsScreenState extends State<GoalsScreen> {
   final GoalRepository _goalRepo = GoalRepository();
   List<Goal> _goals = [];
   bool _isLoading = true;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadGoals();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authService = Provider.of<AuthService>(context);
+    final newUserId = authService.currentUser?.id;
+    
+    if (newUserId != _currentUserId) {
+      _currentUserId = newUserId;
+      _loadGoals();
+    }
   }
 
   Future<void> _loadGoals() async {
-    final userId =
-        Provider.of<AuthService>(context, listen: false).currentUser?.id;
-    if (userId == null) return;
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userId = authService.currentUser?.id;
+    
+    if (userId == null) {
+      if (mounted) {
+        setState(() {
+          _goals = [];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
 
-    final goals = await _goalRepo.getGoalsByUser(userId);
-    if (!mounted) return;
-    setState(() {
-      _goals = goals;
-      _isLoading = false;
-    });
+    setState(() => _isLoading = true);
+    try {
+      final goals = await _goalRepo.getGoalsByUser(userId);
+      if (!mounted) return;
+      setState(() {
+        _goals = goals;
+      });
+    } catch (e) {
+      debugPrint('Error loading goals: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _showAddEditBottomSheet({Goal? existingGoal}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppTheme.sapphire : Colors.white,
       elevation: 20,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -51,12 +82,24 @@ class _GoalsScreenState extends State<GoalsScreen> {
       builder: (context) => _GoalBottomSheet(
         existingGoal: existingGoal,
         onSave: (goal) async {
-          if (existingGoal == null) {
-            await _goalRepo.insertGoal(goal);
-          } else {
-            await _goalRepo.updateGoal(goal);
+          debugPrint('[GoalsScreen] Received goal to save: ${goal.title}');
+          try {
+            if (existingGoal == null) {
+              await _goalRepo.insertGoal(goal);
+              debugPrint('[GoalsScreen] Goal inserted successfully.');
+            } else {
+              await _goalRepo.updateGoal(goal);
+              debugPrint('[GoalsScreen] Goal updated successfully.');
+            }
+            _loadGoals();
+          } catch (e) {
+            debugPrint('[GoalsScreen] Error saving goal: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to save goal: $e')),
+              );
+            }
           }
-          _loadGoals();
         },
       ),
     );
@@ -150,8 +193,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 children: [
                   Icon(Icons.flag_rounded,
                       size: 80,
-                      color: AppTheme.heather.withValues(alpha: 0.2)),
-                  const SizedBox(height: 16),
+                      color: AppTheme.heather.withOpacity(0.2)),
+                  SizedBox(height: 16),
                   Text(
                     'No goals set yet',
                     style: TextStyle(
@@ -225,7 +268,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 ),
                 child: Text(
                   goal.category.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -236,12 +279,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit_rounded, size: 20),
+                    icon: Icon(Icons.edit_rounded, size: 20),
                     onPressed: onEdit,
                     color: isDark ? Colors.white60 : AppTheme.heather,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                    icon: Icon(Icons.delete_outline_rounded, size: 20),
                     onPressed: onDelete,
                     color: Colors.redAccent,
                   ),
@@ -249,7 +292,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             goal.title,
             style: TextStyle(
@@ -259,7 +302,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -281,7 +324,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
@@ -307,7 +350,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: accentColor.withValues(alpha: 0.08),
+                  backgroundColor: accentColor.withOpacity(0.08),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
@@ -328,9 +371,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
+          color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
+          border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
         ),
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
@@ -348,12 +391,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text('Update ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text('Current: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
               style: TextStyle(color: AppTheme.heather, fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
@@ -362,7 +405,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               decoration: InputDecoration(
                 labelText: 'New Current Value (${goal.unit})',
                 labelStyle: TextStyle(color: AppTheme.heather),
-                prefixIcon: const Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
+                prefixIcon: Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
@@ -481,25 +524,49 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
   }
 
   void _submit() {
+    debugPrint('[GoalBottomSheet] Submitting form...');
     if (_formKey.currentState!.validate()) {
-      final userId =
-          Provider.of<AuthService>(context, listen: false).currentUser!.id!;
+      debugPrint('[GoalBottomSheet] Form validated.');
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userId = authService.currentUser?.id ?? 
+                     FirebaseAuth.instance.currentUser?.uid;
 
-      final goal = Goal(
-        id: widget.existingGoal?.id,
-        userId: userId,
-        title: _titleController.text.trim(),
-        category: _selectedCategory,
-        targetValue: double.parse(_targetController.text.trim()),
-        currentValue: widget.existingGoal?.currentValue ?? 0,
-        unit: _unitController.text.trim(),
-        deadline: _selectedDeadline.toIso8601String(),
-        reminderTime: _selectedReminderTime,
-        isCompleted: widget.existingGoal?.isCompleted ?? false,
-      );
+      debugPrint('[GoalBottomSheet] UserId: $userId');
 
-      widget.onSave(goal);
-      Navigator.pop(context);
+      if (userId == null) {
+        debugPrint('[GoalBottomSheet] Error: UserId is null');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User profile not found. Please log in again.')),
+        );
+        return;
+      }
+
+      try {
+        final goal = Goal(
+          id: widget.existingGoal?.id,
+          userId: userId,
+          title: _titleController.text.trim(),
+          category: _selectedCategory,
+          targetValue: double.parse(_targetController.text.trim()),
+          currentValue: widget.existingGoal?.currentValue ?? 0,
+          unit: _unitController.text.trim(),
+          deadline: _selectedDeadline.toIso8601String(),
+          reminderTime: _selectedReminderTime,
+          isCompleted: widget.existingGoal?.isCompleted ?? false,
+        );
+
+        debugPrint('[GoalBottomSheet] Created Goal object: ${goal.title}');
+        widget.onSave(goal);
+        debugPrint('[GoalBottomSheet] onSave called.');
+        Navigator.pop(context);
+      } catch (e) {
+        debugPrint('[GoalBottomSheet] Error parsing target value: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid target value: $e')),
+        );
+      }
+    } else {
+      debugPrint('[GoalBottomSheet] Form validation failed.');
     }
   }
 
@@ -515,9 +582,9 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
         top: 32,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
+        color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
+        border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
       ),
       child: SingleChildScrollView(
         child: Form(
@@ -532,10 +599,10 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                   decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(widget.existingGoal == null ? 'Create New Goal' : 'Edit Goal', 
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               TextFormField(
                 controller: _titleController,
@@ -543,17 +610,17 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 decoration: InputDecoration(
                   labelText: 'Goal Title',
                   labelStyle: TextStyle(color: AppTheme.heather),
-                  prefixIcon: const Icon(Icons.flag_outlined, color: AppTheme.scooter),
+                  prefixIcon: Icon(Icons.flag_outlined, color: AppTheme.scooter),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppTheme.scooter)),
+                      borderSide: BorderSide(color: AppTheme.scooter)),
                 ),
                 validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               GestureDetector(
                 onTap: () {
@@ -574,7 +641,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                             height: 400,
                             child: ListView.separated(
                               itemCount: _categories.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              separatorBuilder: (_, __) => SizedBox(height: 12),
                               itemBuilder: (ctx, idx) {
                                 final cat = _categories[idx];
                                 final isSelected = _selectedCategory == cat;
@@ -586,7 +653,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                                   leading: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]),
+                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
@@ -600,7 +667,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                                     ),
                                   ),
                                   title: Text(cat, style: TextStyle(fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600, color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white70 : AppTheme.sapphire))),
-                                  trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppTheme.blueLagoon) : null,
+                                  trailing: isSelected ? Icon(Icons.check_circle_rounded, color: AppTheme.blueLagoon) : null,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 );
                               },
@@ -614,14 +681,14 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!),
+                    border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.category_rounded, color: AppTheme.blueLagoon),
-                      const SizedBox(width: 12),
+                      Icon(Icons.category_rounded, color: AppTheme.blueLagoon),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,12 +698,12 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.heather),
+                      Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.heather),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -648,18 +715,18 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       decoration: InputDecoration(
                         labelText: 'Target Value',
                         labelStyle: TextStyle(color: AppTheme.heather),
-                        prefixIcon: const Icon(Icons.track_changes, color: AppTheme.scooter),
+                        prefixIcon: Icon(Icons.track_changes, color: AppTheme.scooter),
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
                         focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: AppTheme.scooter)),
+                            borderSide: BorderSide(color: AppTheme.scooter)),
                       ),
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     flex: 1,
                     child: TextFormField(
@@ -680,14 +747,14 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _pickDate,
-                      icon: const Icon(Icons.calendar_today, size: 18),
+                      icon: Icon(Icons.calendar_today, size: 18),
                       label: Text(DateFormat('MMM dd, yyyy').format(_selectedDeadline)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -697,11 +764,11 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _pickTime,
-                      icon: const Icon(Icons.alarm, size: 18),
+                      icon: Icon(Icons.alarm, size: 18),
                       label: Text(_selectedReminderTime ?? 'Set Reminder'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),

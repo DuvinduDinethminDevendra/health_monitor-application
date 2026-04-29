@@ -69,7 +69,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
   Future<void> _loadLogs() async {
     final userId =
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
 
     if (!mounted) return;
     setState(() {
@@ -82,14 +85,16 @@ class _HealthLogScreenState extends State<HealthLogScreen>
       if (!mounted) return;
       setState(() {
         _logs = logs;
-        _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _isLoading = false;
         _errorMessage = 'Failed to load health logs. Please try again.';
       });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -139,6 +144,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           Widget buildMeasurementField(String label,
               TextEditingController controller,
               ValueNotifier<int> shakeNotifier,
@@ -150,10 +156,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF64748B))),
+                            color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -183,7 +189,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                           child: TextFormField(
                             controller: controller,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             onChanged: (val) {
                               if (val.contains('-') || (double.tryParse(val) != null && double.parse(val) < 0)) {
@@ -197,8 +203,8 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                               hintText: hint,
                               contentPadding: const EdgeInsets.symmetric(vertical: 12),
                               filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                              fillColor: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0)))),
                               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0D9488))),
                             ),
                           ),
@@ -256,8 +262,8 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                     borderRadius: BorderRadius.circular(24)),
                 title: Text(
                   isEdit ? 'Edit Tag' : 'Add Custom Tag',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: (isDark ? Colors.white : const Color(0xFF1E293B))),
                 ),
                 content: TextField(
                   controller: tagController,
@@ -265,10 +271,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                   decoration: InputDecoration(
                     hintText: 'e.g., 🍷 Drank Alcohol',
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    fillColor: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        borderSide: BorderSide(color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0)))),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Color(0xFF0D9488))),
@@ -285,20 +291,20 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                         });
                         Navigator.pop(dialogCtx);
                       },
-                      icon: const Icon(Icons.delete, size: 18),
-                      label: const Text('Delete'),
+                      icon: Icon(Icons.delete, size: 18),
+                      label: Text('Delete'),
                     ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(dialogCtx),
-                        child: const Text('Cancel',
+                        child: Text('Cancel',
                             style: TextStyle(color: Colors.grey)),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E293B),
+                          backgroundColor: (isDark ? Colors.white : const Color(0xFF1E293B)),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
@@ -335,28 +341,25 @@ class _HealthLogScreenState extends State<HealthLogScreen>
             );
           }
 
-          return ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.92,
-                padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: Form(
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.92,
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Form(
                   key: formKey,
                   child: Column(
                     children: [
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Container(
                         width: 48,
                         height: 6,
                         decoration: BoxDecoration(
-                            color: const Color(0xFFE2E8F0),
+                            color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                             borderRadius: BorderRadius.circular(10)),
                       ),
                       Padding(
@@ -367,22 +370,22 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                           children: [
                             Text(
                               existingLog != null ? 'Edit Data' : 'Log Health Data',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E293B)),
+                                  color: (isDark ? Colors.white : const Color(0xFF1E293B))),
                             ),
                             IconButton(
                               onPressed: () => Navigator.pop(ctx),
-                              icon: const Icon(Icons.close),
+                              icon: Icon(Icons.close),
                               style: IconButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF1F5F9),
-                                  foregroundColor: const Color(0xFF64748B)),
+                                  backgroundColor: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                                  foregroundColor: (isDark ? Colors.white70 : const Color(0xFF64748B))),
                             ),
                           ],
                         ),
                       ),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      Divider(height: 1, color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))),
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.all(24),
@@ -397,20 +400,20 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(_getWeightLabel(),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
-                                                color: Color(0xFF64748B))),
-                                        const SizedBox(height: 8),
+                                                color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
+                                        SizedBox(height: 8),
                                         Container(
                                           height: 120,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFF8FAFC)
+                                            color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
                                                 .withOpacity(0.5),
                                             borderRadius:
                                                 BorderRadius.circular(16),
                                             border: Border.all(
-                                                color: const Color(0xFFE2E8F0)),
+                                                color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                           ),
                                           child: Row(
                                             children: [
@@ -431,15 +434,15 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                       Center(
                                                           child: Text(
                                                               index.toString(),
-                                                              style: const TextStyle(
+                                                              style: TextStyle(
                                                                   fontSize: 20))),
                                                 ),
                                               ),
-                                              const Text('.',
+                                              Text('.',
                                                   style: TextStyle(
                                                       fontSize: 24,
                                                       fontWeight: FontWeight.bold,
-                                                      color: Color(0xFF64748B))),
+                                                      color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                                               Expanded(
                                                 child: CupertinoPicker.builder(
                                                   scrollController:
@@ -467,27 +470,27 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
+                                  SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(_getHeightLabel(),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
-                                                color: Color(0xFF64748B))),
-                                        const SizedBox(height: 8),
+                                                color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
+                                        SizedBox(height: 8),
                                         Container(
                                           height: 120,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFF8FAFC)
+                                            color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
                                                 .withOpacity(0.5),
                                             borderRadius:
                                                 BorderRadius.circular(16),
                                             border: Border.all(
-                                                color: const Color(0xFFE2E8F0)),
+                                                color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                           ),
                                           child: CupertinoPicker.builder(
                                             scrollController:
@@ -503,7 +506,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                             itemBuilder: (context, index) =>
                                                 Center(
                                                     child: Text(index.toString(),
-                                                        style: const TextStyle(
+                                                        style: TextStyle(
                                                             fontSize: 20))),
                                           ),
                                         ),
@@ -512,13 +515,13 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 24),
+                              SizedBox(height: 24),
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.6) : Colors.white.withOpacity(0.6)),
                                   border: Border.all(
-                                      color: const Color(0xFFE2E8F0)
+                                      color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0))
                                           .withOpacity(0.5)),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
@@ -614,9 +617,9 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                 animationDuration: 1000,
                                                 animationType:
                                                     AnimationType.easeOutBack,
-                                                needleColor: const Color(0xFF1E293B),
-                                                knobStyle: const KnobStyle(
-                                                    color: Color(0xFF1E293B)),
+                                                needleColor: (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                                knobStyle: KnobStyle(
+                                                    color: (isDark ? Colors.white : const Color(0xFF1E293B))),
                                               )
                                             ],
                                             annotations: <GaugeAnnotation>[
@@ -638,13 +641,13 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                 ),
                               ).animate().fade().scale(
                                   duration: 400.ms, curve: Curves.easeOutBack),
-                              const SizedBox(height: 24),
-                              const Text('DATE',
+                              SizedBox(height: 24),
+                              Text('DATE',
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF64748B))),
-                              const SizedBox(height: 8),
+                                      color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
+                              SizedBox(height: 8),
                               InkWell(
                                 onTap: () async {
                                   final picked = await showDatePicker(
@@ -666,22 +669,22 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16, vertical: 16),
                                   decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
+                                      color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                                       border: Border.all(
-                                          color: const Color(0xFFE2E8F0)),
+                                          color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                       borderRadius: BorderRadius.circular(12)),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.calendar_today,
+                                      Icon(Icons.calendar_today,
                                           color: Color(0xFF94A3B8), size: 20),
-                                      const SizedBox(width: 12),
+                                      SizedBox(width: 12),
                                       Text(
                                           DateFormat('yyyy-MM-dd')
                                               .format(selectedDate),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
-                                              color: Color(0xFF1E293B))),
+                                              color: (isDark ? Colors.white : const Color(0xFF1E293B)))),
                                     ],
                                   ),
                                 ),
@@ -705,11 +708,11 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                         children: [
                                           Row(
                                             children: [
-                                              const Text('ADVANCED BODY METRICS',
+                                              Text('ADVANCED BODY METRICS',
                                                   style: TextStyle(
                                                       fontSize: 12,
                                                       fontWeight: FontWeight.bold,
-                                                      color: Color(0xFF64748B))),
+                                                      color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                                               const SizedBox(width: 8),
                                               Container(
                                                 padding: const EdgeInsets.symmetric(
@@ -727,8 +730,8 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 2),
-                                          const Text(
+                                          SizedBox(height: 2),
+                                          Text(
                                               'Track these to unlock deeper body composition insights',
                                               style: TextStyle(
                                                   fontSize: 10,
@@ -740,7 +743,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           showAdvanced
                                               ? Icons.keyboard_arrow_up
                                               : Icons.keyboard_arrow_down,
-                                          color: const Color(0xFF64748B)),
+                                          color: (isDark ? Colors.white70 : const Color(0xFF64748B))),
                                     ],
                                   ),
                                 ),
@@ -783,15 +786,15 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   ],
                                 ),
                               ],
-                              const SizedBox(height: 24),
+                              SizedBox(height: 24),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('CONTEXT & LIFESTYLE',
+                                  Text('CONTEXT & LIFESTYLE',
                                       style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF64748B))),
+                                          color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                                   InkWell(
                                     onTap: () => setDialogState(
                                         () => isEditingTags = !isEditingTags),
@@ -842,7 +845,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                               horizontal: 12, vertical: 8),
                                           decoration: BoxDecoration(
                                             color: isEditingTags
-                                                ? const Color(0xFFF1F5F9)
+                                                ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))
                                                 : isSelected
                                                     ? const Color(0xFFF0FDFA)
                                                     : Colors.white,
@@ -851,7 +854,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                     ? const Color(0xFFCBD5E1)
                                                     : isSelected
                                                         ? const Color(0xFF99F6E4)
-                                                        : const Color(0xFFE2E8F0)),
+                                                        : (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: Row(
@@ -894,45 +897,45 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                 style: BorderStyle.solid),
                                             borderRadius:
                                                 BorderRadius.circular(8)),
-                                        child: const Row(
+                                        child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Icon(Icons.add,
-                                                size: 16, color: Color(0xFF64748B)),
+                                                size: 16, color: (isDark ? Colors.white70 : const Color(0xFF64748B))),
                                             SizedBox(width: 4),
                                             Text('Add Custom',
                                                 style: TextStyle(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w500,
-                                                    color: Color(0xFF64748B))),
+                                                    color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                                           ],
                                         ),
                                       ),
                                     ),
                                 ],
                               ),
-                              const SizedBox(height: 24),
-                              const Text('JOURNAL (OPTIONAL)',
+                              SizedBox(height: 24),
+                              Text('JOURNAL (OPTIONAL)',
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF64748B))),
-                              const SizedBox(height: 8),
+                                      color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
+                              SizedBox(height: 8),
                               TextField(
                                 controller: notesController,
                                 maxLines: 4,
                                 decoration: InputDecoration(
                                   hintText: 'How are you feeling today?',
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide:
-                                          const BorderSide(color: Color(0xFFE2E8F0))),
+                                          BorderSide(color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0)))),
                                   focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide:
-                                          const BorderSide(color: Color(0xFF0D9488))),
+                                          BorderSide(color: Color(0xFF0D9488))),
                                 ),
                               ),
                             ],
@@ -941,10 +944,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                       ),
                       Container(
                         padding: const EdgeInsets.all(24),
-                        decoration: const BoxDecoration(
-                            color: Colors.white,
+                        decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
                             border: Border(
-                                top: BorderSide(color: Color(0xFFF1F5F9)))),
+                                top: BorderSide(color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))))),
                         child: SizedBox(
                           width: double.infinity,
                           height: 56,
@@ -1009,17 +1012,16 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                     ],
                   ),
                 ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+            );
+          },
+        ),
+      );
+    }
 
 
   Widget _buildQuickStats(List<HealthLog> logs) {
     if (logs.isEmpty) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final latestLog = logs.first;
 
@@ -1027,9 +1029,9 @@ class _HealthLogScreenState extends State<HealthLogScreen>
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))),
         boxShadow: const [
           BoxShadow(
               color: Color(0x05000000), blurRadius: 10, offset: Offset(0, 4))
@@ -1058,28 +1060,28 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                     children: [
                       Text(
                         latestLog.weight.toString(),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -1,
-                            color: Color(0xFF1E293B)),
+                            color: (isDark ? Colors.white : const Color(0xFF1E293B))),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         latestLog.unit == 'metric' ? 'kg' : 'lbs',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                             color: Color(0xFF94A3B8)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Row(
                     children: [
                       Text('BMI: ${latestLog.bmi}',
-                          style: const TextStyle(
-                              fontSize: 14, color: Color(0xFF64748B))),
+                          style: TextStyle(
+                              fontSize: 14, color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -1116,7 +1118,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                           ? Colors.green.shade50
                           : isGain
                               ? Colors.red.shade50
-                              : const Color(0xFFF1F5F9),
+                              : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1166,6 +1168,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
   }
 
   void _showSuccessOverlay(BuildContext context, int count) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     OverlayEntry? entry;
     entry = OverlayEntry(
       builder: (context) {
@@ -1178,7 +1181,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: (isDark ? Colors.white : const Color(0xFF1E293B)),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -1235,19 +1238,20 @@ class _HealthLogScreenState extends State<HealthLogScreen>
   }
 
   Widget _buildMetricColumn(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF64748B))),
-        const SizedBox(height: 4),
+                color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
+        SizedBox(height: 4),
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B))),
+                color: (isDark ? Colors.white : const Color(0xFF1E293B)))),
       ],
     );
   }
@@ -1256,12 +1260,13 @@ class _HealthLogScreenState extends State<HealthLogScreen>
   String _getHeightLabel() => _systemUnit == 'metric' ? 'HEIGHT (CM)' : 'HEIGHT (IN)';
 
   Widget _buildFloatingMetric(String label, String value, IconData icon, {double? delta}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.9) : Colors.white.withOpacity(0.9)),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -1300,10 +1305,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                 ],
               ),
               Text(value,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B))),
+                      color: (isDark ? Colors.white : const Color(0xFF1E293B)))),
             ],
           ),
         ],
@@ -1313,6 +1318,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
       return const ShimmerLoading(itemCount: 4);
     }
@@ -1373,7 +1379,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                             shape: BoxShape.circle,
                             color: const Color(0xFF00BFA5).withAlpha(25),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.monitor_weight_outlined,
                             size: 64,
                             color: Color(0xFF00BFA5),
@@ -1381,7 +1387,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     Text(
                       'No health data logged yet',
                       style: TextStyle(
@@ -1390,7 +1396,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                         color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Text(
                       'Start tracking your BMI journey.\nLog your weight and height to get insights.',
                       textAlign: TextAlign.center,
@@ -1439,7 +1445,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                               children: [
                                 Text(
                                   _selectedViewDate == null ? 'LATEST STATUS' : 'DAILY SNAPSHOT',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.2,
@@ -1450,10 +1456,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   _selectedViewDate == null 
                                     ? 'Current Progress' 
                                     : DateFormat('MMMM dd, yyyy').format(_selectedViewDate!),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
+                                    color: (isDark ? Colors.white : const Color(0xFF1E293B)),
                                   ),
                                 ),
                               ],
@@ -1472,7 +1478,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                 if (_selectedViewDate != null)
                                   IconButton(
                                     onPressed: () => setState(() => _selectedViewDate = null),
-                                    icon: const Icon(Icons.history, color: Color(0xFF0D9488)),
+                                    icon: Icon(Icons.history, color: Color(0xFF0D9488)),
                                     tooltip: 'Show Latest',
                                   ),
                                 InkWell(
@@ -1496,14 +1502,14 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
+                                      color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       children: [
-                                        Icon(Icons.calendar_month, size: 18, color: Color(0xFF64748B)),
+                                        Icon(Icons.calendar_month, size: 18, color: (isDark ? Colors.white70 : const Color(0xFF64748B))),
                                         SizedBox(width: 6),
-                                        Text('Pick Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                        Text('Pick Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                                       ],
                                     ),
                                   ),
@@ -1534,14 +1540,14 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                             child: Container(
                               height: 100,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
+                                color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                                 borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text('No data for this date', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+                                  Text('No data for this date', style: TextStyle(color: (isDark ? Colors.white70 : const Color(0xFF64748B)), fontWeight: FontWeight.w500)),
                                   TextButton(
                                     onPressed: _showAddOrEditDialog,
                                     child: const Text('Add Log +', style: TextStyle(color: Color(0xFF0D9488), fontWeight: FontWeight.bold)),
@@ -1624,10 +1630,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                               margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border:
-                                    Border.all(color: const Color(0xFFF1F5F9)),
+                                    Border.all(color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))),
                                 boxShadow: const [
                                   BoxShadow(
                                       color: Color(0x02000000),
@@ -1663,7 +1669,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
+                                      SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment:
@@ -1671,16 +1677,16 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           children: [
                                             Text(
                                                 '${log.weight} ${log.unit == 'metric' ? 'kg' : 'lbs'}',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 16,
-                                                    color: Color(0xFF1E293B))),
-                                            const SizedBox(height: 2),
+                                                    color: (isDark ? Colors.white : const Color(0xFF1E293B)))),
+                                            SizedBox(height: 2),
                                             Text(
                                                 'H: ${log.height} ${log.unit == 'metric' ? 'cm' : 'in'}',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                     fontSize: 12,
-                                                    color: Color(0xFF64748B))),
+                                                    color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                                           ],
                                         ),
                                       ),
@@ -1731,15 +1737,15 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       log.hip != null ||
                                       log.chest != null ||
                                       log.bodyFat != null) ...[
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 12),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFF8FAFC),
+                                        color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                            color: const Color(0xFFE2E8F0)),
+                                            color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                       ),
                                       child: Row(
                                         mainAxisAlignment:
@@ -1767,25 +1773,25 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   ],
                                   if (log.notes != null &&
                                       log.notes!.isNotEmpty) ...[
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     Container(
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                          color: const Color(0xFFF8FAFC),
+                                          color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           border: Border.all(
-                                              color: const Color(0xFFF1F5F9))),
+                                              color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)))),
                                       child: Text('"${log.notes}"',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 13,
                                               fontStyle: FontStyle.italic,
-                                              color: Color(0xFF64748B))),
+                                              color: (isDark ? Colors.white70 : const Color(0xFF64748B)))),
                                     )
                                   ],
                                   if (log.tags.isNotEmpty) ...[
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: 12),
                                     Wrap(
                                       spacing: 6,
                                       runSpacing: 6,
@@ -1794,10 +1800,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
-                                              color: const Color(0xFFF1F5F9),
+                                              color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
                                               border: Border.all(
                                                   color:
-                                                      const Color(0xFFE2E8F0)),
+                                                      (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                               borderRadius:
                                                   BorderRadius.circular(8)),
                                           child: Text(tag,

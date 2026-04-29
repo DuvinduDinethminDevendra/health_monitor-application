@@ -25,7 +25,7 @@ class GoalProgressTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         boxShadow: [
           BoxShadow(
@@ -41,13 +41,13 @@ class GoalProgressTile extends StatelessWidget {
           Row(
             children: [
               Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: ActivityTheme.textPrimary,
+                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                 ),
               ),
@@ -70,12 +70,12 @@ class GoalProgressTile extends StatelessWidget {
               minHeight: 8,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             remainingText,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: ActivityTheme.textSecondary,
+              color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
             ),
           ),
         ],

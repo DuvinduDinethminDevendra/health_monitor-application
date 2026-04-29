@@ -66,11 +66,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _previousPage();
       return;
     }
-    await Future.delayed(const Duration(milliseconds: 1000));
+
     if (mounted) {
       final user = authService.currentUser;
-      if (user != null) await authService.updateUserProfile(user.copyWith(interests: _selectedTopics));
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const DashboardScreen()), (route) => false);
+      if (user != null) {
+        await authService.updateUserProfile(user.copyWith(interests: _selectedTopics));
+      }
+      Navigator.pushAndRemoveUntil(
+        context, 
+        MaterialPageRoute(builder: (_) => const DashboardScreen()), 
+        (route) => false
+      );
     }
   }
 
@@ -105,15 +111,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.person_add_rounded, size: 64, color: AppTheme.scooter),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text('Create Account', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 _buildField(_nameController, 'Full Name', Icons.person_outline, isDark),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildField(_emailController, 'Email Address', Icons.email_outlined, isDark),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildField(_passwordController, 'Password', Icons.lock_outline, isDark, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildField(_confirmPasswordController, 'Confirm Password', Icons.lock_outline, isDark, obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -126,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                    child: Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                   ),
                 ),
                 TextButton(onPressed: () => Navigator.pop(context), child: Text("Already have an account? Login", style: TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.bold))),
@@ -149,7 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         prefixIcon: Icon(icon, color: AppTheme.scooter),
         suffixIcon: onToggle != null ? IconButton(icon: Icon(obscure! ? Icons.visibility_off : Icons.visibility, color: AppTheme.heather), onPressed: onToggle) : null,
         filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
       ),
       validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
@@ -167,9 +173,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Your Interests', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text('Select what matters to you', style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600])),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Wrap(
                 spacing: 8, runSpacing: 8,
                 children: _availableTopics.map((t) {

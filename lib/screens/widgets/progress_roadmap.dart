@@ -15,19 +15,21 @@ class ProgressRoadmap extends StatelessWidget {
     // Show the last 5-7 logs as a "Journey"
     final journeyLogs = logs.take(7).toList().reversed.toList();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFF1F5F9)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 8, bottom: 24),
+          Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 24),
             child: Row(
               children: [
                 Icon(Icons.auto_awesome, color: Color(0xFF0D9488), size: 20),
@@ -37,7 +39,7 @@ class ProgressRoadmap extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2,
-                        color: Color(0xFF64748B))),
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B))),
               ],
             ),
           ),
@@ -46,7 +48,7 @@ class ProgressRoadmap extends StatelessWidget {
               // The Winding Path Painter
               Positioned.fill(
                 child: CustomPaint(
-                  painter: RoadmapPathPainter(count: journeyLogs.length),
+                  painter: RoadmapPathPainter(count: journeyLogs.length, isDark: isDark),
                 ),
               ),
               // The Nodes
@@ -69,7 +71,7 @@ class ProgressRoadmap extends StatelessWidget {
                       mainAxisAlignment: isEven ? MainAxisAlignment.start : MainAxisAlignment.end,
                       children: [
                         if (!isEven) const Spacer(),
-                        _buildMilestoneNode(context, log, index, isRecord, isLast),
+                        _buildMilestoneNode(context, log, index, isRecord, isLast, isDark),
                         if (isEven) const Spacer(),
                       ],
                     ),
@@ -83,7 +85,7 @@ class ProgressRoadmap extends StatelessWidget {
     );
   }
 
-  Widget _buildMilestoneNode(BuildContext context, HealthLog log, int index, bool isRecord, bool isLatest) {
+  Widget _buildMilestoneNode(BuildContext context, HealthLog log, int index, bool isRecord, bool isLatest, bool isDark) {
     final bmiColor = _getBmiColor(log.bmi);
     
     return Container(
@@ -99,7 +101,7 @@ class ProgressRoadmap extends StatelessWidget {
                 height: 64,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
                   border: Border.all(color: bmiColor.withOpacity(0.2), width: 4),
                   boxShadow: [
                     BoxShadow(
@@ -156,28 +158,28 @@ class ProgressRoadmap extends StatelessWidget {
                       color: Color(0xFF2DD4BF),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check, size: 10, color: Colors.white),
+                    child: Icon(Icons.check, size: 10, color: Colors.white),
                   ),
                 ),
             ],
           ).animate().fadeIn(delay: (index * 200).ms).slideY(begin: 0.2, end: 0),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             DateFormat('MMM dd').format(DateTime.parse(log.date)),
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF94A3B8)),
+                color: isDark ? Colors.white60 : const Color(0xFF94A3B8)),
           ),
           if (isLatest)
              Container(
                margin: const EdgeInsets.only(top: 4),
                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                decoration: BoxDecoration(
-                 color: const Color(0xFF1E293B),
+                 color: isDark ? Colors.white : const Color(0xFF1E293B),
                  borderRadius: BorderRadius.circular(8),
                ),
-               child: const Text('CURRENT', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+               child: Text('CURRENT', style: TextStyle(color: isDark ? const Color(0xFF1E293B) : Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
              ),
         ],
       ),
@@ -194,15 +196,16 @@ class ProgressRoadmap extends StatelessWidget {
 
 class RoadmapPathPainter extends CustomPainter {
   final int count;
+  final bool isDark;
 
-  RoadmapPathPainter({required this.count});
+  RoadmapPathPainter({required this.count, required this.isDark});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (count < 2) return;
 
     final paint = Paint()
-      ..color = const Color(0xFFF1F5F9)
+      ..color = isDark ? Colors.white12 : const Color(0xFFF1F5F9)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
@@ -232,7 +235,7 @@ class RoadmapPathPainter extends CustomPainter {
     canvas.drawPath(path, paint);
     
     final dashPaint = Paint()
-      ..color = const Color(0xFFE2E8F0)
+      ..color = isDark ? Colors.white24 : const Color(0xFFE2E8F0)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
       

@@ -53,16 +53,18 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
       compColor = _getLiquidColor(compBmi);
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 280,
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x08000000), blurRadius: 20, offset: Offset(0, 10))
+        border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(color: isDark ? Colors.black26 : const Color(0x08000000), blurRadius: 20, offset: const Offset(0, 10))
         ],
       ),
       child: Column(
@@ -75,11 +77,11 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
-                      color: widget.comparisonLog != null ? const Color(0xFF0D9488) : const Color(0xFF94A3B8))),
-              Icon(Icons.waves, size: 16, color: widget.comparisonLog != null ? const Color(0xFF0D9488) : const Color(0xFFCBD5E1)),
+                      color: widget.comparisonLog != null ? const Color(0xFF0D9488) : (isDark ? Colors.white60 : const Color(0xFF94A3B8)))),
+              Icon(Icons.waves, size: 16, color: widget.comparisonLog != null ? const Color(0xFF0D9488) : (isDark ? Colors.white38 : const Color(0xFFCBD5E1))),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Expanded(
             child: Stack(
               alignment: Alignment.center,
@@ -89,7 +91,7 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                   width: 140,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(70),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 8),
+                    border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFF1F5F9), width: 8),
                     boxShadow: [
                       BoxShadow(
                         color: color.withOpacity(0.1),
@@ -144,10 +146,10 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                   children: [
                     Text(
                       bmi.toStringAsFixed(1),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
                       ),
                     ),
                     Text(
@@ -155,7 +157,7 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E293B).withOpacity(0.5),
+                        color: isDark ? Colors.white54 : const Color(0xFF1E293B).withOpacity(0.5),
                       ),
                     ),
                     if (widget.comparisonLog != null)
@@ -163,12 +165,12 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                         margin: const EdgeInsets.only(top: 4),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8),
+                          color: isDark ? Colors.white12 : Colors.white.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           'PREV: ${widget.comparisonLog!.bmi.toStringAsFixed(1)}',
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
                         ),
                       ),
                   ],

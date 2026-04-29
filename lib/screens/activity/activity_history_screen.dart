@@ -121,7 +121,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ActivityTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: ActivityTheme.primaryBlue))
@@ -141,9 +141,9 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                   _buildChartSection(),
                   const SizedBox(height: 20),
                   _buildDailyLogSection(),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   _buildRecentWorkoutsSection(),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                 ],
               ),
             ),
@@ -154,20 +154,20 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: ActivityTheme.cardBackground,
+      backgroundColor: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
       elevation: 0,
-      iconTheme: const IconThemeData(color: ActivityTheme.textPrimary),
-      title: const Text(
+      iconTheme: IconThemeData(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A))),
+      title: Text(
         'Activity History',
         style: TextStyle(
-          color: ActivityTheme.textPrimary,
+          color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.filter_list, color: ActivityTheme.textPrimary),
+          icon: Icon(Icons.filter_list, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A))),
           tooltip: 'Filter',
           onPressed: _showFilterSheet,
         ),
@@ -204,7 +204,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : ActivityTheme.textSecondary,
+                    color: isSelected ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
                   ),
                 ),
               ),
@@ -221,9 +221,9 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     return Row(
       children: [
         Expanded(child: _buildSummaryTile('Total Steps', NumberFormat.decimalPattern().format(_totalSteps), Icons.directions_walk, ActivityTheme.primaryBlue)),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(child: _buildSummaryTile('Active Min', '$_totalActiveMin', Icons.timer_outlined, ActivityTheme.tealAccent)),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(child: _buildSummaryTile('Calories', '$_totalCalories', Icons.local_fire_department_outlined, ActivityTheme.warning)),
       ],
     );
@@ -233,7 +233,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 3))],
       ),
@@ -241,10 +241,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: ActivityTheme.textPrimary)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11, color: ActivityTheme.textSecondary)),
+          SizedBox(height: 8),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+          SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 11, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
         ],
       ),
     );
@@ -256,13 +256,13 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Weekly Steps', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ActivityTheme.textPrimary)),
-        const SizedBox(height: 12),
+        Text('Weekly Steps', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+        SizedBox(height: 12),
         Container(
           height: 260,
           padding: const EdgeInsets.only(top: 20, right: 12, left: 0, bottom: 12),
           decoration: BoxDecoration(
-            color: ActivityTheme.cardBackground,
+            color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
             borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
             boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4))],
           ),
@@ -274,7 +274,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
   Widget _buildBarChart() {
     if (_weeklySteps.isEmpty) {
-      return const Center(child: Text('No data', style: TextStyle(color: ActivityTheme.textSecondary)));
+      return Center(child: Text('No data', style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))));
     }
 
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -323,7 +323,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(DateFormat('E').format(d).substring(0, 1),
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: ActivityTheme.textSecondary)),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
                   );
                 } catch (_) {
                   return const SizedBox.shrink();
@@ -338,7 +338,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
               getTitlesWidget: (val, meta) {
                 if (val == 0) return const SizedBox.shrink();
                 return Text(NumberFormat.compact().format(val),
-                    style: const TextStyle(fontSize: 10, color: ActivityTheme.textSecondary), textAlign: TextAlign.center);
+                    style: TextStyle(fontSize: 10, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))), textAlign: TextAlign.center);
               },
             ),
           ),
@@ -371,11 +371,11 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Daily Log', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ActivityTheme.textPrimary)),
-        const SizedBox(height: 8),
+        Text('Daily Log', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+        SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: ActivityTheme.cardBackground,
+            color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
             borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
             boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 3))],
           ),
@@ -423,29 +423,29 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Recent Workouts', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ActivityTheme.textPrimary)),
+            Text('Recent Workouts', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
             TextButton(
               onPressed: () {},   // View All — no action required
-              child: const Text('View All', style: TextStyle(color: ActivityTheme.primaryBlue, fontWeight: FontWeight.w600, fontSize: 13)),
+              child: Text('View All', style: TextStyle(color: ActivityTheme.primaryBlue, fontWeight: FontWeight.w600, fontSize: 13)),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         if (_recentWorkouts.isEmpty)
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ActivityTheme.cardBackground,
+              color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
               borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
             ),
-            child: const Center(
-              child: Text('No workouts recorded yet.', style: TextStyle(color: ActivityTheme.textSecondary)),
+            child: Center(
+              child: Text('No workouts recorded yet.', style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
             ),
           )
         else
           Container(
             decoration: BoxDecoration(
-              color: ActivityTheme.cardBackground,
+              color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
               borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
               boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8, offset: const Offset(0, 3))],
             ),
@@ -517,12 +517,12 @@ class _DailyLogRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(dayLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: ActivityTheme.textPrimary)),
-                Text(dateLabel, style: const TextStyle(fontSize: 11, color: ActivityTheme.textSecondary)),
+                Text(dayLabel, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+                Text(dateLabel, style: TextStyle(fontSize: 11, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
 
           // Steps (blue if goal met)
           Expanded(
@@ -535,10 +535,10 @@ class _DailyLogRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: goalMet ? ActivityTheme.primaryBlue : ActivityTheme.textPrimary,
+                    color: goalMet ? ActivityTheme.primaryBlue : (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                 ),
-                Text('steps', style: const TextStyle(fontSize: 10, color: ActivityTheme.textSecondary)),
+                Text('steps', style: TextStyle(fontSize: 10, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
               ],
             ),
           ),
@@ -549,8 +549,8 @@ class _DailyLogRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$activeMin', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: ActivityTheme.textPrimary)),
-                Text('min', style: const TextStyle(fontSize: 10, color: ActivityTheme.textSecondary)),
+                Text('$activeMin', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+                Text('min', style: TextStyle(fontSize: 10, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
               ],
             ),
           ),
@@ -561,8 +561,8 @@ class _DailyLogRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$calories', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: ActivityTheme.textPrimary)),
-                Text('kcal', style: const TextStyle(fontSize: 10, color: ActivityTheme.textSecondary)),
+                Text('$calories', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+                Text('kcal', style: TextStyle(fontSize: 10, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
               ],
             ),
           ),
@@ -573,8 +573,8 @@ class _DailyLogRow extends StatelessWidget {
             color: goalMet ? ActivityTheme.success : Colors.grey.withAlpha(120),
             size: 20,
           ),
-          const SizedBox(width: 6),
-          const Icon(Icons.chevron_right, color: ActivityTheme.textSecondary, size: 18),
+          SizedBox(width: 6),
+          Icon(Icons.chevron_right, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)), size: 18),
         ],
       ),
     );
@@ -615,16 +615,16 @@ class _WorkoutRow extends StatelessWidget {
             decoration: BoxDecoration(color: color.withAlpha(30), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
 
           // Workout name + date
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(type, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: ActivityTheme.textPrimary)),
-                const SizedBox(height: 2),
-                Text(dateLabel, style: const TextStyle(fontSize: 11, color: ActivityTheme.textSecondary)),
+                Text(type, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+                SizedBox(height: 2),
+                Text(dateLabel, style: TextStyle(fontSize: 11, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
               ],
             ),
           ),
@@ -633,12 +633,12 @@ class _WorkoutRow extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${workout.durationMins} min', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: ActivityTheme.textPrimary)),
-              Text('$cals kcal', style: const TextStyle(fontSize: 11, color: ActivityTheme.textSecondary)),
+              Text('${workout.durationMins} min', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+              Text('$cals kcal', style: TextStyle(fontSize: 11, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
             ],
           ),
-          const SizedBox(width: 6),
-          const Icon(Icons.chevron_right, color: ActivityTheme.textSecondary, size: 18),
+          SizedBox(width: 6),
+          Icon(Icons.chevron_right, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)), size: 18),
         ],
       ),
     );
@@ -657,8 +657,8 @@ class _FilterSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: ActivityTheme.cardBackground,
+      decoration: BoxDecoration(
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
@@ -670,14 +670,14 @@ class _FilterSheet extends StatelessWidget {
             width: 40, height: 4,
             decoration: BoxDecoration(color: Colors.grey.withAlpha(80), borderRadius: BorderRadius.circular(2)),
           ),
-          const SizedBox(height: 16),
-          const Text('Filter Period', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: ActivityTheme.textPrimary)),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
+          Text('Filter Period', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
+          SizedBox(height: 16),
           ...[ _Period.day, _Period.week, _Period.month ].map((p) {
             final label = p.name[0].toUpperCase() + p.name.substring(1);
             final isSelected = p == selected;
             return ListTile(
-              title: Text(label, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: ActivityTheme.textPrimary)),
+              title: Text(label, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
               trailing: isSelected ? const Icon(Icons.check, color: ActivityTheme.primaryBlue) : null,
               onTap: () => onSelected(p),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

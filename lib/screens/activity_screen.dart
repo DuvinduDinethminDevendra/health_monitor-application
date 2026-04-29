@@ -188,15 +188,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final provider = context.watch<ActivityProvider>();
 
     if (provider.isLoading) {
-      return const Scaffold(
-        backgroundColor: ActivityTheme.background,
-        body: ActivityLoadingSkeleton(),
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const ActivityLoadingSkeleton(),
       );
     }
 
     if (provider.errorMessage != null) {
       return Scaffold(
-        backgroundColor: ActivityTheme.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: ActivityErrorState(
           message: provider.errorMessage!,
           onRetry: _loadAll,
@@ -205,7 +205,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     }
 
     return Scaffold(
-      backgroundColor: ActivityTheme.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _loadAll,
         color: ActivityTheme.primaryBlue,
@@ -255,7 +255,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         : 'Syncing…';
 
     return SliverAppBar(
-      backgroundColor: ActivityTheme.cardBackground,
+      backgroundColor: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
       elevation: 0,
       floating: true,
       snap: true,
@@ -264,7 +264,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
       flexibleSpace: FlexibleSpaceBar(
         collapseMode: CollapseMode.pin,
         background: Container(
-          color: ActivityTheme.cardBackground,
+          color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12,
             left: ActivityTheme.screenPadding,
@@ -281,10 +281,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   children: [
                     Text(
                       '${_greeting()}, $name 👋',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: ActivityTheme.textPrimary,
+                        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -560,14 +560,14 @@ class _EmptyActivityPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(vertical: 16),
       child: Center(
         child: Text(
           'No recent activities recorded yet.\nStart moving to see your history here!',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: ActivityTheme.textSecondary,
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
             fontSize: 13,
             height: 1.5,
           ),
@@ -587,8 +587,8 @@ class _WorkoutPickerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: ActivityTheme.cardBackground,
+      decoration: BoxDecoration(
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -604,13 +604,13 @@ class _WorkoutPickerSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Choose Workout Type',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: ActivityTheme.textPrimary,
+              color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
             ),
           ),
           const SizedBox(height: 16),
@@ -630,12 +630,12 @@ class _WorkoutPickerSheet extends StatelessWidget {
               );
             }).toList(),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: ActivityTheme.textSecondary),
+              style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
             ),
           ),
         ],

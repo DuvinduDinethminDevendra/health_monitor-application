@@ -216,7 +216,8 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const accent = Color(0xFFAB47BC);
+    final accent = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -234,17 +235,17 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             // ── SCHEDULE TIMES ──
             // ═══════════════════════════════════════════════════
             _sectionLabel('Schedule'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             ...List.generate(_selectedTimes.length, (index) {
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(16.0),
                   border: Border.all(color: accent.withOpacity(0.3)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
+                      color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -254,7 +255,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   title: Text(
                     _formatTime(_selectedTimes[index]),
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w300, letterSpacing: -1.0),
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w300, letterSpacing: -1.0, color: isDark ? Colors.white : Colors.black87),
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
@@ -269,25 +270,25 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             Center(
               child: TextButton.icon(
                 onPressed: () => _pickTime(),
-                icon: const Icon(Icons.add, color: accent),
-                label: const Text('Add Time', style: TextStyle(color: accent, fontWeight: FontWeight.bold)),
+                icon: Icon(Icons.add, color: accent),
+                label: Text('Add Time', style: TextStyle(color: accent, fontWeight: FontWeight.bold)),
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── TITLE & MESSAGE ──
             // ═══════════════════════════════════════════════════
             _sectionLabel('Details'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -300,22 +301,22 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   labelText: 'Title',
                   hintText: 'e.g. Take Vitamins',
-                  prefixIcon: const Icon(Icons.label_outline, color: Colors.grey),
+                  prefixIcon: Icon(Icons.label_outline, color: Colors.grey),
                   border: InputBorder.none,
                 ),
                 validator: (v) =>
                     (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -334,18 +335,18 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── ALERT STYLE ──
             // ═══════════════════════════════════════════════════
             _sectionLabel('Alert Style'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Container(
               height: 56,
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: isDark ? Colors.white12 : Colors.grey[100],
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Row(
@@ -367,7 +368,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                             'Banner',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: _alertStyle == AlertStyle.banner ? Colors.white : Colors.grey[600],
+                              color: _alertStyle == AlertStyle.banner ? Colors.white : (isDark ? Colors.white60 : Colors.grey[600]),
                             ),
                           ),
                         ),
@@ -391,7 +392,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                             'Alarm',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: _alertStyle == AlertStyle.alarm ? Colors.white : Colors.grey[600],
+                              color: _alertStyle == AlertStyle.alarm ? Colors.white : (isDark ? Colors.white60 : Colors.grey[600]),
                             ),
                           ),
                         ),
@@ -401,16 +402,16 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── REPEAT DAYS ──
             // ═══════════════════════════════════════════════════
             _sectionLabel('Repeat'),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               _repeatSummary(),
-              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey[500]),
             ),
             const SizedBox(height: 10),
             Row(
@@ -437,7 +438,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: active ? accent : Colors.grey[500],
+                          color: active ? accent : (isDark ? Colors.white54 : Colors.grey[500]),
                         ),
                       ),
                     ),
@@ -451,7 +452,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             // ── SOUND ──
             // ═══════════════════════════════════════════════════
             _sectionLabel('Sound'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -464,9 +465,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                       Icon(
                         opt['icon'] as IconData,
                         size: 16,
-                        color: isActive ? Colors.white : Colors.grey[600],
+                        color: isActive ? Colors.white : (isDark ? Colors.white60 : Colors.grey[600]),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(opt['label'] as String),
                     ],
                   ),
@@ -475,7 +476,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   backgroundColor: Colors.transparent,
                   showCheckmark: false,
                   labelStyle: TextStyle(
-                    color: isActive ? accent : Colors.grey[600],
+                    color: isActive ? accent : (isDark ? Colors.white60 : Colors.grey[600]),
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                   ),
                   shape: RoundedRectangleBorder(
@@ -488,18 +489,19 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // ═══════════════════════════════════════════════════
             // ── VIBRATION ──
             // ═══════════════════════════════════════════════════
             Card(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: SwitchListTile(
-                title: const Text('Vibration', style: TextStyle(fontWeight: FontWeight.w500)),
+                title: Text('Vibration', style: TextStyle(fontWeight: FontWeight.w500)),
                 subtitle: Text(
                   _vibration ? 'Device will vibrate' : 'No vibration',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey[500]),
                 ),
                 secondary: Icon(
                   _vibration ? Icons.vibration : Icons.phone_android,
@@ -553,13 +555,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                     style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.redAccent),
+                    side: BorderSide(color: Colors.redAccent),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),
             ],
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
           ],
         ),
       ),
@@ -567,12 +569,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   }
 
   Widget _sectionLabel(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       text,
       style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w700,
-        color: Colors.grey[600],
+        color: isDark ? Colors.white60 : Colors.grey[600],
         letterSpacing: 0.5,
       ),
     );

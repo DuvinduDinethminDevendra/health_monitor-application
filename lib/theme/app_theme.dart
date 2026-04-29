@@ -111,7 +111,7 @@ class MatteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = color ?? (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white);
+    final cardColor = color ?? (isDark ? Colors.white.withOpacity(0.08) : Colors.white);
     
     return Container(
       width: width,
@@ -121,7 +121,7 @@ class MatteCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -129,20 +129,17 @@ class MatteCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: isDark ? 15 : 0, sigmaY: isDark ? 15 : 0),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(borderRadius),
-              border: border ?? Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.05),
-                width: 1.5,
-              ),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: border ?? Border.all(
+              color: isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.05),
+              width: 1.5,
             ),
-            child: child,
           ),
+          child: child,
         ),
       ),
     );

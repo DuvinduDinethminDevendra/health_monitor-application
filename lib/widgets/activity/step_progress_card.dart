@@ -22,7 +22,7 @@ class StepProgressCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
         boxShadow: [
           BoxShadow(
@@ -52,22 +52,22 @@ class StepProgressCard extends StatelessWidget {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.directions_walk, color: ActivityTheme.primaryBlue, size: 32),
-                    const SizedBox(height: 8),
+                    Icon(Icons.directions_walk, color: ActivityTheme.primaryBlue, size: 32),
+                    SizedBox(height: 8),
                     Text(
                       currentSteps.toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
-                        color: ActivityTheme.textPrimary,
+                        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
                         height: 1.0,
                       ),
                     ),
                     Text(
                       'Goal: $goalSteps',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: ActivityTheme.textSecondary,
+                        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -81,9 +81,9 @@ class StepProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildProgressDetail('${(clampedPercentage * 100).toInt()}%', 'Completed'),
+              _buildProgressDetail(context, '${(clampedPercentage * 100).toInt()}%', 'Completed'),
               Container(width: 1, height: 30, color: Colors.grey.withAlpha(50), margin: const EdgeInsets.symmetric(horizontal: 24)),
-              _buildProgressDetail(remaining.toString(), 'Remaining'),
+              _buildProgressDetail(context, remaining.toString(), 'Remaining'),
             ],
           )
         ],
@@ -91,22 +91,22 @@ class StepProgressCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressDetail(String value, String label) {
+  Widget _buildProgressDetail(BuildContext context, String value, String label) {
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: ActivityTheme.textPrimary,
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
           ),
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: ActivityTheme.textSecondary,
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
           ),
         ),
       ],

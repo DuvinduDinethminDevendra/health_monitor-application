@@ -25,28 +25,28 @@ class ActivityEmptyState extends StatelessWidget {
                 color: ActivityTheme.primaryBlue.withAlpha(15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.directions_run,
                 size: 64,
                 color: ActivityTheme.primaryBlue,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: ActivityTheme.textPrimary,
+                color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               subMessage,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: ActivityTheme.textSecondary,
+                color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
               ),
               textAlign: TextAlign.center,
             ),

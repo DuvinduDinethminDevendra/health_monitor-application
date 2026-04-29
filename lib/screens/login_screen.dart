@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.health_and_safety_rounded, size: 64, color: AppTheme.scooter),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       'Welcome Back',
                       style: TextStyle(
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Login to track your health',
                       style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600]),
                     ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
                     TextFormField(
                       controller: _emailController,
                       style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
@@ -106,12 +106,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelStyle: TextStyle(color: isDark ? Colors.white38 : AppTheme.heather),
                         prefixIcon: Icon(Icons.email_outlined, color: AppTheme.scooter),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       validator: (value) => (value == null || !value.contains('@')) ? 'Invalid email' : null,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -125,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
+                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       validator: (value) => (value == null || value.length < 6) ? 'Password too short' : null,
@@ -142,15 +142,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
                         ),
-                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     TextButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
                       child: Text("New here? Create Account", style: TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.w900)),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(child: Divider(color: isDark ? Colors.white12 : Colors.grey[300])),
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Expanded(child: Divider(color: isDark ? Colors.white12 : Colors.grey[300])),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       height: 55,

@@ -52,16 +52,18 @@ class ProgressLineChart extends StatelessWidget {
     final minBmi = spots.map((e) => e.y).reduce(math.min);
     final maxBmi = spots.map((e) => e.y).reduce(math.max);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 280,
       padding: const EdgeInsets.fromLTRB(12, 24, 24, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: const [
+        border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFF1F5F9)),
+        boxShadow: [
           BoxShadow(
-              color: Color(0x05000000), blurRadius: 10, offset: Offset(0, 4))
+              color: isDark ? Colors.black26 : const Color(0x05000000), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: LineChart(
@@ -73,7 +75,7 @@ class ProgressLineChart extends StatelessWidget {
           lineTouchData: LineTouchData(
             handleBuiltInTouches: true,
             touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (spot) => const Color(0xFF1E293B),
+              getTooltipColor: (spot) => isDark ? Colors.white : const Color(0xFF1E293B),
               tooltipRoundedRadius: 12,
               getTooltipItems: (touchedSpots) {
                 return touchedSpots.map((LineBarSpot touchedSpot) {
@@ -81,16 +83,16 @@ class ProgressLineChart extends StatelessWidget {
                       touchedSpot.x.toInt());
                   return LineTooltipItem(
                     '${touchedSpot.y.toStringAsFixed(1)}\n',
-                    const TextStyle(
-                      color: Colors.white,
+                    TextStyle(
+                      color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                     children: [
                       TextSpan(
                         text: DateFormat('MMM dd').format(date),
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
+                        style: TextStyle(
+                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),
@@ -115,7 +117,7 @@ class ProgressLineChart extends StatelessWidget {
                         radius: 8,
                         color: const Color(0xFF0D9488),
                         strokeWidth: 3,
-                        strokeColor: Colors.white,
+                        strokeColor: isDark ? const Color(0xFF0A2A3F) : Colors.white,
                       );
                     },
                   ),
@@ -128,7 +130,7 @@ class ProgressLineChart extends StatelessWidget {
             drawVerticalLine: false,
             horizontalInterval: 5,
             getDrawingHorizontalLine: (value) => FlLine(
-              color: const Color(0xFFF1F5F9),
+              color: isDark ? Colors.white12 : const Color(0xFFF1F5F9),
               strokeWidth: 1,
             ),
           ),
@@ -148,8 +150,8 @@ class ProgressLineChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 12),
                     child: Text(
                       DateFormat('MMM dd').format(date),
-                      style: const TextStyle(
-                        color: Color(0xFF94A3B8),
+                      style: TextStyle(
+                        color: isDark ? Colors.white60 : const Color(0xFF94A3B8),
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -167,8 +169,8 @@ class ProgressLineChart extends StatelessWidget {
                   if (value % 10 != 0) return const SizedBox.shrink();
                   return Text(
                     value.toInt().toString(),
-                    style: const TextStyle(
-                        color: Color(0xFF94A3B8),
+                    style: TextStyle(
+                        color: isDark ? Colors.white60 : const Color(0xFF94A3B8),
                         fontSize: 11,
                         fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
@@ -224,7 +226,7 @@ class ProgressLineChart extends StatelessWidget {
                 getDotPainter: (spot, percent, barData, index) {
                   return FlDotCirclePainter(
                     radius: 5,
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
                     strokeWidth: 3,
                     strokeColor: const Color(0xFF0D9488),
                   );

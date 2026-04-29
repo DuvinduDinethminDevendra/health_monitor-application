@@ -89,14 +89,16 @@ class RemindersScreen extends StatelessWidget {
     return Consumer<RemindersProvider>(
       builder: (context, provider, _) {
         final isSelecting = provider.isSelecting;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final primaryColor = Theme.of(context).colorScheme.primary;
 
         return Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey[50],
           appBar: AppBar(
             title: isSelecting
                 ? Text('${provider.selectedIds.length} selected')
                 : const Text('Health Reminders'),
-            backgroundColor: isSelecting ? Colors.grey[700] : const Color(0xFFAB47BC),
+            backgroundColor: isSelecting ? Colors.grey[700] : primaryColor,
             foregroundColor: Colors.white,
             elevation: 0,
             leading: isSelecting
@@ -120,7 +122,7 @@ class RemindersScreen extends StatelessWidget {
               : FloatingActionButton.extended(
                   heroTag: 'reminders_fab',
                   onPressed: () => _navigateToEdit(context),
-                  backgroundColor: const Color(0xFFAB47BC),
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   icon: const Icon(Icons.add_alarm),
                   label: const Text('New Reminder'),
@@ -159,14 +161,14 @@ class RemindersScreen extends StatelessWidget {
                   ),
                   children: [
                     if (!isSelecting) ...[
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 4.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Stay On Track',
-                              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5, color: isDark ? Colors.white : Colors.black87),
                             ),
                             SizedBox(height: 8),
                             Text(
@@ -178,7 +180,7 @@ class RemindersScreen extends StatelessWidget {
                       ),
                     ],
                     ...provider.reminders.map(
-                      (reminder) => _buildReminderCard(context, provider, reminder),
+                      (reminder) => _buildReminderCard(context, provider, reminder, isDark, primaryColor),
                     ),
                   ],
                 ),
@@ -187,7 +189,7 @@ class RemindersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReminderCard(BuildContext context, RemindersProvider provider, Reminder reminder) {
+  Widget _buildReminderCard(BuildContext context, RemindersProvider provider, Reminder reminder, bool isDark, Color primaryColor) {
     final color = _getColorForId(reminder.id);
     final icon = _getIconForId(reminder.id);
     final isCustom = reminder.id > 6;
@@ -250,12 +252,12 @@ class RemindersScreen extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.red.withAlpha(15) : Colors.white,
+          color: isSelected ? Colors.red.withAlpha(15) : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(24.0),
           border: isSelected ? Border.all(color: Colors.redAccent, width: 2) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
               blurRadius: 24.0,
               offset: const Offset(0, 10.0),
             ),
@@ -294,26 +296,26 @@ class RemindersScreen extends StatelessWidget {
                               reminder.times.isEmpty
                                   ? 'No time'
                                   : _formatTime(reminder.times.first['hour']!, reminder.times.first['minute']!),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.w300,
                                 letterSpacing: -1.5,
-                                color: Colors.black87,
+                                color: isDark ? Colors.white : Colors.black87,
                               ),
                             ),
                             if (reminder.times.length > 1) ...[
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[200],
+                                  color: isDark ? Colors.white12 : Colors.grey[200],
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   '+ ${reminder.times.length - 1} more',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[700],
+                                    color: isDark ? Colors.white70 : Colors.grey[700],
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -321,18 +323,18 @@ class RemindersScreen extends StatelessWidget {
                             ],
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(icon, color: color, size: 14),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 reminder.title,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey[500],
+                                  color: isDark ? Colors.white54 : Colors.grey[500],
                                   fontWeight: FontWeight.w600,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -362,14 +364,14 @@ class RemindersScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Switch(
                     value: reminder.isEnabled,
-                    activeColor: const Color(0xFFAB47BC),
+                    activeColor: primaryColor,
                     onChanged: (value) async {
                       await provider.toggleReminder(reminder, value);
                       if (value && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${reminder.title} reminder enabled'),
-                            backgroundColor: const Color(0xFFAB47BC),
+                            backgroundColor: primaryColor,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),

@@ -25,27 +25,70 @@ class RemindersProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _reminders = await _repository.getReminders();
+    try {
+      _reminders = await _repository.getReminders();
 
-    // Seed initial reminders if the database is empty
-    if (_reminders.isEmpty) {
-      final initialReminders = [
-        Reminder(id: 1, title: 'Morning Workout', body: 'Scheduled daily exercise and physical conditioning.', times: [{'hour': 7, 'minute': 0}]),
-        Reminder(id: 2, title: 'Hydration Check', body: 'Daily hydration goal reminder. Please consume water.', times: [{'hour': 9, 'minute': 0}, {'hour': 13, 'minute': 0}, {'hour': 18, 'minute': 0}]),
-        Reminder(id: 3, title: 'Nutrition Log', body: 'Reminder to record your recent meals and nutritional intake.', times: [{'hour': 12, 'minute': 30}]),
-        Reminder(id: 4, title: 'Mobility Break', body: 'Scheduled time for a short walk to maintain physical activity.', times: [{'hour': 15, 'minute': 0}]),
-        Reminder(id: 5, title: 'Weight Tracking', body: 'Please log your current weight and body metrics.', times: [{'hour': 18, 'minute': 0}]),
-        Reminder(id: 6, title: 'Sleep Schedule', body: 'Evening wind-down period to ensure optimal rest.', times: [{'hour': 22, 'minute': 0}]),
-      ];
+      // Seed initial reminders if the database is empty
+      if (_reminders.isEmpty) {
+        final initialReminders = [
+          Reminder(
+              id: 1,
+              title: 'Morning Workout',
+              body: 'Scheduled daily exercise and physical conditioning.',
+              times: [
+                {'hour': 7, 'minute': 0}
+              ]),
+          Reminder(
+              id: 2,
+              title: 'Hydration Check',
+              body: 'Daily hydration goal reminder. Please consume water.',
+              times: [
+                {'hour': 9, 'minute': 0},
+                {'hour': 13, 'minute': 0},
+                {'hour': 18, 'minute': 0}
+              ]),
+          Reminder(
+              id: 3,
+              title: 'Nutrition Log',
+              body: 'Reminder to record your recent meals and nutritional intake.',
+              times: [
+                {'hour': 12, 'minute': 30}
+              ]),
+          Reminder(
+              id: 4,
+              title: 'Mobility Break',
+              body:
+                  'Scheduled time for a short walk to maintain physical activity.',
+              times: [
+                {'hour': 15, 'minute': 0}
+              ]),
+          Reminder(
+              id: 5,
+              title: 'Weight Tracking',
+              body: 'Please log your current weight and body metrics.',
+              times: [
+                {'hour': 18, 'minute': 0}
+              ]),
+          Reminder(
+              id: 6,
+              title: 'Sleep Schedule',
+              body: 'Evening wind-down period to ensure optimal rest.',
+              times: [
+                {'hour': 22, 'minute': 0}
+              ]),
+        ];
 
-      for (var r in initialReminders) {
-        await _repository.insertReminder(r);
+        for (var r in initialReminders) {
+          await _repository.insertReminder(r);
+        }
+        _reminders = initialReminders;
       }
-      _reminders = initialReminders;
+    } catch (e) {
+      debugPrint('Error loading reminders: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   // ── Toggle On/Off ──

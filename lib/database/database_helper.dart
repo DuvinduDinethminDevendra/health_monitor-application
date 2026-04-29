@@ -33,7 +33,7 @@ class DatabaseHelper {
     return await openDatabase(
       path,
 
-      version: 10,
+      version: 11,
 
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -98,6 +98,99 @@ class DatabaseHelper {
     if (oldVersion < 10) {
       await db.execute("ALTER TABLE reminders ADD COLUMN times TEXT NOT NULL DEFAULT '[]'");
     }
+
+    // ENSURE 'is_dark_mode' EXISTS IN 'users' TABLE
+    await _ensureColumnExists(db, 'users', 'is_dark_mode', "ALTER TABLE users ADD COLUMN is_dark_mode INTEGER DEFAULT 0");
+
+    // ENSURE ALL TABLES EXIST (Crucial for users upgrading from very old versions)
+    await _ensureTableExists(db, 'goals', '''
+      CREATE TABLE IF NOT EXISTS goals(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        title TEXT,
+        category TEXT,
+        target_value REAL,
+        current_value REAL,
+        unit TEXT,
+        deadline TEXT,
+        reminder_time TEXT,
+        is_completed INTEGER DEFAULT 0,
+        sync_status INTEGER DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await _ensureTableExists(db, 'activities', '''
+      CREATE TABLE IF NOT EXISTS activities(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        type TEXT,
+        value REAL,
+        date TEXT,
+        duration INTEGER,
+        sync_status INTEGER DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await _ensureTableExists(db, 'health_logs', '''
+      CREATE TABLE IF NOT EXISTS health_logs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        weight REAL,
+        height REAL,
+        bmi REAL,
+        date TEXT,
+        tags TEXT,
+        notes TEXT,
+        unit TEXT NOT NULL DEFAULT 'metric',
+        waist REAL,
+        hip REAL,
+        chest REAL,
+        body_fat REAL,
+        sync_status INTEGER DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await _ensureTableExists(db, 'step_records', '''
+      CREATE TABLE IF NOT EXISTS step_records(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        date TEXT,
+        step_count INTEGER,
+        goal INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await _ensureTableExists(db, 'workout_records', '''
+      CREATE TABLE IF NOT EXISTS workout_records(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        workout_type TEXT,
+        duration_mins INTEGER,
+        calories_burned INTEGER,
+        logged_at TEXT,
+        notes TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+  }
+
+  Future<void> _ensureTableExists(Database db, String tableName, String createSql) async {
+    final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [tableName]);
+    if (tables.isEmpty) {
+      await db.execute(createSql);
+    }
+  }
+
+  Future<void> _ensureColumnExists(Database db, String tableName, String columnName, String alterSql) async {
+    final columns = await db.rawQuery("PRAGMA table_info($tableName)");
+    final exists = columns.any((c) => c['name'] == columnName);
+    if (!exists) {
+      await db.execute(alterSql);
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -113,6 +206,7 @@ class DatabaseHelper {
         height REAL,
         weight REAL,
         profile_picture TEXT,
+        is_dark_mode INTEGER DEFAULT 0,
         interests TEXT,
         sync_status INTEGER DEFAULT 0
       )

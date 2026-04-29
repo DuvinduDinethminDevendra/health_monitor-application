@@ -86,6 +86,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ShowCaseWidget(
       builder: (context) {
         final provider = Provider.of<HealthTipsProvider>(context);
@@ -98,7 +99,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
         }
 
         return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF0A192F) : Colors.white,
       body: Stack(
         children: [
           Positioned.fill(
@@ -216,12 +217,9 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                child: Container(
-                  color: Colors.white.withOpacity(0.85),
-                  child: SafeArea(
+            child: Container(
+              color: isDark ? const Color(0xFF0A192F).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+              child: SafeArea(
                     bottom: false,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -231,12 +229,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                           child: Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                                icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87),
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
-                              const Text(
+                              Text(
                                 'Health Tips',
-                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
                               ),
                             ],
                           ),
@@ -249,8 +247,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                             description: 'Type here to find specific health advice or keywords.',
                             tooltipBackgroundColor: const Color(0xFF1A73E8),
                             textColor: Colors.white,
-                            titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
-                            descTextStyle: const TextStyle(fontSize: 14, color: Colors.white70),
+                            titleTextStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
+                            descTextStyle: TextStyle(fontSize: 14, color: Colors.white70),
                             tooltipBorderRadius: BorderRadius.circular(12),
                             child: TextField(
                               controller: _searchController,
@@ -258,7 +256,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                               onSubmitted: (_) => _onSearchSubmitted(),
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: Colors.grey[200],
+                                fillColor: isDark ? const Color(0xFF1E293B) : Colors.grey[200],
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                                 hintText: 'Search health tips...',
                                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
@@ -291,8 +289,6 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                   ),
                 ),
               ),
-              ),
-            ),
           ),
         ],
       ),
@@ -302,6 +298,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
   }
 
   Widget _buildTagChips(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.watch<HealthTipsProvider>();
     final authService = context.watch<AuthService>();
     final userInterests = authService.currentUser?.interests;
@@ -328,8 +325,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
               label: Text(tag),
               selected: isSelected,
               showCheckmark: false,
-              backgroundColor: Colors.grey[100],
-              selectedColor: Colors.black,
+              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.grey[100],
+              selectedColor: isDark ? const Color(0xFF1A73E8) : Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30.0),
                 side: BorderSide.none,
@@ -341,7 +338,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                 }
               },
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[800],
+                color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.grey[800]),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
@@ -352,6 +349,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
   }
 
   Widget _buildShimmerSkeleton() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.only(top: 230, left: 16, right: 16, bottom: 16),
@@ -370,7 +368,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
               highlightColor: Colors.grey[100]!,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -390,8 +388,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => ShowCaseWidget(
-        builder: (context) => DraggableScrollableSheet(
+      builder: (context) => DraggableScrollableSheet(
           initialChildSize: 0.6,
           maxChildSize: 0.9,
           minChildSize: 0.3,
@@ -458,20 +455,20 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                           const SizedBox(height: 16),
                           Text(
                             tip.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
                               height: 1.2,
                               letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           tip.content.isNotEmpty
                               ? HtmlWidget(
                                   tip.content,
                                   textStyle: TextStyle(
                                     fontSize: 17,
-                                    color: Colors.grey[850],
+                                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.grey[850],
                                     height: 1.7,
                                   ),
                                 )
@@ -479,7 +476,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                   'Follow this health tip to improve your overall wellness and maintain a healthy lifestyle.',
                                   style: TextStyle(
                                     fontSize: 17,
-                                    color: Colors.grey[850],
+                                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.grey[850],
                                     height: 1.7,
                                   ),
                                 ),
@@ -512,7 +509,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 40),
+                          SizedBox(height: 40),
                         ],
                       ),
                     ),
@@ -619,11 +616,11 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
           );
         },
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildFeaturedTipCard(HealthTip tip, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -673,7 +670,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.9) : Colors.white.withOpacity(0.9)),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text(
@@ -708,6 +705,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
 }
 
   Widget _buildGridTipCard(HealthTip tip, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -757,7 +755,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.9) : Colors.white.withOpacity(0.9)),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text(

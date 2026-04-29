@@ -68,7 +68,7 @@ class RecentActivityTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
+        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -85,22 +85,22 @@ class RecentActivityTile extends StatelessWidget {
         ),
         title: Text(
           type[0].toUpperCase() + type.substring(1),
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: ActivityTheme.textPrimary,
+            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
           ),
         ),
         subtitle: Row(
           children: [
             Text(
               '$value • $duration min',
-              style: const TextStyle(color: ActivityTheme.textSecondary),
+              style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
             ),
             if (calories != null) ...[
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 '• $calories kcal',
-                style: const TextStyle(color: ActivityTheme.textSecondary),
+                style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
               ),
             ]
           ],
@@ -111,9 +111,9 @@ class RecentActivityTile extends StatelessWidget {
           children: [
             Text(
               date,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: ActivityTheme.textSecondary,
+                color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
               ),
             ),
             const SizedBox(height: 4),

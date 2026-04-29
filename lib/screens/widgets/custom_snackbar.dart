@@ -77,6 +77,11 @@ class _TopToastWidgetState extends State<_TopToastWidget> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final errorColor = theme.colorScheme.error;
+    final successColor = theme.colorScheme.secondary;
+    final bgColor = widget.isError ? errorColor : successColor;
+
     return Positioned(
       top: MediaQuery.of(context).padding.top + 16,
       left: 16,
@@ -88,11 +93,11 @@ class _TopToastWidgetState extends State<_TopToastWidget> with SingleTickerProvi
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: widget.isError ? const Color(0xFFE53935) : const Color(0xFF00BFA5),
+              color: bgColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: (widget.isError ? const Color(0xFFE53935) : const Color(0xFF00BFA5)).withAlpha(50),
+                  color: bgColor.withAlpha(50),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
