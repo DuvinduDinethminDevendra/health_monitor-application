@@ -344,7 +344,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Switch.adaptive(
                               value: isDark,
                               onChanged: (_) => authService.toggleTheme(),
-                              activeThumbColor: AppTheme.scooter,
+                              activeColor: AppTheme.scooter,
                             ),
                           ],
                         ),
