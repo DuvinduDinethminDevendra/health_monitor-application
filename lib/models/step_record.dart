@@ -1,6 +1,6 @@
 class StepRecord {
   final int? id;
-  final int userId;
+  final String userId;
   final String date;
   final int stepCount;
   final int goal;
@@ -26,7 +26,7 @@ class StepRecord {
   factory StepRecord.fromMap(Map<String, dynamic> map) {
     return StepRecord(
       id: map['id'] as int?,
-      userId: map['user_id'] as int,
+      userId: map['user_id'] as String,
       date: map['date'] as String,
       stepCount: map['step_count'] as int,
       goal: map['goal'] as int? ?? 10000,
@@ -35,7 +35,7 @@ class StepRecord {
 
   StepRecord copyWith({
     int? id,
-    int? userId,
+    String? userId,
     String? date,
     int? stepCount,
     int? goal,

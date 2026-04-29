@@ -32,7 +32,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -98,9 +98,35 @@ class DatabaseHelper {
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE step_records(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        date TEXT,
+        step_count INTEGER,
+        goal INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE workout_records(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        workout_type TEXT,
+        duration_mins INTEGER,
+        calories_burned INTEGER,
+        logged_at TEXT,
+        notes TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    await db.execute('DROP TABLE IF EXISTS workout_records');
+    await db.execute('DROP TABLE IF EXISTS step_records');
     await db.execute('DROP TABLE IF EXISTS health_logs');
     await db.execute('DROP TABLE IF EXISTS activities');
     await db.execute('DROP TABLE IF EXISTS goals');

@@ -9,7 +9,7 @@ class WorkoutRecordRepository {
     return await db.insert('workout_records', workout.toMap());
   }
 
-  Future<List<WorkoutRecord>> getWorkoutsByUser(int userId) async {
+  Future<List<WorkoutRecord>> getWorkoutsByUser(String userId) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'workout_records',
@@ -20,7 +20,7 @@ class WorkoutRecordRepository {
     return maps.map((map) => WorkoutRecord.fromMap(map)).toList();
   }
 
-  Future<List<WorkoutRecord>> getTodaysWorkouts(int userId, String date) async {
+  Future<List<WorkoutRecord>> getTodaysWorkouts(String userId, String date) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'workout_records',
@@ -31,7 +31,7 @@ class WorkoutRecordRepository {
     return maps.map((map) => WorkoutRecord.fromMap(map)).toList();
   }
 
-  Future<List<WorkoutRecord>> getWorkoutsByDateRange(int userId, String start, String end) async {
+  Future<List<WorkoutRecord>> getWorkoutsByDateRange(String userId, String start, String end) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'workout_records',

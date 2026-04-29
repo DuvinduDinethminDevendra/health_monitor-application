@@ -47,7 +47,7 @@ void onServiceStart(ServiceInstance service) async {
       if (cachedDate != null && cachedSteps > 0) {
         final stepRepo = StepRecordRepository();
         
-        final userId = prefs.getInt('active_user_id') ?? 1; 
+        final userId = prefs.getString('active_user_id') ?? '1'; 
 
         final record = StepRecord(
           userId: userId,

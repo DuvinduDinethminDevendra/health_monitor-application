@@ -1,6 +1,6 @@
 class WorkoutRecord {
   final int? id;
-  final int userId;
+  final String userId;
   final String workoutType;
   final int durationMins;
   final int? caloriesBurned;
@@ -32,7 +32,7 @@ class WorkoutRecord {
   factory WorkoutRecord.fromMap(Map<String, dynamic> map) {
     return WorkoutRecord(
       id: map['id'] as int?,
-      userId: map['user_id'] as int,
+      userId: map['user_id'] as String,
       workoutType: map['workout_type'] as String,
       durationMins: map['duration_mins'] as int,
       caloriesBurned: map['calories_burned'] as int?,
@@ -43,7 +43,7 @@ class WorkoutRecord {
 
   WorkoutRecord copyWith({
     int? id,
-    int? userId,
+    String? userId,
     String? workoutType,
     int? durationMins,
     int? caloriesBurned,

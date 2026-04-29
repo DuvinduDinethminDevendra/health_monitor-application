@@ -14,7 +14,7 @@ class StepRecordRepository {
     );
   }
 
-  Future<StepRecord?> getStepRecordByDate(int userId, String date) async {
+  Future<StepRecord?> getStepRecordByDate(String userId, String date) async {
     final db = await _dbHelper.database;
     final maps = await db.query(
       'step_records',
@@ -28,7 +28,7 @@ class StepRecordRepository {
     return null;
   }
 
-  Future<List<StepRecord>> getLast7DaysSteps(int userId) async {
+  Future<List<StepRecord>> getLast7DaysSteps(String userId) async {
     final db = await _dbHelper.database;
     
     final now = DateTime.now();
@@ -64,7 +64,7 @@ class StepRecordRepository {
     return filledRecords;
   }
 
-  Future<List<StepRecord>> getLast30DaysSteps(int userId) async {
+  Future<List<StepRecord>> getLast30DaysSteps(String userId) async {
     final db = await _dbHelper.database;
     final now = DateTime.now();
     final thirtyDaysAgo = now.subtract(const Duration(days: 29));

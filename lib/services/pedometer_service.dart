@@ -6,7 +6,7 @@ class PedometerService {
   StreamSubscription<StepCount>? _stepCountStream;
   StreamSubscription<PedestrianStatus>? _pedestrianStatusStream;
 
-  void startListening(ActivityProvider provider, int userId) {
+  void startListening(ActivityProvider provider, String userId) {
     try {
       _stepCountStream = Pedometer.stepCountStream.listen(
         (StepCount event) {
