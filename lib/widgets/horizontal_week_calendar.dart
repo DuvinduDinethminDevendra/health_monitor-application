@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class HorizontalWeekCalendar extends StatefulWidget {
   final DateTime selectedDate;
@@ -146,7 +147,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hello, ${widget.userName}',
+                        '${AppLocalizations.of(context)!.hello}, ${widget.userName}',
                         style: TextStyle(
                           color: textColor,
                           fontSize: 24,

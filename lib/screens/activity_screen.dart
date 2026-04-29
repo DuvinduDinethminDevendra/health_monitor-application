@@ -5,6 +5,7 @@ import '../models/activity.dart';
 import '../repositories/activity_repository.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -74,7 +75,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Activities',
+        title: Text(AppLocalizations.of(context)!.activity,
             style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : AppTheme.sapphire,
@@ -103,7 +104,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       color: AppTheme.heather.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
                   Text(
-                    'No activities logged yet',
+                    AppLocalizations.of(context)!.noActivities,
                     style: TextStyle(
                         fontSize: 18,
                         color: isDark ? Colors.white : AppTheme.sapphire,

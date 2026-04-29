@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/health_tips_service.dart';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class HealthTipsScreen extends StatefulWidget {
   const HealthTipsScreen({super.key});
@@ -57,7 +58,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Health Insights', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+        title: Text(AppLocalizations.of(context)!.dailyTips, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         backgroundColor: Colors.transparent,
         foregroundColor: AppTheme.darkCharcoal,
         elevation: 0,

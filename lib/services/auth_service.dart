@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../repositories/user_repository.dart';
 import '../models/user.dart' as model;
 import 'sync_service.dart';
@@ -24,6 +25,24 @@ class AuthService with ChangeNotifier {
   bool _forceDark = false;
 
   bool get isDarkMode => _currentLocalUser?.isDarkMode ?? _forceDark;
+  
+  Locale _locale = const Locale('en');
+  Locale get locale => _locale;
+
+  void setLocale(Locale locale) {
+    if (_locale != locale) {
+      _locale = locale;
+      notifyListeners();
+      _saveLocale(locale.languageCode);
+    }
+  }
+
+  Future<void> _saveLocale(String code) async {
+    if (_currentLocalUser != null) {
+      final updatedUser = _currentLocalUser!.copyWith(languageCode: code);
+      await _userRepository.updateUser(updatedUser);
+    }
+  }
 
   void clearFirstTimeLogin() {
     _isFirstTimeLogin = false;
@@ -31,6 +50,7 @@ class AuthService with ChangeNotifier {
 
   AuthService() {
     _loadTheme();
+    _loadLocale();
     _auth.authStateChanges().listen((User? user) async {
       _firebaseUser = user;
       if (user != null) {
@@ -169,10 +189,18 @@ class AuthService with ChangeNotifier {
       final maps = await db.query('users', orderBy: 'created_at DESC', limit: 1);
       if (maps.isNotEmpty) {
         _forceDark = maps.first['is_dark_mode'] == 1;
+        final code = maps.first['language_code'] as String?;
+        if (code != null) {
+          _locale = Locale(code);
+        }
         notifyListeners();
       }
     } catch (e) {
-      print("Error loading theme: $e");
+      print("Error loading settings: $e");
     }
+  }
+
+  Future<void> _loadLocale() async {
+    // Already handled in _loadTheme for now
   }
 }

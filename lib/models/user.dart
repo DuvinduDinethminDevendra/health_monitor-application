@@ -16,6 +16,7 @@ class User {
   final String? profilePicture; // Base64 string for SQLite offline image
   final List<String>? interests; // Spotify-style topics (Fitness, Diet, etc)
   final bool isDarkMode;
+  final String languageCode;
 
   // This is the Constructor. It tells Flutter how to create a new User object in memory.
   // The 'required' keyword means that a User MUST have a name, email, and password to be created.
@@ -32,6 +33,7 @@ class User {
     this.profilePicture,
     this.interests,
     this.isDarkMode = false,
+    this.languageCode = 'en',
   }) : createdAt = createdAt ?? DateTime.now().toIso8601String();
 
   // toMap() is a Translator. 
@@ -50,6 +52,7 @@ class User {
       'weight': weight,
       'profile_picture': profilePicture,
       'is_dark_mode': isDarkMode ? 1 : 0,
+      'language_code': languageCode,
       // We convert the list of topics into a JSON string because SQLite can't store Lists directly
       'interests': interests != null ? jsonEncode(interests) : null,
     };
@@ -83,6 +86,7 @@ class User {
       profilePicture: map['profile_picture'] as String?,
       interests: parsedInterests,
       isDarkMode: (map['is_dark_mode'] == 1 || map['is_dark_mode'] == true),
+      languageCode: map['language_code'] as String? ?? 'en',
     );
   }
 
@@ -103,6 +107,7 @@ class User {
     String? profilePicture,
     List<String>? interests,
     bool? isDarkMode,
+    String? languageCode,
   }) {
     return User(
       id: id ?? this.id,
@@ -117,6 +122,7 @@ class User {
       profilePicture: profilePicture ?? this.profilePicture,
       interests: interests ?? this.interests,
       isDarkMode: isDarkMode ?? this.isDarkMode,
+      languageCode: languageCode ?? this.languageCode,
     );
   }
 }

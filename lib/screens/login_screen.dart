@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import 'register_screen.dart';
 import 'dashboard_screen.dart';
 import 'profile_screen.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -85,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Icon(Icons.health_and_safety_rounded, size: 64, color: AppTheme.scooter),
                     const SizedBox(height: 16),
                     Text(
-                      'Welcome Back',
+                      AppLocalizations.of(context)!.welcomeBack,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
@@ -94,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     Text(
-                      'Login to track your health',
+                      AppLocalizations.of(context)!.loginToTrack,
                       style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600]),
                     ),
                     const SizedBox(height: 40),
@@ -102,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
-                        labelText: 'Email Address',
+                        labelText: AppLocalizations.of(context)!.email,
                         labelStyle: TextStyle(color: isDark ? Colors.white38 : AppTheme.heather),
                         prefixIcon: Icon(Icons.email_outlined, color: AppTheme.scooter),
                         filled: true,
@@ -117,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
-                        labelText: 'Password',
+                        labelText: AppLocalizations.of(context)!.password,
                         labelStyle: TextStyle(color: isDark ? Colors.white38 : AppTheme.heather),
                         prefixIcon: Icon(Icons.lock_outline, color: AppTheme.scooter),
                         suffixIcon: IconButton(
@@ -142,19 +143,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
                         ),
-                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : Text(AppLocalizations.of(context)!.login, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
                       ),
                     ),
                     const SizedBox(height: 24),
                     TextButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                      child: Text("New here? Create Account", style: TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.w900)),
+                      child: Text(AppLocalizations.of(context)!.newHere, style: TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.w900)),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(child: Divider(color: isDark ? Colors.white12 : Colors.grey[300])),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('OR', style: TextStyle(color: AppTheme.heather, fontWeight: FontWeight.bold))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text(AppLocalizations.of(context)!.or, style: TextStyle(color: AppTheme.heather, fontWeight: FontWeight.bold))),
                         Expanded(child: Divider(color: isDark ? Colors.white12 : Colors.grey[300])),
                       ],
                     ),
@@ -175,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             const Icon(Icons.g_mobiledata_rounded, size: 30),
                             const SizedBox(width: 8),
-                            const Text('Sign in with Google', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(AppLocalizations.of(context)!.loginWithGoogle, style: const TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),

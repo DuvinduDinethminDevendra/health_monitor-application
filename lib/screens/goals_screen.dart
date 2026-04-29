@@ -7,6 +7,7 @@ import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -125,7 +126,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Health Goals',
+        title: Text(AppLocalizations.of(context)!.goals,
             style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : AppTheme.sapphire,
@@ -153,7 +154,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       color: AppTheme.heather.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
                   Text(
-                    'No goals set yet',
+                    AppLocalizations.of(context)!.noGoals,
                     style: TextStyle(
                         fontSize: 18,
                         color: isDark ? Colors.white : AppTheme.sapphire,

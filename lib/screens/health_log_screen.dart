@@ -5,6 +5,7 @@ import '../models/health_log.dart';
 import '../repositories/health_log_repository.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class HealthLogScreen extends StatefulWidget {
   const HealthLogScreen({super.key});
@@ -199,7 +200,7 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Health Logs',
+        title: Text(AppLocalizations.of(context)!.healthLog,
             style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : AppTheme.sapphire,
@@ -227,7 +228,7 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                       color: AppTheme.heather.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
                   Text(
-                    'No health logs yet',
+                    AppLocalizations.of(context)!.noLogs,
                     style: TextStyle(
                         fontSize: 18,
                         color: isDark ? Colors.white : AppTheme.sapphire,

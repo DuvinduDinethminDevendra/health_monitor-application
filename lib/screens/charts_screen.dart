@@ -10,6 +10,7 @@ import '../models/activity.dart';
 import '../models/health_log.dart';
 import '../models/goal.dart';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class ChartsScreen extends StatefulWidget {
   final int initialIndex;
@@ -73,7 +74,7 @@ class _ChartsScreenState extends State<ChartsScreen>
     return Scaffold(
       backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       appBar: AppBar(
-        title: Text('Health Insights', 
+        title: Text(AppLocalizations.of(context)!.progress, 
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -97,10 +98,10 @@ class _ChartsScreenState extends State<ChartsScreen>
               labelColor: Colors.white,
               unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withValues(alpha: 0.4),
               labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-              tabs: const [
-                Tab(text: 'Activity'),
-                Tab(text: 'Trends'),
-                Tab(text: 'Insights'),
+              tabs: [
+                Tab(text: AppLocalizations.of(context)!.activity),
+                Tab(text: AppLocalizations.of(context)!.trends),
+                Tab(text: AppLocalizations.of(context)!.insights),
               ],
             ),
           ),

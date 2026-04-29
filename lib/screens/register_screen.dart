@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -106,15 +107,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 Icon(Icons.person_add_rounded, size: 64, color: AppTheme.scooter),
                 const SizedBox(height: 16),
-                Text('Create Account', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
+                Text(AppLocalizations.of(context)!.createAccount, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
                 const SizedBox(height: 32),
-                _buildField(_nameController, 'Full Name', Icons.person_outline, isDark),
+                _buildField(_nameController, AppLocalizations.of(context)!.name, Icons.person_outline, isDark),
                 const SizedBox(height: 16),
-                _buildField(_emailController, 'Email Address', Icons.email_outlined, isDark),
+                _buildField(_emailController, AppLocalizations.of(context)!.email, Icons.email_outlined, isDark),
                 const SizedBox(height: 16),
-                _buildField(_passwordController, 'Password', Icons.lock_outline, isDark, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
+                _buildField(_passwordController, AppLocalizations.of(context)!.password, Icons.lock_outline, isDark, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
                 const SizedBox(height: 16),
-                _buildField(_confirmPasswordController, 'Confirm Password', Icons.lock_outline, isDark, obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
+                _buildField(_confirmPasswordController, AppLocalizations.of(context)!.confirmPassword, Icons.lock_outline, isDark, obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -126,10 +127,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                    child: Text(AppLocalizations.of(context)!.continueText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                   ),
                 ),
-                TextButton(onPressed: () => Navigator.pop(context), child: Text("Already have an account? Login", style: TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.bold))),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.alreadyAccount, style: TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.bold))),
               ],
             ),
           ),
@@ -166,16 +167,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Your Interests', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
+              Text(AppLocalizations.of(context)!.manageInterests, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
               const SizedBox(height: 8),
-              Text('Select what matters to you', style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600])),
+              Text(AppLocalizations.of(context)!.selectInterests, style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600])),
               const SizedBox(height: 32),
               Wrap(
                 spacing: 8, runSpacing: 8,
                 children: _availableTopics.map((t) {
                   final sel = _selectedTopics.contains(t);
                   return FilterChip(
-                    label: Text(t),
+                    label: Text(_translateTopic(t)),
                     selected: sel,
                     onSelected: (s) => setState(() => s ? _selectedTopics.add(t) : _selectedTopics.remove(t)),
                     selectedColor: AppTheme.scooter,
@@ -187,7 +188,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 40),
               Row(
                 children: [
-                  TextButton(onPressed: _isLoading ? null : _previousPage, child: const Text('Back', style: TextStyle(color: AppTheme.heather, fontWeight: FontWeight.bold))),
+                  TextButton(onPressed: _isLoading ? null : _previousPage, child: Text(AppLocalizations.of(context)!.back, style: const TextStyle(color: AppTheme.heather, fontWeight: FontWeight.bold))),
                   const SizedBox(width: 12),
                   Expanded(
                     child: SizedBox(
@@ -199,7 +200,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
                         ),
-                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Get Started', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : Text(AppLocalizations.of(context)!.register, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                       ),
                     ),
                   ),
@@ -210,5 +211,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+  }
+
+  String _translateTopic(String topic) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (topic.toLowerCase()) {
+      case 'fitness': return l10n.fitness;
+      case 'diet': return l10n.diet;
+      case 'meditation': return l10n.meditation;
+      case 'hydration': return l10n.hydration;
+      case 'weight loss': return l10n.weightLoss;
+      case 'muscle gain': return l10n.muscleGain;
+      case 'sleep': return l10n.sleep;
+      case 'running': return l10n.running;
+      case 'yoga': return l10n.yoga;
+      case 'healthy habits': return l10n.healthyHabits;
+      default: return topic;
+    }
   }
 }

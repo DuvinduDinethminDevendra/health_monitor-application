@@ -32,7 +32,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -53,6 +53,7 @@ class DatabaseHelper {
         profile_picture TEXT,
         interests TEXT,
         is_dark_mode INTEGER DEFAULT 0,
+        language_code TEXT DEFAULT 'en',
         sync_status INTEGER DEFAULT 0
       )
     ''');

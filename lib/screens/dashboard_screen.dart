@@ -15,8 +15,8 @@ import '../services/sync_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/horizontal_week_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:ui';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -27,7 +27,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
-  int _totalActivities = 0;
   int _totalSteps = 0;
   int _activeGoals = 0;
   double _latestBmi = 0;
@@ -75,7 +74,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     setState(() {
-      _totalActivities = activities.length;
       _totalSteps = steps; // New state variable
       _activeGoals = goals.length;
       if (latestLog != null) {
@@ -117,7 +115,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildAddOption(
-                  'Activity',
+                  AppLocalizations.of(context)!.activity,
                   Icons.directions_run_rounded,
                   AppTheme.scooter,
                   () {
@@ -126,7 +124,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
                 _buildAddOption(
-                  'Goal',
+                  AppLocalizations.of(context)!.goals,
                   Icons.flag_rounded,
                   AppTheme.warmOrange,
                   () {
@@ -135,7 +133,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
                 _buildAddOption(
-                  'Health',
+                  'Health', // This is for Health Log, maybe add key?
                   Icons.monitor_weight_rounded,
                   AppTheme.skyBlue,
                   () {
@@ -191,7 +189,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       const GoalsScreen(),
     ];
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(
@@ -206,11 +203,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.grid_view_rounded, 'Home'),
-              _buildNavItem(1, Icons.directions_run_rounded, 'Activity'),
+              _buildNavItem(0, Icons.grid_view_rounded, AppLocalizations.of(context)!.dashboard),
+              _buildNavItem(1, Icons.directions_run_rounded, AppLocalizations.of(context)!.activity),
               _buildAddButton(),
-              _buildNavItem(2, Icons.bar_chart_rounded, 'Progress'),
-              _buildNavItem(3, Icons.flag_rounded, 'Goals'),
+              _buildNavItem(2, Icons.bar_chart_rounded, AppLocalizations.of(context)!.progress),
+              _buildNavItem(3, Icons.flag_rounded, AppLocalizations.of(context)!.goals),
             ],
           ),
         ),
@@ -411,7 +408,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _touchedIndex == 1 ? '${_activeGoals}' : (_touchedIndex == 2 ? 'Optimal' : '${_totalSteps}'),
+                                    _touchedIndex == 1 ? '$_activeGoals' : (_touchedIndex == 2 ? 'Optimal' : '$_totalSteps'),
                                     style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.w900,
@@ -420,7 +417,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   Text(
-                                    _touchedIndex == 1 ? 'ACTIVE GOALS' : (_touchedIndex == 2 ? 'HEALTH STATE' : 'STEPS TODAY'),
+                                    _touchedIndex == 1 ? AppLocalizations.of(context)!.activeGoals : (_touchedIndex == 2 ? AppLocalizations.of(context)!.healthState : AppLocalizations.of(context)!.stepsToday),
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,

@@ -78,6 +78,7 @@ erDiagram
         string email
         string created_at
         bool is_dark_mode "Theme persistence"
+        string language_code "Locale persistence"
         int sync_status
     }
     GOALS {
@@ -129,7 +130,10 @@ Acts as an abstraction layer between the Business Logic and the Data Sources.
 An internal utility that monitors SQLite changes and ensures parity with Firebase Firestore. It uses `sync_status` flags in the local database to handle offline-to-online transitions.
 
 ### C. Authentication Service
-Wraps `FirebaseAuth` to provide a clean interface for the UI, managing the transition between "Logged Out" and "Logged In" states while triggering the initial data rehydration.
+Wraps `FirebaseAuth` to provide a clean interface for the UI, managing the transition between "Logged Out" and "Logged In" states while triggering the initial data rehydration and locale loading.
+
+### D. Reactive Localization Engine
+Utilizes `flutter_localizations` and `.arb` code generation. The active `Locale` is managed as a reactive property within `AuthService`, ensuring that language switches propagate instantly across the UI without requiring an app restart.
 
 ---
 

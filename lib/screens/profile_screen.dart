@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -169,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: _availableTopics.map((topic) {
                     final isSelected = _selectedInterests.contains(topic);
                     return ChoiceChip(
-                      label: Text(topic),
+                      label: Text(_translateTopic(topic)),
                       selected: isSelected,
                       onSelected: (selected) {
                         setModalState(() {
@@ -205,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       elevation: 0,
                     ),
-                    child: const Text('Save & Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                    child: Text(AppLocalizations.of(context)!.saveAndDone, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -226,8 +227,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Smart Profile',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+        title: Text(AppLocalizations.of(context)!.profile,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
         backgroundColor: Colors.transparent,
         foregroundColor: isDark ? Colors.white : AppTheme.darkCharcoal,
         elevation: 0,
@@ -332,7 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Dark Appearance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                    Text(AppLocalizations.of(context)!.darkMode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                     Text(
                                       isDark ? 'Solid Matte Sapphire' : 'Solid Matte Alabaster',
                                       style: TextStyle(fontSize: 10, color: isDark ? Colors.white60 : Colors.grey[600]),
@@ -349,9 +350,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+                        // Language Toggle Section
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark 
+                                ? AppTheme.scooter.withValues(alpha: 0.1) 
+                                : AppTheme.blueLagoon.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? AppTheme.scooter.withValues(alpha: 0.2) 
+                                  : AppTheme.blueLagoon.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.translate_rounded,
+                                    color: Theme.of(context).brightness == Brightness.dark 
+                                        ? AppTheme.scooter 
+                                        : AppTheme.blueLagoon,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(AppLocalizations.of(context)!.language, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                      Text(
+                                        authService.locale.languageCode == 'si' ? 'සිංහල (Sinhala)' : 'English',
+                                        style: TextStyle(fontSize: 10, color: isDark ? Colors.white60 : Colors.grey[600]),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  _buildLangBtn('EN', authService.locale.languageCode == 'en', () => authService.setLocale(const Locale('en'))),
+                                  const SizedBox(width: 8),
+                                  _buildLangBtn('සිං', authService.locale.languageCode == 'si', () => authService.setLocale(const Locale('si'))),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 32),
                       
-                      Text('Your Interests', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                      Text(AppLocalizations.of(context)!.manageInterests, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                       const SizedBox(height: 16),
                       Wrap(
                         spacing: 8, runSpacing: 8,
@@ -359,7 +409,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           ..._selectedInterests.map((topic) {
                             return Chip(
-                              label: Text(topic),
+                              label: Text(_translateTopic(topic)),
                               backgroundColor: AppTheme.scooter.withValues(alpha: 0.1),
                               labelStyle: const TextStyle(
                                 color: AppTheme.scooter,
@@ -372,7 +422,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }).toList(),
                           ActionChip(
                             avatar: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Colors.white),
-                            label: const Text('Add More'),
+                            label: Text(AppLocalizations.of(context)!.addMore),
                             onPressed: _showInterestsPicker,
                             backgroundColor: AppTheme.blueLagoon,
                             labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
@@ -491,7 +541,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                        child: const Text('Save Profile Data',
+                        child: Text(AppLocalizations.of(context)!.save,
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
@@ -503,5 +553,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
     );
+  }
+
+  Widget _buildLangBtn(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.scooter : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isSelected ? AppTheme.scooter : AppTheme.heather.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : AppTheme.sapphire),
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _translateTopic(String topic) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (topic.toLowerCase()) {
+      case 'fitness': return l10n.fitness;
+      case 'diet': return l10n.diet;
+      case 'meditation': return l10n.meditation;
+      case 'hydration': return l10n.hydration;
+      case 'weight loss': return l10n.weightLoss;
+      case 'muscle gain': return l10n.muscleGain;
+      case 'sleep': return l10n.sleep;
+      case 'running': return l10n.running;
+      case 'yoga': return l10n.yoga;
+      case 'healthy habits': return l10n.healthyHabits;
+      default: return topic;
+    }
   }
 }

@@ -5,6 +5,8 @@ import 'services/auth_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'theme/app_theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 import 'package:flutter/foundation.dart'; // Added for kIsWeb
 
@@ -46,6 +48,17 @@ class HealthMonitorApp extends StatelessWidget {
             themeMode: authService.isDarkMode 
                 ? ThemeMode.dark 
                 : ThemeMode.light,
+            locale: authService.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'), // English
+              Locale('si'), // Sinhala
+            ],
             home: authService.isLoggedIn
                 ? const DashboardScreen()
                 : const LoginScreen(),

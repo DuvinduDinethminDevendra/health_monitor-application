@@ -21,3 +21,11 @@
   - [x] Update `DESIGN.md` with Pallet 2 rules and Glassmorphism guidelines
   - [x] Audit all modals for consistent high-contrast premium styling
   - [x] Remove all legacy hardcoded color references
+
+- [x] **Multi-Language Localization**
+  - [x] Setup `flutter_localizations` and `.arb` files
+  - [x] Upgrade Database to v9 with `language_code`
+  - [x] Implement locale persistence in `AuthService`
+  - [x] Integrate Language Switcher in Profile screen
+  - [x] Systematically translate all screens (Dashboard, Auth, Charts, etc.)
+  - [x] Resolve `intl` dependency conflicts
