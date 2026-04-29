@@ -21,6 +21,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
   List<Goal> _goals = [];
   bool _isLoading = true;
 
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -130,7 +140,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : AppTheme.sapphire,
-                fontSize: 20)),
+                fontSize: _siSize(20))),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -162,7 +172,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the + button to set your first goal',
+                    AppLocalizations.of(context)!.tapToAddLog,
                     style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
@@ -225,9 +235,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  goal.category.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 10,
+                  _translateCategory(goal.category).toUpperCase(),
+                  style: TextStyle(
+                    fontSize: _siSize(10),
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     letterSpacing: 1.2,
@@ -254,7 +264,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           Text(
             goal.title,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: _siSize(20),
               fontWeight: FontWeight.w900,
               color: isDark ? Colors.white : AppTheme.sapphire,
               letterSpacing: -0.5,
@@ -300,7 +310,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 onPressed: () => _showProgressDialog(goal),
                 icon: Icon(Icons.add_circle_outline, size: 18, color: accentColor),
                 label: Text(
-                  'Log Progress',
+                  AppLocalizations.of(context)!.logProgress,
                   style: TextStyle(
                     color: accentColor,
                     fontWeight: FontWeight.w900,
@@ -350,10 +360,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Update ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+            Text('${AppLocalizations.of(context)!.updateGoal} ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
             const SizedBox(height: 12),
-            Text('Current: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
-              style: TextStyle(color: AppTheme.heather, fontSize: 14, fontWeight: FontWeight.w600)),
+            Text('${AppLocalizations.of(context)!.currentValue}: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
+              style: TextStyle(color: AppTheme.heather, fontSize: _siSize(14), fontWeight: FontWeight.w600)),
             const SizedBox(height: 24),
             TextField(
               controller: controller,
@@ -361,7 +371,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               autofocus: true,
               style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
               decoration: InputDecoration(
-                labelText: 'New Current Value (${goal.unit})',
+                labelText: '${AppLocalizations.of(context)!.newCurrentValue} (${goal.unit})',
                 labelStyle: TextStyle(color: AppTheme.heather),
                 prefixIcon: const Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
                 enabledBorder: OutlineInputBorder(
@@ -386,12 +396,42 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
-              child: const Text('Save Progress', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.save, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _translateCategory(String category) {
+    final l10n = AppLocalizations.of(context)!;
+    String base = category.split(' (')[0].toLowerCase();
+    String suffixRaw = category.contains('(') ? category.split(' (')[1].replaceAll(')', '') : '';
+    
+    String translatedBase = base;
+    switch (base) {
+      case 'steps': translatedBase = l10n.steps; break;
+      case 'running': translatedBase = l10n.running; break;
+      case 'sleep': translatedBase = l10n.sleep; break;
+      case 'water': translatedBase = l10n.water; break;
+      case 'diet': translatedBase = l10n.diet; break;
+      case 'custom': translatedBase = l10n.other; break;
+    }
+
+    String translatedSuffix = '';
+    if (suffixRaw.isNotEmpty) {
+      String lowSuffix = suffixRaw.toLowerCase();
+      if (lowSuffix == 'daily') {
+        translatedSuffix = ' (${l10n.daily})';
+      } else if (lowSuffix == 'cumulative') {
+        translatedSuffix = ' (${l10n.cumulative})';
+      } else {
+        translatedSuffix = ' ($suffixRaw)';
+      }
+    }
+
+    return '$translatedBase$translatedSuffix';
   }
 }
 
@@ -534,7 +574,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 ),
               ),
               const SizedBox(height: 24),
-              Text(widget.existingGoal == null ? 'Create New Goal' : 'Edit Goal', 
+              Text(widget.existingGoal == null ? AppLocalizations.of(context)!.createGoal : AppLocalizations.of(context)!.editGoal, 
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
               const SizedBox(height: 24),
 
@@ -542,7 +582,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 controller: _titleController,
                 style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                 decoration: InputDecoration(
-                  labelText: 'Goal Title',
+                  labelText: AppLocalizations.of(context)!.goalTitle,
                   labelStyle: TextStyle(color: AppTheme.heather),
                   prefixIcon: const Icon(Icons.flag_outlined, color: AppTheme.scooter),
                   enabledBorder: OutlineInputBorder(
@@ -552,7 +592,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       borderRadius: BorderRadius.circular(16),
                       borderSide: const BorderSide(color: AppTheme.scooter)),
                 ),
-                validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
+                validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.pleaseEnterTitle : null,
               ),
               const SizedBox(height: 16),
 
@@ -568,7 +608,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('Select Goal Category', 
+                          Text(AppLocalizations.of(context)!.selectCategory, 
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                           const SizedBox(height: 24),
                           SizedBox(
@@ -600,7 +640,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                                       size: 20,
                                     ),
                                   ),
-                                  title: Text(cat, style: TextStyle(fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600, color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white70 : AppTheme.sapphire))),
+                                  title: Text(_translateCategory(cat), style: TextStyle(fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600, color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white70 : AppTheme.sapphire))),
                                   trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppTheme.blueLagoon) : null,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 );
@@ -627,8 +667,8 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Category / Tracking Type', style: TextStyle(fontSize: 12, color: AppTheme.heather)),
-                            Text(_selectedCategory, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
+                            Text(AppLocalizations.of(context)!.trackingType, style: TextStyle(fontSize: 12, color: AppTheme.heather)),
+                            Text(_translateCategory(_selectedCategory), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
                           ],
                         ),
                       ),
@@ -647,7 +687,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
-                        labelText: 'Target Value',
+                        labelText: AppLocalizations.of(context)!.targetValue,
                         labelStyle: TextStyle(color: AppTheme.heather),
                         prefixIcon: const Icon(Icons.track_changes, color: AppTheme.scooter),
                         enabledBorder: OutlineInputBorder(
@@ -657,7 +697,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(color: AppTheme.scooter)),
                       ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                      validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.required : null,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -667,7 +707,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       controller: _unitController,
                       style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
-                        labelText: 'Unit',
+                        labelText: AppLocalizations.of(context)!.unit,
                         labelStyle: TextStyle(color: AppTheme.heather),
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -676,7 +716,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(color: AppTheme.scooter)),
                       ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                      validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.required : null,
                     ),
                   ),
                 ],
@@ -703,7 +743,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                     child: OutlinedButton.icon(
                       onPressed: _pickTime,
                       icon: const Icon(Icons.alarm, size: 18),
-                      label: Text(_selectedReminderTime ?? 'Set Reminder'),
+                      label: Text(_selectedReminderTime ?? AppLocalizations.of(context)!.setReminder),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
@@ -726,7 +766,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                   elevation: 0,
                 ),
                 child: Text(
-                  widget.existingGoal == null ? 'Create Goal' : 'Save Changes',
+                  widget.existingGoal == null ? AppLocalizations.of(context)!.createGoal : AppLocalizations.of(context)!.saveChanges,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -735,5 +775,35 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
         ),
       ),
     );
+  }
+
+  String _translateCategory(String category) {
+    final l10n = AppLocalizations.of(context)!;
+    String base = category.split(' (')[0].toLowerCase();
+    String suffixRaw = category.contains('(') ? category.split(' (')[1].replaceAll(')', '') : '';
+    
+    String translatedBase = base;
+    switch (base) {
+      case 'steps': translatedBase = l10n.steps; break;
+      case 'running': translatedBase = l10n.running; break;
+      case 'sleep': translatedBase = l10n.sleep; break;
+      case 'water': translatedBase = l10n.water; break;
+      case 'diet': translatedBase = l10n.diet; break;
+      case 'custom': translatedBase = l10n.other; break;
+    }
+
+    String translatedSuffix = '';
+    if (suffixRaw.isNotEmpty) {
+      String lowSuffix = suffixRaw.toLowerCase();
+      if (lowSuffix == 'daily') {
+        translatedSuffix = ' (${l10n.daily})';
+      } else if (lowSuffix == 'cumulative') {
+        translatedSuffix = ' (${l10n.cumulative})';
+      } else {
+        translatedSuffix = ' ($suffixRaw)';
+      }
+    }
+
+    return '$translatedBase$translatedSuffix';
   }
 }

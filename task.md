@@ -29,3 +29,9 @@
   - [x] Integrate Language Switcher in Profile screen
   - [x] Systematically translate all screens (Dashboard, Auth, Charts, etc.)
   - [x] Resolve `intl` dependency conflicts
+- [x] **Refined Localization & UI Scaling**
+  - [x] Localize dynamic category suffixes (Daily/Cumulative)
+  - [x] Implement `_siSize` font scaling helper across all screens
+  - [x] Localize interest topics and form validation messages
+  - [x] Integrate locale-aware Date Formatting
+  - [x] Audit and fix hardcoded UI labels (Unit, Preview, etc.)

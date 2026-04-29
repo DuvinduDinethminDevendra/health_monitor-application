@@ -161,7 +161,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                         child: Row(
                           children: [
                             Text(
-                              DateFormat('MMMM, yyyy').format(widget.selectedDate),
+                              DateFormat('MMMM, yyyy', AppLocalizations.of(context)!.localeName).format(widget.selectedDate),
                               style: TextStyle(
                                 color: subTextColor,
                                 fontSize: 14,
@@ -236,7 +236,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                DateFormat('E').format(date).substring(0, 1),
+                                DateFormat('E', AppLocalizations.of(context)!.localeName).format(date).substring(0, 1),
                                 style: TextStyle(
                                   color: isSelected ? Colors.white : (isDark ? Colors.white60 : AppTheme.sapphire.withValues(alpha: 0.5)),
                                   fontSize: 12,

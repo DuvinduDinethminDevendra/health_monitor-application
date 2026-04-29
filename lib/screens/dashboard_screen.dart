@@ -34,6 +34,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   DateTime _selectedDate = DateTime.now();
   int _touchedIndex = -1;
 
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -133,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
                 _buildAddOption(
-                  'Health', // This is for Health Log, maybe add key?
+                  AppLocalizations.of(context)!.healthLog,
                   Icons.monitor_weight_rounded,
                   AppTheme.skyBlue,
                   () {
@@ -324,9 +334,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Daily Progress',
+                                AppLocalizations.of(context)!.dailyProgress,
                                 style: TextStyle(
-                                  fontSize: 22,
+                                  fontSize: _siSize(22),
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -1,
                                   color: isDark ? Colors.white : AppTheme.sapphire,
@@ -334,9 +344,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Your health at a glance',
+                                AppLocalizations.of(context)!.healthAtAGlance,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: _siSize(14),
                                   fontWeight: FontWeight.w700,
                                   color: isDark ? Colors.white70 : AppTheme.heather,
                                 ),
@@ -408,9 +418,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _touchedIndex == 1 ? '$_activeGoals' : (_touchedIndex == 2 ? 'Optimal' : '$_totalSteps'),
+                                    _touchedIndex == 1 ? '$_activeGoals' : (_touchedIndex == 2 ? _translateBmiCategory(_bmiCategory != 'N/A' ? _bmiCategory : 'Optimal') : '$_totalSteps'),
                                     style: TextStyle(
-                                      fontSize: 32,
+                                      fontSize: _siSize(32),
                                       fontWeight: FontWeight.w900,
                                       color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal,
                                       letterSpacing: -1,
@@ -419,7 +429,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   Text(
                                     _touchedIndex == 1 ? AppLocalizations.of(context)!.activeGoals : (_touchedIndex == 2 ? AppLocalizations.of(context)!.healthState : AppLocalizations.of(context)!.stepsToday),
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: _siSize(10),
                                       fontWeight: FontWeight.w800,
                                       color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal).withValues(alpha: 0.7),
                                       letterSpacing: 1.5,
@@ -434,9 +444,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildMiniLegend('Activity', AppTheme.emeraldGreen),
-                            _buildMiniLegend('Goals', AppTheme.warmOrange),
-                            _buildMiniLegend('Health', AppTheme.skyBlue),
+                            _buildMiniLegend(AppLocalizations.of(context)!.activity, AppTheme.emeraldGreen),
+                            _buildMiniLegend(AppLocalizations.of(context)!.goals, AppTheme.warmOrange),
+                            _buildMiniLegend(AppLocalizations.of(context)!.healthLog, AppTheme.skyBlue),
                           ],
                         ),
                       ],
@@ -449,7 +459,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildStatCard(
-                          'Active Goals',
+                          AppLocalizations.of(context)!.activeGoals,
                           _activeGoals.toString(),
                           Icons.insights_rounded,
                           AppTheme.emeraldGreen,
@@ -458,7 +468,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildStatCard(
-                          'Current BMI',
+                          AppLocalizations.of(context)!.bmi,
                           _latestBmi > 0 ? _latestBmi.toString() : '22.4',
                           Icons.speed_rounded,
                           AppTheme.skyBlue,
@@ -471,8 +481,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildStatCard(
-                          'Health State',
-                          _bmiCategory != 'N/A' ? _bmiCategory : 'Optimal',
+                          AppLocalizations.of(context)!.healthState,
+                          _bmiCategory != 'N/A' ? _translateBmiCategory(_bmiCategory) : _translateBmiCategory('Optimal'),
                           Icons.favorite_rounded,
                           AppTheme.warmOrange,
                         ),
@@ -480,8 +490,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildStatCard(
-                          'Health Tips',
-                          'Explore',
+                          AppLocalizations.of(context)!.healthTips,
+                          AppLocalizations.of(context)!.explore,
                           Icons.auto_awesome_rounded,
                           AppTheme.darkCharcoal,
                           onTap: () => Navigator.push(
@@ -494,16 +504,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  const Text(
-                    'Quick Actions',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.darkCharcoal),
+                  Text(
+                    AppLocalizations.of(context)!.quickActions,
+                    style: TextStyle(fontSize: _siSize(18), fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.darkCharcoal),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
                         child: _buildQuickActionBtn(
-                          'Health Logs',
+                          AppLocalizations.of(context)!.healthLog,
                           Icons.assignment_rounded,
                           AppTheme.skyBlue,
                           () => Navigator.push(
@@ -515,7 +525,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionBtn(
-                          'Reminders',
+                          AppLocalizations.of(context)!.reminders,
                           Icons.notifications_active_rounded,
                           AppTheme.emeraldGreen,
                           () => Navigator.push(
@@ -558,10 +568,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const Icon(Icons.stars_rounded, color: AppTheme.scooter, size: 32),
                         const SizedBox(height: 12),
                         Text(
-                          'Keep pushing, $userName!',
+                          '${AppLocalizations.of(context)!.keepPushing}, $userName!',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
+                          style: TextStyle(
+                            fontSize: _siSize(18),
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                             letterSpacing: -0.5,
@@ -569,9 +579,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Your health journey is looking great.',
+                          AppLocalizations.of(context)!.healthJourneyGreat,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: _siSize(13),
                             color: Colors.white.withValues(alpha: 0.6),
                             fontWeight: FontWeight.w500,
                           ),
@@ -616,8 +626,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 20),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 24,
+              style: TextStyle(
+                fontSize: _siSize(24),
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
                 letterSpacing: -0.5,
@@ -626,8 +636,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(
-                  fontSize: 13,
+              style: TextStyle(
+                  fontSize: _siSize(13),
                   fontWeight: FontWeight.w700,
                   color: Colors.white), 
             ),
@@ -656,7 +666,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: TextStyle(
                 color: isDark ? Colors.white : color,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: _siSize(14),
               ),
             ),
           ],
@@ -706,5 +716,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ],
     );
+  }
+
+  String _translateBmiCategory(String category) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (category.toLowerCase()) {
+      case 'underweight': return l10n.underweight;
+      case 'normal':
+      case 'optimal': return l10n.normal;
+      case 'overweight': return l10n.overweight;
+      case 'obese': return l10n.obese;
+      default: return category;
+    }
   }
 }

@@ -29,6 +29,16 @@ class _ChartsScreenState extends State<ChartsScreen>
   final GoalRepository _goalRepo = GoalRepository();
   bool _isLoading = true;
 
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +85,7 @@ class _ChartsScreenState extends State<ChartsScreen>
       backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.progress, 
-          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: _siSize(22), color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -124,11 +134,11 @@ class _ChartsScreenState extends State<ChartsScreen>
   Widget _buildGoalInsights() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_goals.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No goals set yet.\nAdd goals to see your predictive insights!',
+          AppLocalizations.of(context)!.noGoalsSet,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
       );
     }
@@ -180,22 +190,22 @@ class _ChartsScreenState extends State<ChartsScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Goal Performance',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              Text(
+                AppLocalizations.of(context)!.goalPerformance,
+                style: TextStyle(fontSize: _siSize(20), fontWeight: FontWeight.bold, letterSpacing: -0.5),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            'Visual breakdown of your active health targets',
+            AppLocalizations.of(context)!.visualBreakdown,
             style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           const SizedBox(height: 32),
           if (cumulativeGoals.isNotEmpty) ...[
-            const Text(
-              'Cumulative Progress',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.cumulativeProgress,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             MatteCard(
@@ -212,7 +222,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         final goal = cumulativeGoals[groupIndex];
                         final deadlineStr = DateFormat('MMM dd').format(DateTime.parse(goal.deadline));
                         return BarTooltipItem(
-                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}\nDeadline: $deadlineStr\n${rod.toY.toInt()}%',
+                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}\n${AppLocalizations.of(context)!.deadline}: $deadlineStr\n${rod.toY.toInt()}%',
                           const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                         );
                       },
@@ -299,9 +309,9 @@ class _ChartsScreenState extends State<ChartsScreen>
             const SizedBox(height: 32),
           ],
           if (dailyGoals.isNotEmpty) ...[
-            const Text(
-              'Daily Goals (Weekly Trend)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.dailyGoalsWeekly,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             ...dailyGoals.asMap().entries.map((entry) {
@@ -393,7 +403,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                               dashArray: [5, 5],
                               label: HorizontalLineLabel(
                                 show: true,
-                                labelResolver: (line) => 'Goal',
+                                labelResolver: (line) => AppLocalizations.of(context)!.goals,
                                 style: const TextStyle(
                                     color: Colors.redAccent,
                                     fontSize: 9,
@@ -418,7 +428,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
                                       daysAgo == 0
-                                          ? 'Today'
+                                          ? AppLocalizations.of(context)!.today
                                           : DateFormat('MM/dd').format(date),
                                       style: const TextStyle(
                                           fontSize: 9, color: Colors.grey)),
@@ -469,9 +479,9 @@ class _ChartsScreenState extends State<ChartsScreen>
             }),
           ],
           const SizedBox(height: 16),
-          const Text(
-            'Predictive Insights',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)!.predictiveInsights,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           ..._goals.map((goal) {
@@ -534,7 +544,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
-                                  goal.category.toUpperCase(),
+                                  _translateCategory(goal.category).toUpperCase(),
                                   style: TextStyle(
                                     color: accentColor,
                                     fontWeight: FontWeight.bold,
@@ -552,7 +562,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                               if (snapshot.connectionState == ConnectionState.waiting) {
                                 return const LinearProgressIndicator();
                               }
-                              final insight = snapshot.data ?? 'Calculating...';
+                              final insight = snapshot.data ?? AppLocalizations.of(context)!.calculating;
                               return Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -603,10 +613,10 @@ class _ChartsScreenState extends State<ChartsScreen>
           children: [
             Icon(Icons.bar_chart, size: 80, color: Colors.grey[300]),
             const SizedBox(height: 16),
-            Text('No activity data for charts',
+            Text(AppLocalizations.of(context)!.noActivityData,
                 style: TextStyle(fontSize: 18, color: Colors.grey[600])),
             const SizedBox(height: 8),
-            Text('Log some activities to see trends',
+            Text(AppLocalizations.of(context)!.logActivitiesToSeeTrends,
                 style: TextStyle(color: Colors.grey[400])),
           ],
         ),
@@ -643,15 +653,15 @@ class _ChartsScreenState extends State<ChartsScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Activity Timeline',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              Text(
+                AppLocalizations.of(context)!.activityTimeline,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            'Your performance over the last 30 days',
+            AppLocalizations.of(context)!.performance30Days,
             style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           const SizedBox(height: 24),
@@ -726,7 +736,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${type[0].toUpperCase()}${type.substring(1)}',
+                                _translateType(type),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 16,
@@ -778,7 +788,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text(
                                     daysAgo == 0
-                                        ? 'Today'
+                                        ? AppLocalizations.of(context)!.today
                                         : DateFormat('MM/dd').format(date),
                                     style: TextStyle(
                                         fontSize: 10,
@@ -1034,5 +1044,47 @@ class _ChartsScreenState extends State<ChartsScreen>
         Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
       ],
     );
+  }
+
+  String _translateType(String type) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (type.toLowerCase()) {
+      case 'steps': return l10n.steps;
+      case 'running': return l10n.running;
+      case 'sleep': return l10n.sleep;
+      case 'water': return l10n.water;
+      case 'diet': return l10n.diet;
+      default: return type;
+    }
+  }
+
+  String _translateCategory(String category) {
+    final l10n = AppLocalizations.of(context)!;
+    String base = category.split(' (')[0].toLowerCase();
+    String suffixRaw = category.contains('(') ? category.split(' (')[1].replaceAll(')', '') : '';
+    
+    String translatedBase = base;
+    switch (base) {
+      case 'steps': translatedBase = l10n.steps; break;
+      case 'running': translatedBase = l10n.running; break;
+      case 'sleep': translatedBase = l10n.sleep; break;
+      case 'water': translatedBase = l10n.water; break;
+      case 'diet': translatedBase = l10n.diet; break;
+      case 'custom': translatedBase = l10n.other; break;
+    }
+
+    String translatedSuffix = '';
+    if (suffixRaw.isNotEmpty) {
+      String lowSuffix = suffixRaw.toLowerCase();
+      if (lowSuffix == 'daily') {
+        translatedSuffix = ' (${l10n.daily})';
+      } else if (lowSuffix == 'cumulative') {
+        translatedSuffix = ' (${l10n.cumulative})';
+      } else {
+        translatedSuffix = ' ($suffixRaw)';
+      }
+    }
+
+    return '$translatedBase$translatedSuffix';
   }
 }

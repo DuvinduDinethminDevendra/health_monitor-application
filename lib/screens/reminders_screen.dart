@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -11,6 +12,17 @@ class RemindersScreen extends StatefulWidget {
 
 class _RemindersScreenState extends State<RemindersScreen> {
   final NotificationService _notificationService = NotificationService();
+
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   final List<_Reminder> _reminders = [
     _Reminder(
       id: 1,
@@ -93,7 +105,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Smart Reminders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: isDark ? Colors.white : AppTheme.sapphire)),
+        title: Text(AppLocalizations.of(context)!.smartReminders, style: TextStyle(fontWeight: FontWeight.w900, fontSize: _siSize(20), color: isDark ? Colors.white : AppTheme.sapphire)),
         backgroundColor: Colors.transparent,
         foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
         elevation: 0,
@@ -110,26 +122,26 @@ class _RemindersScreenState extends State<RemindersScreen> {
               children: [
                 const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 32),
                 const SizedBox(height: 12),
-                const Text(
-                  'Habit Tracking',
+                Text(
+                  AppLocalizations.of(context)!.habitTracking,
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: _siSize(24),
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Set daily reminders to maintain your healthy lifestyle',
-                  style: TextStyle(color: Colors.white70),
+                Text(
+                  AppLocalizations.of(context)!.setDailyReminders,
+                  style: const TextStyle(color: Colors.white70),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 32),
           Text(
-            'Daily Schedules',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire),
+            AppLocalizations.of(context)!.dailySchedules,
+            style: TextStyle(fontSize: _siSize(20), fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire),
           ),
           const SizedBox(height: 16),
           ..._reminders.map((reminder) => _buildReminderCard(reminder)),
@@ -159,9 +171,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(reminder.title,
+                Text(_translateReminderTitle(reminder.id),
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : AppTheme.sapphire)),
+                        fontWeight: FontWeight.bold, fontSize: _siSize(16), color: isDark ? Colors.white : AppTheme.sapphire)),
                 const SizedBox(height: 2),
                 Text(
                   _formatTime(reminder.hour, reminder.minute),
@@ -178,15 +190,15 @@ class _RemindersScreenState extends State<RemindersScreen> {
               if (value) {
                 await _notificationService.scheduleDaily(
                   id: reminder.id,
-                  title: reminder.title,
-                  body: reminder.body,
+                  title: _translateReminderTitle(reminder.id),
+                  body: _translateReminderBody(reminder.id),
                   hour: reminder.hour,
                   minute: reminder.minute,
                 );
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('${reminder.title} reminder enabled'),
+                    content: Text('${_translateReminderTitle(reminder.id)} ${AppLocalizations.of(context)!.reminderEnabled}'),
                     backgroundColor: AppTheme.emeraldGreen,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -200,6 +212,32 @@ class _RemindersScreenState extends State<RemindersScreen> {
         ],
       ),
     );
+  }
+
+  String _translateReminderTitle(int id) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (id) {
+      case 1: return l10n.morningWorkout;
+      case 2: return l10n.drinkWater;
+      case 3: return l10n.logMeals;
+      case 4: return l10n.takeAWalk;
+      case 5: return l10n.logWeight;
+      case 6: return l10n.bedtimeReminder;
+      default: return '';
+    }
+  }
+
+  String _translateReminderBody(int id) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (id) {
+      case 1: return l10n.morningWorkoutBody;
+      case 2: return l10n.drinkWaterBody;
+      case 3: return l10n.logMealsBody;
+      case 4: return l10n.takeAWalkBody;
+      case 5: return l10n.logWeightBody;
+      case 6: return l10n.bedtimeReminderBody;
+      default: return '';
+    }
   }
 }
 

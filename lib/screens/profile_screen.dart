@@ -17,6 +17,16 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _heightController;
@@ -125,9 +135,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile Updated Successfully!'),
-              backgroundColor: Color(0xFF00BFA5),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.profileUpdated),
+              backgroundColor: const Color(0xFF00BFA5),
             ),
           );
           Navigator.pop(context);
@@ -158,10 +168,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                Text('Manage Interests', 
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                Text(AppLocalizations.of(context)!.manageInterests, 
+                  style: TextStyle(fontSize: _siSize(24), fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                 const SizedBox(height: 8),
-                Text('Tailor your health experience', 
+                Text(AppLocalizations.of(context)!.tailorExperience, 
                   style: TextStyle(color: isDark ? Colors.white60 : AppTheme.heather, fontSize: 14)),
                 const SizedBox(height: 32),
                 Wrap(
@@ -228,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.profile,
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: _siSize(20))),
         backgroundColor: Colors.transparent,
         foregroundColor: isDark ? Colors.white : AppTheme.darkCharcoal,
         elevation: 0,
@@ -250,7 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: user == null
-          ? const Center(child: Text("User not found."))
+          ? Center(child: Text(AppLocalizations.of(context)!.userNotFound))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: GlassCard(
@@ -335,7 +345,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     Text(AppLocalizations.of(context)!.darkMode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                     Text(
-                                      isDark ? 'Solid Matte Sapphire' : 'Solid Matte Alabaster',
+                                      isDark ? AppLocalizations.of(context)!.solidMatteSapphire : AppLocalizations.of(context)!.solidMatteAlabaster,
                                       style: TextStyle(fontSize: 10, color: isDark ? Colors.white60 : Colors.grey[600]),
                                     ),
                                   ],
@@ -401,7 +411,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       const SizedBox(height: 32),
                       
-                      Text(AppLocalizations.of(context)!.manageInterests, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                      Text(AppLocalizations.of(context)!.manageInterests, style: TextStyle(fontSize: _siSize(18), fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                       const SizedBox(height: 16),
                       Wrap(
                         spacing: 8, runSpacing: 8,
@@ -437,7 +447,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
-                        labelText: 'Full Name',
+                        labelText: AppLocalizations.of(context)!.fullName,
                         prefixIcon: const Icon(Icons.person_outline),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -447,7 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (v) =>
-                          v!.isEmpty ? 'Name cannot be empty' : null,
+                          v!.isEmpty ? AppLocalizations.of(context)!.nameEmpty : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -460,7 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _ageController,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText: 'Age',
+                              labelText: AppLocalizations.of(context)!.ageLabel,
                               prefixIcon: const Icon(Icons.cake),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12)),
@@ -474,7 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             value: _selectedGender,
                             isExpanded: true,
                             decoration: InputDecoration(
-                              labelText: 'Gender',
+                              labelText: AppLocalizations.of(context)!.genderLabel,
                               prefixIcon: const Icon(Icons.transgender),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12)),
@@ -482,7 +492,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             items: ['Not Specified', 'Male', 'Female', 'Other']
                                 .map((g) => DropdownMenuItem(
                                     value: g,
-                                    child: Text(g,
+                                    child: Text(_translateGender(g),
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(fontSize: 13))))
                                 .toList(),
@@ -505,7 +515,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _heightController,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText: 'Height (cm)',
+                              labelText: AppLocalizations.of(context)!.heightCm,
                               prefixIcon: const Icon(Icons.height),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12)),
@@ -518,7 +528,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _weightController,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              labelText: 'Weight (kg)',
+                              labelText: AppLocalizations.of(context)!.weightKg,
                               prefixIcon: const Icon(Icons.fitness_center),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12)),
@@ -590,7 +600,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 'running': return l10n.running;
       case 'yoga': return l10n.yoga;
       case 'healthy habits': return l10n.healthyHabits;
+      case 'diet & nutrition': return l10n.dietNutrition;
+      case 'mental health': return l10n.mentalHealth;
+      case 'sleep tracking': return l10n.sleepTracking;
+      case 'cardio': return l10n.cardio;
+      case 'strength training': return l10n.strengthTraining;
+      case 'yoga & flexibility': return l10n.flexibility;
       default: return topic;
+    }
+  }
+
+  String _translateGender(String gender) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (gender) {
+      case 'Male': return l10n.male;
+      case 'Female': return l10n.female;
+      case 'Other': return l10n.other;
+      case 'Not Specified': return l10n.notSpecified;
+      default: return gender;
     }
   }
 }

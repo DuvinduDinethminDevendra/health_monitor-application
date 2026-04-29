@@ -19,6 +19,16 @@ class _ActivityScreenState extends State<ActivityScreen> {
   List<Activity> _activities = [];
   bool _isLoading = true;
 
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -79,7 +89,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
             style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : AppTheme.sapphire,
-                fontSize: 22,
+                fontSize: _siSize(22),
                 letterSpacing: -1)),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -112,7 +122,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the + button to log your first activity',
+                    AppLocalizations.of(context)!.tapToAddLog,
                     style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
@@ -144,10 +154,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                activity.type.toUpperCase(),
+                                Text(
+                                  _translateType(activity.type).toUpperCase(),
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: _siSize(12),
                                   fontWeight: FontWeight.w900,
                                   color: color,
                                   letterSpacing: 1.2,
@@ -157,16 +167,16 @@ class _ActivityScreenState extends State<ActivityScreen> {
                               Text(
                                 '${activity.value.toInt()} ${activity.unit}',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: _siSize(20),
                                   fontWeight: FontWeight.w900,
                                   color: isDark ? Colors.white : AppTheme.sapphire,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DateFormat('MMM dd, hh:mm a').format(DateTime.parse(activity.date)),
+                                DateFormat('MMM dd, hh:mm a', AppLocalizations.of(context)!.localeName).format(DateTime.parse(activity.date)),
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: _siSize(12),
                                   fontWeight: FontWeight.w700,
                                   color: isDark ? Colors.white38 : AppTheme.heather,
                                 ),
@@ -223,7 +233,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Log Activity', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+            Text(AppLocalizations.of(context)!.logActivity, style: TextStyle(fontSize: _siSize(24), fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
             const SizedBox(height: 24),
             
             // Modern Activity Type Selector
@@ -231,7 +241,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               builder: (context, setModalState) => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Select Type', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.heather, letterSpacing: 1.2)),
+                  Text(AppLocalizations.of(context)!.selectType, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.heather, letterSpacing: 1.2)),
                   const SizedBox(height: 12),
                   SizedBox(
                     height: 90,
@@ -253,7 +263,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                             children: [
                               Icon(_getActivityIcon(type), color: typeController.text == type ? AppTheme.blueLagoon : (isDark ? Colors.white38 : Colors.grey[600])),
                               const SizedBox(height: 8),
-                              Text(type, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: typeController.text == type ? AppTheme.blueLagoon : (isDark ? Colors.white38 : Colors.grey[600]))),
+                              Text(_translateType(type), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: typeController.text == type ? AppTheme.blueLagoon : (isDark ? Colors.white38 : Colors.grey[600]))),
                             ],
                           ),
                         ),
@@ -270,7 +280,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               keyboardType: TextInputType.number,
               style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
               decoration: InputDecoration(
-                labelText: 'Value (km / steps / units)',
+                labelText: AppLocalizations.of(context)!.value,
                 labelStyle: TextStyle(color: AppTheme.heather),
                 prefixIcon: const Icon(Icons.add_chart_rounded, color: AppTheme.scooter),
                 enabledBorder: OutlineInputBorder(
@@ -287,7 +297,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               keyboardType: TextInputType.number,
               style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
               decoration: InputDecoration(
-                labelText: 'Duration (min)',
+                labelText: AppLocalizations.of(context)!.durationMin,
                 labelStyle: TextStyle(color: AppTheme.heather),
                 prefixIcon: const Icon(Icons.timer_rounded, color: AppTheme.scooter),
                 enabledBorder: OutlineInputBorder(
@@ -321,11 +331,25 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
-              child: const Text('Save Activity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.save, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _translateType(String type) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (type.toLowerCase()) {
+      case 'steps': return l10n.steps;
+      case 'workout': return l10n.workout;
+      case 'running': return l10n.running;
+      case 'cycling': return l10n.cycling;
+      case 'swimming': return l10n.swimming;
+      case 'yoga': return l10n.yoga;
+      case 'sleep': return l10n.sleep;
+      default: return type;
+    }
   }
 }

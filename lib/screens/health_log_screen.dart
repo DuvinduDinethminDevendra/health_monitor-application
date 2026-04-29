@@ -19,6 +19,16 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
   List<HealthLog> _logs = [];
   bool _isLoading = true;
 
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -84,14 +94,14 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Log Health Data', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                Text(AppLocalizations.of(context)!.logActivity, style: TextStyle(fontSize: _siSize(24), fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                 const SizedBox(height: 24),
                 TextField(
                   controller: weightController,
                   keyboardType: TextInputType.number,
                   style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                   decoration: InputDecoration(
-                    labelText: 'Weight (kg)',
+                    labelText: AppLocalizations.of(context)!.weightKg,
                     labelStyle: TextStyle(color: AppTheme.heather),
                     prefixIcon: const Icon(Icons.monitor_weight_rounded, color: AppTheme.scooter),
                     enabledBorder: OutlineInputBorder(
@@ -109,7 +119,7 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                   keyboardType: TextInputType.number,
                   style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                   decoration: InputDecoration(
-                    labelText: 'Height (cm)',
+                    labelText: AppLocalizations.of(context)!.heightCm,
                     labelStyle: TextStyle(color: AppTheme.heather),
                     prefixIcon: const Icon(Icons.height_rounded, color: AppTheme.scooter),
                     enabledBorder: OutlineInputBorder(
@@ -132,7 +142,7 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('BMI Preview', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
+                        Text('${AppLocalizations.of(context)!.bmi} ${AppLocalizations.of(context)!.preview}', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
                         Text('$previewBmi', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.blueLagoon)),
                       ],
                     ),
@@ -166,7 +176,7 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
                   ),
-                  child: const Text('Save Health Data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: Text(AppLocalizations.of(context)!.save, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -204,7 +214,7 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
             style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : AppTheme.sapphire,
-                fontSize: 20)),
+                fontSize: _siSize(20))),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -230,13 +240,13 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                   Text(
                     AppLocalizations.of(context)!.noLogs,
                     style: TextStyle(
-                        fontSize: 18,
+                        fontSize: _siSize(18),
                         color: isDark ? Colors.white : AppTheme.sapphire,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the + button to log your vitals',
+                    AppLocalizations.of(context)!.tapToAddLog,
                     style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
@@ -272,10 +282,10 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              log.bmiCategory,
+                              _translateBmiCategory(log.bmiCategory),
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
-                                fontSize: 16,
+                                fontSize: _siSize(16),
                                 color: isDark ? Colors.white : AppTheme.sapphire,
                               ),
                             ),
@@ -335,5 +345,16 @@ class _HealthLogScreenState extends State<HealthLogScreen> {
               },
             ),
     );
+  }
+
+  String _translateBmiCategory(String category) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (category.toLowerCase()) {
+      case 'underweight': return l10n.underweight;
+      case 'normal': return l10n.normal;
+      case 'overweight': return l10n.overweight;
+      case 'obese': return l10n.obese;
+      default: return category;
+    }
   }
 }
