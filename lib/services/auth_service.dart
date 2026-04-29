@@ -21,12 +21,16 @@ class AuthService with ChangeNotifier {
   model.User? get currentUser => _currentLocalUser;
   bool get isLoggedIn => _firebaseUser != null;
   bool get isFirstTimeLogin => _isFirstTimeLogin;
+  bool _forceDark = false;
+
+  bool get isDarkMode => _currentLocalUser?.isDarkMode ?? _forceDark;
 
   void clearFirstTimeLogin() {
     _isFirstTimeLogin = false;
   }
 
   AuthService() {
+    _loadTheme();
     _auth.authStateChanges().listen((User? user) async {
       _firebaseUser = user;
       if (user != null) {
@@ -145,5 +149,30 @@ class AuthService with ChangeNotifier {
     await _syncService.syncUserProfile(updatedUser); // Add explicit sync to Firebase!
     _currentLocalUser = updatedUser;
     notifyListeners();
+  }
+
+  Future<void> toggleTheme() async {
+    if (_currentLocalUser == null) {
+      _forceDark = !_forceDark;
+      notifyListeners();
+      return;
+    }
+    final updatedUser = _currentLocalUser!.copyWith(
+      isDarkMode: !_currentLocalUser!.isDarkMode,
+    );
+    await updateUserProfile(updatedUser);
+  }
+
+  Future<void> _loadTheme() async {
+    try {
+      final db = await _userRepository.database;
+      final maps = await db.query('users', orderBy: 'created_at DESC', limit: 1);
+      if (maps.isNotEmpty) {
+        _forceDark = maps.first['is_dark_mode'] == 1;
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Error loading theme: $e");
+    }
   }
 }

@@ -1,8 +1,10 @@
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/user.dart';
 
 class UserRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  Future<Database> get database => _dbHelper.database;
 
   Future<void> insertUser(User user) async {
     final db = await _dbHelper.database;

@@ -2,24 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'services/auth_service.dart';
-import 'services/notification_service.dart';
-import 'providers/health_tips_provider.dart';
-import 'providers/reminders_provider.dart';
-import 'providers/activity_provider.dart';
-import 'providers/health_log_provider.dart';
-
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/health_tips_screen.dart';
-import 'screens/charts_screen.dart';
-import 'screens/reminders_screen.dart';
+import 'theme/app_theme.dart';
 
 import 'package:flutter/foundation.dart'; // Added for kIsWeb
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService().initialize();
   
   if (kIsWeb) {
     await Firebase.initializeApp(
@@ -44,59 +34,22 @@ class HealthMonitorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
-        ChangeNotifierProvider(create: (_) => HealthTipsProvider()),
-        ChangeNotifierProvider(create: (_) => RemindersProvider()),
-        ChangeNotifierProvider(create: (_) => ActivityProvider()),
-        ChangeNotifierProvider(create: (_) => HealthLogProvider()),
-
-      ],
-      child: MaterialApp(
-        title: 'Health Monitor',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF1A73E8),
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-          ),
-          cardTheme: CardThemeData(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            elevation: 4,
-          ),
-        ),
-        home: Consumer<AuthService>(
-          builder: (context, authService, _) {
-            return authService.isLoggedIn
+    return ChangeNotifierProvider(
+      create: (_) => AuthService(),
+      child: Consumer<AuthService>(
+        builder: (context, authService, _) {
+          return MaterialApp(
+            title: 'Health Monitor',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: authService.isDarkMode 
+                ? ThemeMode.dark 
+                : ThemeMode.light,
+            home: authService.isLoggedIn
                 ? const DashboardScreen()
-                : const LoginScreen();
-          },
-        ),
-        routes: {
-          '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegisterScreen(),
-          '/dashboard': (context) => const DashboardScreen(),
-          '/health-tips': (context) => const HealthTipsScreen(),
-          '/charts': (context) => const ChartsScreen(),
-          '/reminders': (context) => const RemindersScreen(),
+                : const LoginScreen(),
+          );
         },
       ),
     );

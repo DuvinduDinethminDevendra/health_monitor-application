@@ -6,6 +6,14 @@ class Activity {
   final String date;
   final int duration; // in minutes
 
+  String get unit {
+    switch (type.toLowerCase()) {
+      case 'steps': return 'steps';
+      case 'sleep': return 'hours';
+      default: return 'units';
+    }
+  }
+
   Activity({
     this.id,
     required this.userId,
