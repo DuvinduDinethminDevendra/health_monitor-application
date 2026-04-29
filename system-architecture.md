@@ -77,6 +77,7 @@ erDiagram
         string name
         string email
         string created_at
+        bool is_dark_mode "Theme persistence"
         int sync_status
     }
     GOALS {
@@ -145,5 +146,5 @@ To resolve conflicts between Manual User Input (Goals) and Automated Tracking (A
 - **Visual Boundaries**: The system reads the `targetValue` of the Goal to generate dynamic Y-axis maximums and renders an industry-standard dashed horizontal target line, visually uniting the user's manual goals with their daily activity.
 
 ---
-**Last Updated:** 2026-04-26
+**Last Updated:** 2026-04-28
 **Author:** LSR Vidanaarachchi (Member 3)

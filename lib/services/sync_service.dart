@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../repositories/user_repository.dart';
 import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
@@ -16,7 +15,6 @@ class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Lazy getters for repositories to break circular dependency
-  UserRepository get _userRepo => UserRepository();
   GoalRepository get _goalRepo => GoalRepository();
   ActivityRepository get _activityRepo => ActivityRepository();
   HealthLogRepository get _healthLogRepo => HealthLogRepository();
