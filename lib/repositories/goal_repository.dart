@@ -225,17 +225,26 @@ class GoalRepository {
   Future<int> deleteGoal(int id) async {
     final db = await _dbHelper.database;
 
-    // Phase 2: Cascading Delete for Linked Reminders
-    final linkedReminders = await _reminderRepo.getRemindersByGoalId(id.toString());
-    final notificationService = NotificationService();
+    // Fetch goal first to get userId for sync
+    final maps = await db.query('goals', where: 'id = ?', whereArgs: [id]);
+    if (maps.isNotEmpty) {
+      final goal = Goal.fromMap(maps.first);
+      
+      // Phase 2: Cascading Delete for Linked Reminders
+      final linkedReminders = await _reminderRepo.getRemindersByGoalId(id.toString());
+      final notificationService = NotificationService();
 
-    for (var reminder in linkedReminders) {
-      // 1. Cancel all sub-ID notifications (matches provider logic for multi-time reminders)
-      for (var i = 0; i < 20; i++) {
-        await notificationService.cancelNotification((reminder.id * 100) + i);
+      for (var reminder in linkedReminders) {
+        // 1. Cancel all sub-ID notifications
+        for (var i = 0; i < 20; i++) {
+          await notificationService.cancelNotification((reminder.id * 100) + i);
+        }
+        // 2. Delete from database
+        await _reminderRepo.deleteReminder(reminder.id);
       }
-      // 2. Delete from database
-      await _reminderRepo.deleteReminder(reminder.id);
+
+      // Sync deletion to Firestore
+      await _syncService.deleteGoal(id, goal.userId);
     }
 
     return await db.delete(

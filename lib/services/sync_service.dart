@@ -127,6 +127,20 @@ class SyncService {
     }
   }
 
+  Future<void> deleteGoal(int goalId, String userId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('goals')
+          .doc(goalId.toString())
+          .delete();
+      print("Goal deleted from Firestore: $goalId");
+    } catch (e) {
+      print("Error deleting goal from Firestore: $e");
+    }
+  }
+
   Future<void> syncActivity(dynamic activity) async {
     try {
       await _firestore
