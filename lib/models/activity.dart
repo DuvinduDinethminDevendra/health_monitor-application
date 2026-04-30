@@ -1,10 +1,18 @@
 class Activity {
-  final int? id;
-  final int userId;
+  final int? id; // SQLite auto-increment ID
+  final String userId; // Firebase UID
   final String type; // 'steps' or 'workout'
   final double value;
   final String date;
   final int duration; // in minutes
+
+  String get unit {
+    switch (type.toLowerCase()) {
+      case 'steps': return 'steps';
+      case 'sleep': return 'hours';
+      default: return 'units';
+    }
+  }
 
   Activity({
     this.id,
@@ -29,7 +37,7 @@ class Activity {
   factory Activity.fromMap(Map<String, dynamic> map) {
     return Activity(
       id: map['id'] as int?,
-      userId: map['user_id'] as int,
+      userId: map['user_id'] as String,
       type: map['type'] as String,
       value: (map['value'] as num).toDouble(),
       date: map['date'] as String,
@@ -39,7 +47,7 @@ class Activity {
 
   Activity copyWith({
     int? id,
-    int? userId,
+    String? userId,
     String? type,
     double? value,
     String? date,

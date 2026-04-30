@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../models/goal.dart';
+import '../models/activity.dart';
 import '../repositories/goal_repository.dart';
+import '../repositories/activity_repository.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -16,320 +21,786 @@ class _GoalsScreenState extends State<GoalsScreen> {
   final GoalRepository _goalRepo = GoalRepository();
   List<Goal> _goals = [];
   bool _isLoading = true;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadGoals();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authService = Provider.of<AuthService>(context);
+    final newUserId = authService.currentUser?.id;
+    
+    if (newUserId != _currentUserId) {
+      _currentUserId = newUserId;
+      _loadGoals();
+    }
   }
 
   Future<void> _loadGoals() async {
-    final userId =
-        Provider.of<AuthService>(context, listen: false).currentUser?.id;
-    if (userId == null) return;
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userId = authService.currentUser?.id;
+    
+    if (userId == null) {
+      if (mounted) {
+        setState(() {
+          _goals = [];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
 
-    final goals = await _goalRepo.getGoalsByUser(userId);
-    if (!mounted) return;
-    setState(() {
-      _goals = goals;
-      _isLoading = false;
-    });
+    setState(() => _isLoading = true);
+    try {
+      final goals = await _goalRepo.getGoalsByUser(userId);
+      if (!mounted) return;
+      setState(() {
+        _goals = goals;
+      });
+    } catch (e) {
+      debugPrint('Error loading goals: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
-  void _showAddEditDialog({Goal? existingGoal}) {
-    final formKey = GlobalKey<FormState>();
-    final titleController =
-        TextEditingController(text: existingGoal?.title ?? '');
-    final targetController = TextEditingController(
-        text: existingGoal?.targetValue.toString() ?? '');
-    final currentController = TextEditingController(
-        text: existingGoal?.currentValue.toString() ?? '0');
-    final unitController =
-        TextEditingController(text: existingGoal?.unit ?? '');
-    DateTime deadline = existingGoal != null
-        ? DateTime.parse(existingGoal.deadline)
-        : DateTime.now().add(const Duration(days: 30));
-
-    showDialog(
+  void _showAddEditBottomSheet({Goal? existingGoal}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(existingGoal != null ? 'Edit Goal' : 'New Goal'),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppTheme.sapphire : Colors.white,
+      elevation: 20,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => _GoalBottomSheet(
+        existingGoal: existingGoal,
+        onSave: (goal) async {
+          debugPrint('[GoalsScreen] Received goal to save: ${goal.title}');
+          try {
+            if (existingGoal == null) {
+              await _goalRepo.insertGoal(goal);
+              debugPrint('[GoalsScreen] Goal inserted successfully.');
+            } else {
+              await _goalRepo.updateGoal(goal);
+              debugPrint('[GoalsScreen] Goal updated successfully.');
+            }
+            _loadGoals();
+          } catch (e) {
+            debugPrint('[GoalsScreen] Error saving goal: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to save goal: $e')),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  String _getBaseType(Goal goal) {
+    if (goal.category.startsWith('Custom')) {
+      return goal.title.toLowerCase();
+    }
+    return goal.category
+        .replaceAll(' (Daily)', '')
+        .replaceAll(' (Cumulative)', '')
+        .toLowerCase();
+  }
+
+  Future<void> _updateProgress(Goal goal, double newProgress) async {
+    // Determine the exact date to permanently anchor this manual progress
+    final userId =
+        Provider.of<AuthService>(context, listen: false).currentUser!.id!;
+    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final activityRepo = ActivityRepository();
+
+    // Auto-Merge: Universally anchor manual progress to the Activity timeline
+    bool isDaily = goal.category.contains('(Daily)');
+    final typeMatch = _getBaseType(goal);
+
+    double diff = 0.0;
+    if (isDaily) {
+      final activities =
+          await activityRepo.getActivitiesByDateRange(userId, dateStr, dateStr);
+      final goalActivities =
+          activities.where((a) => a.type.toLowerCase() == typeMatch).toList();
+      double currentDaySum =
+          goalActivities.fold(0.0, (sum, a) => sum + a.value);
+      diff = newProgress - currentDaySum;
+    } else {
+      diff = newProgress - goal.currentValue;
+    }
+
+    if (diff > 0) {
+      // Insert the missing difference so the true historical Activity matches the manual input
+      await activityRepo.insertActivity(Activity(
+        userId: userId,
+        type: typeMatch,
+        value: diff,
+        date: dateStr,
+        duration: 0,
+      ));
+    }
+
+    await _goalRepo.updateProgress(goal.id!, newProgress);
+    if (newProgress >= goal.targetValue) {
+      await _goalRepo.markCompleted(goal.id!);
+    }
+    _loadGoals();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator(color: AppTheme.blueLagoon));
+    }
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(loc.titleHealthGoals,
+            style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white : AppTheme.sapphire,
+                fontSize: 20)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.sapphire),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 40),
+        child: FloatingActionButton(
+          onPressed: () => _showAddEditBottomSheet(),
+          backgroundColor: AppTheme.blueLagoon,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
+      body: _goals.isEmpty
+          ? Center(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TextFormField(
-                    controller: titleController,
-                    decoration: InputDecoration(
-                      labelText: 'Goal Title',
-                      hintText: 'e.g., Walk 10,000 steps daily',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Required' : null,
+                  Icon(Icons.flag_rounded,
+                      size: 80,
+                      color: AppTheme.heather.withOpacity(0.2)),
+                  SizedBox(height: 16),
+                  Text(
+                    loc.noGoalsSet,
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: isDark ? Colors.white : AppTheme.sapphire,
+                        fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextFormField(
-                          controller: targetController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Target',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          validator: (v) {
-                            if (v == null || v.isEmpty) return 'Required';
-                            if (double.tryParse(v) == null) return 'Invalid';
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: TextFormField(
-                          controller: unitController,
-                          decoration: InputDecoration(
-                            labelText: 'Unit',
-                            hintText: 'kg, km, steps',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          validator: (v) =>
-                              v == null || v.isEmpty ? 'Required' : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (existingGoal != null) ...[
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: currentController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Current Progress',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.calendar_today),
-                    title: Text(
-                        'Deadline: ${DateFormat('MMM dd, yyyy').format(deadline)}'),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: deadline,
-                        firstDate: DateTime.now(),
-                        lastDate:
-                            DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (picked != null) {
-                        setDialogState(() => deadline = picked);
-                      }
-                    },
+                  const SizedBox(height: 8),
+                  Text(
+                    loc.tapToAddGoal,
+                    style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
               ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+              itemCount: _goals.length,
+              itemBuilder: (context, index) {
+                return _buildGoalCard(
+                  goal: _goals[index],
+                  onEdit: () =>
+                      _showAddEditBottomSheet(existingGoal: _goals[index]),
+                  onDelete: () async {
+                    await _goalRepo.deleteGoal(_goals[index].id!);
+                    _loadGoals();
+                  },
+                  onUpdateProgress: (val) => _updateProgress(_goals[index], val),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildGoalCard({
+    required Goal goal,
+    required VoidCallback onEdit,
+    required VoidCallback onDelete,
+    required Function(double) onUpdateProgress,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = (goal.currentValue / goal.targetValue).clamp(0.0, 1.0);
+    final isCompleted = goal.currentValue >= goal.targetValue;
+    Color accentColor = AppTheme.scooter; 
+
+    final category = goal.category.toLowerCase();
+    if (category.contains('sleep')) {
+      accentColor = AppTheme.scooter;
+    } else if (category.contains('water')) {
+      accentColor = AppTheme.skyBlue;
+    } else if (category.contains('step') || category.contains('walk')) {
+      accentColor = AppTheme.blueLagoon;
+    } else if (category.contains('diet') || category.contains('food')) {
+      accentColor = AppTheme.warmOrange;
+    }
+
+    return MatteCard(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  goal.category.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit_rounded, size: 20),
+                    onPressed: onEdit,
+                    color: isDark ? Colors.white60 : AppTheme.heather,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete_outline_rounded, size: 20),
+                    onPressed: onDelete,
+                    color: Colors.redAccent,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Text(
+            goal.title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: isDark ? Colors.white : AppTheme.sapphire,
+              letterSpacing: -0.5,
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  color: isDark ? Colors.white70 : AppTheme.sapphire,
+                ),
+              ),
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  color: accentColor,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: isDark ? Colors.white12 : Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+              minHeight: 12,
             ),
+          ),
+          const SizedBox(height: 20),
+          if (!isCompleted)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _showProgressDialog(goal),
+                icon: Icon(Icons.add_circle_outline, size: 18, color: accentColor),
+                label: Text(
+                  AppLocalizations.of(context)!.btnLogProgress,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: accentColor.withOpacity(0.08),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showProgressDialog(Goal goal) {
+    final controller = TextEditingController(text: goal.currentValue.toString());
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+        ),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
+          left: 24,
+          right: 24,
+          top: 32,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            SizedBox(height: 24),
+            Text('${AppLocalizations.of(context)!.titleUpdateGoal} ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+            SizedBox(height: 12),
+            Text('${AppLocalizations.of(context)!.lblCurrentValue}: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
+              style: TextStyle(color: AppTheme.heather, fontSize: 14, fontWeight: FontWeight.w600)),
+            SizedBox(height: 24),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+              decoration: InputDecoration(
+                labelText: '${AppLocalizations.of(context)!.lblNewCurrentValue} (${goal.unit})',
+                labelStyle: TextStyle(color: AppTheme.heather),
+                prefixIcon: Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppTheme.scooter)),
+              ),
+            ),
+            const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  final userId =
-                      Provider.of<AuthService>(context, listen: false)
-                          .currentUser!
-                          .id!;
-                  final goal = Goal(
-                    id: existingGoal?.id,
-                    userId: userId,
-                    title: titleController.text,
-                    targetValue: double.parse(targetController.text),
-                    currentValue:
-                        double.tryParse(currentController.text) ?? 0,
-                    unit: unitController.text,
-                    deadline:
-                        DateFormat('yyyy-MM-dd').format(deadline),
-                    isCompleted: existingGoal?.isCompleted ?? false,
-                  );
-
-                  if (existingGoal != null) {
-                    await _goalRepo.updateGoal(goal);
-                  } else {
-                    await _goalRepo.insertGoal(goal);
-                  }
-
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  _loadGoals();
-                }
+              onPressed: () {
+                final val = double.tryParse(controller.text) ?? goal.currentValue;
+                _updateProgress(goal, val);
+                Navigator.pop(ctx);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFB8C00),
+                backgroundColor: AppTheme.blueLagoon,
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
               ),
-              child: Text(existingGoal != null ? 'Update' : 'Create'),
+              child: Text(AppLocalizations.of(context)!.btnSaveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+// ----------------------------------------------------------------------
+// Bottom Sheet for Adding/Editing Goals
+// ----------------------------------------------------------------------
+class _GoalBottomSheet extends StatefulWidget {
+  final Goal? existingGoal;
+  final Function(Goal) onSave;
+
+  const _GoalBottomSheet({this.existingGoal, required this.onSave});
+
+  @override
+  State<_GoalBottomSheet> createState() => _GoalBottomSheetState();
+}
+
+class _GoalBottomSheetState extends State<_GoalBottomSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _titleController;
+  late TextEditingController _targetController;
+  late TextEditingController _unitController;
+
+  DateTime _selectedDeadline = DateTime.now().add(const Duration(days: 7));
+  String _selectedCategory = 'Steps (Daily)';
+  String? _selectedReminderTime;
+
+  final List<String> _categories = [
+    'Steps (Daily)',
+    'Steps (Cumulative)',
+    'Running (Daily)',
+    'Running (Cumulative)',
+    'Sleep (Daily)',
+    'Water (Daily)',
+    'Diet (Daily)',
+    'Custom (Daily)',
+    'Custom (Cumulative)'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController =
+        TextEditingController(text: widget.existingGoal?.title ?? '');
+    _targetController = TextEditingController(
+        text: widget.existingGoal?.targetValue.toString() ?? '');
+    _unitController =
+        TextEditingController(text: widget.existingGoal?.unit ?? '');
+
+    if (widget.existingGoal != null) {
+      _selectedDeadline = DateTime.parse(widget.existingGoal!.deadline);
+      _selectedReminderTime = widget.existingGoal!.reminderTime;
+
+      final existingCat = widget.existingGoal!.category;
+      if (_categories.contains(existingCat)) {
+        _selectedCategory = existingCat;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _targetController.dispose();
+    _unitController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDeadline,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    );
+    if (picked != null) {
+      setState(() => _selectedDeadline = picked);
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedReminderTime = picked.format(context));
+    }
+  }
+
+  void _submit() {
+    debugPrint('[GoalBottomSheet] Submitting form...');
+    if (_formKey.currentState!.validate()) {
+      debugPrint('[GoalBottomSheet] Form validated.');
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userId = authService.currentUser?.id ?? 
+                     FirebaseAuth.instance.currentUser?.uid;
+
+      debugPrint('[GoalBottomSheet] UserId: $userId');
+
+      if (userId == null) {
+        debugPrint('[GoalBottomSheet] Error: UserId is null');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User profile not found. Please log in again.')),
+        );
+        return;
+      }
+
+      try {
+        final goal = Goal(
+          id: widget.existingGoal?.id,
+          userId: userId,
+          title: _titleController.text.trim(),
+          category: _selectedCategory,
+          targetValue: double.parse(_targetController.text.trim()),
+          currentValue: widget.existingGoal?.currentValue ?? 0,
+          unit: _unitController.text.trim(),
+          deadline: _selectedDeadline.toIso8601String(),
+          reminderTime: _selectedReminderTime,
+          isCompleted: widget.existingGoal?.isCompleted ?? false,
+        );
+
+        debugPrint('[GoalBottomSheet] Created Goal object: ${goal.title}');
+        widget.onSave(goal);
+        debugPrint('[GoalBottomSheet] onSave called.');
+        Navigator.pop(context);
+      } catch (e) {
+        debugPrint('[GoalBottomSheet] Error parsing target value: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid target value: $e')),
+        );
+      }
+    } else {
+      debugPrint('[GoalBottomSheet] Form validation failed.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      body: _goals.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.flag, size: 80, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No goals set yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+        left: 24,
+        right: 24,
+        top: 32,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              SizedBox(height: 24),
+              Text(widget.existingGoal == null ? AppLocalizations.of(context)!.titleCreateNewGoal : AppLocalizations.of(context)!.titleEditGoal, 
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+              SizedBox(height: 24),
+
+              TextFormField(
+                controller: _titleController,
+                style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.lblGoalTitle,
+                  labelStyle: TextStyle(color: AppTheme.heather),
+                  prefixIcon: Icon(Icons.flag_outlined, color: AppTheme.scooter),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: AppTheme.scooter)),
+                ),
+                validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.reqField : null,
+              ),
+              SizedBox(height: 16),
+
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: isDark ? AppTheme.sapphire : Colors.white,
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+                    builder: (ctx) => Container(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(AppLocalizations.of(context)!.lblSelectCategory, 
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            height: 400,
+                            child: ListView.separated(
+                              itemCount: _categories.length,
+                              separatorBuilder: (_, __) => SizedBox(height: 12),
+                              itemBuilder: (ctx, idx) {
+                                final cat = _categories[idx];
+                                final isSelected = _selectedCategory == cat;
+                                return ListTile(
+                                  onTap: () {
+                                    setState(() => _selectedCategory = cat);
+                                    Navigator.pop(ctx);
+                                  },
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      cat.contains('Steps') ? Icons.directions_run_rounded :
+                                      cat.contains('Running') ? Icons.speed_rounded :
+                                      cat.contains('Sleep') ? Icons.bedtime_rounded :
+                                      cat.contains('Water') ? Icons.water_drop_rounded :
+                                      cat.contains('Diet') ? Icons.restaurant_rounded : Icons.flag_rounded,
+                                      color: isSelected ? Colors.white : (isDark ? Colors.white38 : Colors.grey[600]),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  title: Text(cat, style: TextStyle(fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600, color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white70 : AppTheme.sapphire))),
+                                  trailing: isSelected ? Icon(Icons.check_circle_rounded, color: AppTheme.blueLagoon) : null,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to create your first goal',
-                    style: TextStyle(color: Colors.grey[400]),
+                  child: Row(
+                    children: [
+                      Icon(Icons.category_rounded, color: AppTheme.blueLagoon),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(AppLocalizations.of(context)!.lblCategoryType, style: TextStyle(fontSize: 12, color: AppTheme.heather)),
+                            Text(_selectedCategory, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.heather),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _targetController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.lblTargetValue,
+                        labelStyle: TextStyle(color: AppTheme.heather),
+                        prefixIcon: Icon(Icons.track_changes, color: AppTheme.scooter),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: AppTheme.scooter)),
+                      ),
+                      validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.reqField : null,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    flex: 1,
+                    child: TextFormField(
+                      controller: _unitController,
+                      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.lblUnit,
+                        labelStyle: TextStyle(color: AppTheme.heather),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(color: AppTheme.scooter)),
+                      ),
+                      validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.reqField : null,
+                    ),
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _goals.length,
-              itemBuilder: (context, index) {
-                final goal = _goals[index];
-                final progress = goal.progressPercent;
-                final isOverdue =
-                    DateTime.parse(goal.deadline).isBefore(DateTime.now());
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                goal.title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  decoration: goal.isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            if (goal.isCompleted)
-                              const Icon(Icons.check_circle,
-                                  color: Color(0xFF00BFA5)),
-                            PopupMenuButton<String>(
-                              onSelected: (action) async {
-                                if (action == 'edit') {
-                                  _showAddEditDialog(existingGoal: goal);
-                                } else if (action == 'complete') {
-                                  await _goalRepo.markCompleted(goal.id!);
-                                  _loadGoals();
-                                } else if (action == 'delete') {
-                                  await _goalRepo.deleteGoal(goal.id!);
-                                  _loadGoals();
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                    value: 'edit', child: Text('Edit')),
-                                if (!goal.isCompleted)
-                                  const PopupMenuItem(
-                                      value: 'complete',
-                                      child: Text('Mark Complete')),
-                                const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('Delete',
-                                        style:
-                                            TextStyle(color: Colors.red))),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${goal.currentValue} / ${goal.targetValue} ${goal.unit}',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: LinearProgressIndicator(
-                            value: progress / 100,
-                            minHeight: 8,
-                            backgroundColor: Colors.grey[200],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              goal.isCompleted
-                                  ? const Color(0xFF00BFA5)
-                                  : const Color(0xFFFB8C00),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${progress.toStringAsFixed(0)}% complete',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey[500]),
-                            ),
-                            Text(
-                              'Due: ${goal.deadline}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isOverdue && !goal.isCompleted
-                                    ? Colors.red
-                                    : Colors.grey[500],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+              SizedBox(height: 16),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickDate,
+                      icon: Icon(Icons.calendar_today, size: 18),
+                      label: Text(DateFormat('MMM dd, yyyy').format(_selectedDeadline)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
+                        side: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
                     ),
                   ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEditDialog(),
-        backgroundColor: const Color(0xFFFB8C00),
-        child: const Icon(Icons.add, color: Colors.white),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickTime,
+                      icon: Icon(Icons.alarm, size: 18),
+                      label: Text(_selectedReminderTime ?? AppLocalizations.of(context)!.btnSetReminder),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
+                        side: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              ElevatedButton(
+                onPressed: _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.blueLagoon,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: Text(
+                  widget.existingGoal == null ? AppLocalizations.of(context)!.btnCreateGoal : AppLocalizations.of(context)!.btnSaveChanges,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
