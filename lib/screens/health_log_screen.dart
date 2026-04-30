@@ -1315,6 +1315,44 @@ class _HealthLogScreenState extends State<HealthLogScreen>
     );
   }
 
+  Widget _buildTopBar(BuildContext context, bool isDark) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0A192F).withOpacity(0.98) : Colors.white.withOpacity(0.98),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Text(
+                  AppLocalizations.of(context)!.healthLogs,
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1342,97 +1380,109 @@ class _HealthLogScreenState extends State<HealthLogScreen>
     final filterOptions = ['All', ...allUsedTags.toList()..sort()];
 
     return Scaffold(
-      body: _logs.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Pulsing icon container
-                    ScaleTransition(
-                      scale: _pulseAnimation,
-                      child: Container(
-                        padding: const EdgeInsets.all(28),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF00BFA5).withAlpha(30),
-                              const Color(0xFF1A73E8).withAlpha(20),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00BFA5).withAlpha(15),
-                              blurRadius: 24,
-                              spreadRadius: 8,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: _logs.isEmpty
+                ? SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).padding.top + 110,
+                        left: 32,
+                        right: 32,
+                        bottom: 32,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Pulsing icon container
+                          ScaleTransition(
+                            scale: _pulseAnimation,
+                            child: Container(
+                              padding: const EdgeInsets.all(28),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF00BFA5).withAlpha(30),
+                                    const Color(0xFF1A73E8).withAlpha(20),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF00BFA5).withAlpha(15),
+                                    blurRadius: 24,
+                                    spreadRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFF00BFA5).withAlpha(25),
+                                ),
+                                child: Icon(
+                                  Icons.monitor_weight_outlined,
+                                  size: 64,
+                                  color: Color(0xFF00BFA5),
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF00BFA5).withAlpha(25),
                           ),
-                          child: Icon(
-                            Icons.monitor_weight_outlined,
-                            size: 64,
-                            color: Color(0xFF00BFA5),
+                          SizedBox(height: 32),
+                          Text(
+                            'No health data logged yet',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 32),
-                    Text(
-                      'No health data logged yet',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Start tracking your BMI journey.\nLog your weight and height to get insights.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
-                        height: 1.5,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // Call-to-action button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: _showAddOrEditDialog,
-                        icon: const Icon(Icons.add_circle_outline, size: 22),
-                        label: const Text(
-                          'Log Your First Entry',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00BFA5),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          SizedBox(height: 10),
+                          Text(
+                            'Start tracking your BMI journey.\nLog your weight and height to get insights.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              height: 1.5,
+                              color: Theme.of(context).textTheme.bodySmall?.color,
+                            ),
                           ),
-                          elevation: 2,
-                        ),
+                          const SizedBox(height: 32),
+                          // Call-to-action button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton.icon(
+                              onPressed: _showAddOrEditDialog,
+                              icon: const Icon(Icons.add_circle_outline, size: 22),
+                              label: const Text(
+                                'Log Your First Entry',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF00BFA5),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 2,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-                )
-              : CustomScrollView(
+                  )
+                : CustomScrollView(
+
                   slivers: [
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: MediaQuery.of(context).padding.top + 85),
+                    ),
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1825,6 +1875,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
         const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
       ],
     ),
+          ),
+          _buildTopBar(context, isDark),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'health_log_fab',
         onPressed: _showAddOrEditDialog,
