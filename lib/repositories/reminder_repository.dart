@@ -38,4 +38,14 @@ class ReminderRepository {
       whereArgs: [id],
     );
   }
+
+  Future<List<Reminder>> getRemindersByGoalId(String goalId) async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'reminders',
+      where: 'linked_goal_id = ?',
+      whereArgs: [goalId],
+    );
+    return maps.map((map) => Reminder.fromMap(map)).toList();
+  }
 }
