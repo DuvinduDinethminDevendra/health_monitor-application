@@ -53,8 +53,15 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final isNewUser = await authService.signInWithGoogle();
       if (!mounted) return;
+      
+      // If result is null, it means the user cancelled the sign-in
+      if (isNewUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
-      if (isNewUser) {
+      if (isNewUser == true) {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
       }
     } catch (e) {

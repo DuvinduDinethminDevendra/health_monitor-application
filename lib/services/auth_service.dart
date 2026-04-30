@@ -57,7 +57,7 @@ class AuthService with ChangeNotifier {
     });
   }
 
-  Future<bool> signInWithGoogle() async {
+  Future<bool?> signInWithGoogle() async {
     try {
       fb.UserCredential credential;
       if (kIsWeb) {
@@ -65,7 +65,7 @@ class AuthService with ChangeNotifier {
         credential = await _auth.signInWithPopup(googleProvider);
       } else {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        if (googleUser == null) return false;
+        if (googleUser == null) return null; // Return null for cancellation
 
         final GoogleSignInAuthentication googleAuth =
             await googleUser.authentication;
