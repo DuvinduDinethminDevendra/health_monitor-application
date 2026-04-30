@@ -34,7 +34,7 @@ class _ChartsScreenState extends State<ChartsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(
-        length: 3, vsync: this, initialIndex: widget.initialIndex);
+        length: 2, vsync: this, initialIndex: widget.initialIndex > 1 ? 1 : widget.initialIndex);
   }
 
   @override
@@ -124,26 +124,33 @@ class _ChartsScreenState extends State<ChartsScreen>
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.black.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: TabBar(
               controller: _tabController,
               indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 color: AppTheme.blueLagoon,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.blueLagoon.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               labelColor: Colors.white,
               unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withOpacity(0.4),
-              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
               tabs: [
-                Tab(text: AppLocalizations.of(context)!.tabActivity),
-                Tab(text: AppLocalizations.of(context)!.tabTrends),
-                Tab(text: AppLocalizations.of(context)!.tabInsights),
+                Tab(text: AppLocalizations.of(context)!.tabActivity.toUpperCase()),
+                Tab(text: AppLocalizations.of(context)!.tabInsights.toUpperCase()),
               ],
             ),
           ),
@@ -155,7 +162,6 @@ class _ChartsScreenState extends State<ChartsScreen>
               controller: _tabController,
               children: [
                 _buildActivityChart(),
-                _buildBmiChart(),
                 _buildGoalInsights(),
               ],
             ),
@@ -674,6 +680,164 @@ class _ChartsScreenState extends State<ChartsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- Merged BMI Section ---
+          if (_healthLogs.isNotEmpty) ...[
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppTheme.skyBlue,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Health Metrics',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tracking your weight & height correlation (BMI)',
+              style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            MatteCard(
+              height: 260,
+              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.skyBlue.withOpacity(0.03),
+              padding: const EdgeInsets.only(top: 24, right: 20, bottom: 10),
+              child: LineChart(
+                LineChartData(
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          final log = _healthLogs[spot.x.toInt()];
+                          return LineTooltipItem(
+                            'BMI: ${log.bmi}\n${log.date}',
+                            const TextStyle(
+                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 5,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 30,
+                        interval: (_healthLogs.length / 5).clamp(1, 10).toDouble(),
+                        getTitlesWidget: (value, meta) {
+                          final idx = value.toInt();
+                          if (idx >= 0 && idx < _healthLogs.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: Text(
+                                _healthLogs[idx].date.substring(5),
+                                style: TextStyle(
+                                    fontSize: 10, color: isDark ? Colors.white60 : AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                              ),
+                            );
+                          }
+                          return const Text('');
+                        },
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 35,
+                        getTitlesWidget: (value, meta) {
+                          return Text(value.toInt().toString(),
+                              style: TextStyle(
+                                  fontSize: 10, color: isDark ? Colors.white60 : AppTheme.mutedGrey, fontWeight: FontWeight.w500));
+                        },
+                      ),
+                    ),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: _healthLogs.asMap().entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value.bmi)).toList(),
+                      isCurved: true,
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.skyBlue, AppTheme.emeraldGreen],
+                      ),
+                      barWidth: 4,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.skyBlue.withOpacity(0.2),
+                            AppTheme.skyBlue.withOpacity(0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ],
+                  extraLinesData: ExtraLinesData(
+                    horizontalLines: [
+                      HorizontalLine(
+                        y: 18.5,
+                        color: Colors.orange.withOpacity(0.3),
+                        strokeWidth: 1,
+                        dashArray: [5, 5],
+                        label: HorizontalLineLabel(
+                          show: true,
+                          labelResolver: (_) => 'Under',
+                          style: TextStyle(fontSize: 9, color: Colors.orange[300]),
+                        ),
+                      ),
+                      HorizontalLine(
+                        y: 25,
+                        color: Colors.red.withOpacity(0.3),
+                        strokeWidth: 1,
+                        dashArray: [5, 5],
+                        label: HorizontalLineLabel(
+                          show: true,
+                          labelResolver: (_) => 'Over',
+                          style: TextStyle(fontSize: 9, color: Colors.red[300]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildBmiCategory('< 18.5', 'Under', AppTheme.warmOrange),
+                _buildBmiCategory('18.5-25', 'Normal', AppTheme.emeraldGreen),
+                _buildBmiCategory('25-30', 'Over', AppTheme.warmOrange),
+                _buildBmiCategory('> 30', 'Obese', Colors.redAccent),
+              ],
+            ),
+            const SizedBox(height: 48),
+          ],
+
           Row(
             children: [
               Container(
@@ -874,191 +1038,7 @@ class _ChartsScreenState extends State<ChartsScreen>
 );
 }
 
-  Widget _buildBmiChart() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (_healthLogs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.show_chart, size: 80, color: Colors.grey[300]),
-            const SizedBox(height: 16),
-            Text('No BMI data for charts',
-                style: TextStyle(fontSize: 18, color: Colors.grey[600])),
-            const SizedBox(height: 8),
-            Text('Log your weight & height to see trends',
-                style: TextStyle(color: Colors.grey[400])),
-          ],
-        ),
-      );
-    }
 
-    final spots = _healthLogs.asMap().entries.map((entry) {
-      return FlSpot(entry.key.toDouble(), entry.value.bmi);
-    }).toList();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppTheme.skyBlue,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'BMI Trend',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Tracking your weight & height correlation',
-            style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
-          ),
-          SizedBox(height: 32),
-          MatteCard(
-            height: 280,
-            color: isDark ? const Color(0xFF0A2A3F) : AppTheme.skyBlue.withOpacity(0.03),
-            padding: const EdgeInsets.only(top: 24, right: 20, bottom: 10),
-            child: LineChart(
-              LineChartData(
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    fitInsideHorizontally: true,
-                    fitInsideVertically: true,
-                    getTooltipItems: (touchedSpots) {
-                      return touchedSpots.map((spot) {
-                        final log = _healthLogs[spot.x.toInt()];
-                        return LineTooltipItem(
-                          'BMI: ${log.bmi}\n${log.date}',
-                          TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                        );
-                      }).toList();
-                    },
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 5,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
-                    strokeWidth: 1,
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: (_healthLogs.length / 5).clamp(1, 10).toDouble(),
-                      getTitlesWidget: (value, meta) {
-                        final idx = value.toInt();
-                        if (idx >= 0 && idx < _healthLogs.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Text(
-                              _healthLogs[idx].date.substring(5),
-                              style: TextStyle(
-                                  fontSize: 10, color: isDark ? Colors.white60 : AppTheme.mutedGrey, fontWeight: FontWeight.w500),
-                            ),
-                          );
-                        }
-                        return Text('');
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 35,
-                      getTitlesWidget: (value, meta) {
-                        return Text(value.toInt().toString(),
-                            style: TextStyle(
-                                fontSize: 10, color: isDark ? Colors.white60 : AppTheme.mutedGrey, fontWeight: FontWeight.w500));
-                      },
-                    ),
-                  ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: spots,
-                    isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.skyBlue, AppTheme.emeraldGreen],
-                    ),
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.skyBlue.withOpacity(0.2),
-                          AppTheme.skyBlue.withOpacity(0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
-                extraLinesData: ExtraLinesData(
-                  horizontalLines: [
-                    HorizontalLine(
-                      y: 18.5,
-                      color: Colors.orange.withOpacity(0.3),
-                      strokeWidth: 1,
-                      dashArray: [5, 5],
-                      label: HorizontalLineLabel(
-                        show: true,
-                        labelResolver: (_) => 'Underweight',
-                        style: TextStyle(fontSize: 9, color: Colors.orange[300]),
-                      ),
-                    ),
-                    HorizontalLine(
-                      y: 25,
-                      color: Colors.red.withOpacity(0.3),
-                      strokeWidth: 1,
-                      dashArray: [5, 5],
-                      label: HorizontalLineLabel(
-                        show: true,
-                        labelResolver: (_) => 'Overweight',
-                        style: TextStyle(fontSize: 9, color: Colors.red[300]),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildBmiCategory('< 18.5', 'Under', AppTheme.warmOrange),
-              _buildBmiCategory('18.5-25', 'Normal', AppTheme.emeraldGreen),
-              _buildBmiCategory('25-30', 'Over', AppTheme.warmOrange),
-              _buildBmiCategory('> 30', 'Obese', Colors.redAccent),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildBmiCategory(String range, String label, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

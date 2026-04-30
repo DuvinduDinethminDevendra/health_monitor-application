@@ -33,7 +33,7 @@ class DatabaseHelper {
     return await openDatabase(
       path,
 
-      version: 11,
+      version: 13,
 
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -97,6 +97,12 @@ class DatabaseHelper {
     }
     if (oldVersion < 10) {
       await db.execute("ALTER TABLE reminders ADD COLUMN times TEXT NOT NULL DEFAULT '[]'");
+    }
+    if (oldVersion < 12) {
+      await db.execute('ALTER TABLE reminders ADD COLUMN linked_goal_id TEXT');
+    }
+    if (oldVersion < 13) {
+      await db.execute('ALTER TABLE reminders ADD COLUMN one_time_date TEXT');
     }
 
     // ENSURE 'is_dark_mode' EXISTS IN 'users' TABLE
@@ -272,7 +278,9 @@ class DatabaseHelper {
         alert_style TEXT NOT NULL DEFAULT 'banner',
         repeat_days TEXT NOT NULL DEFAULT '1111111',
         vibration INTEGER NOT NULL DEFAULT 1,
-        sound_name TEXT NOT NULL DEFAULT 'default'
+        sound_name TEXT NOT NULL DEFAULT 'default',
+        linked_goal_id TEXT,
+        one_time_date TEXT
       )
     ''');
 

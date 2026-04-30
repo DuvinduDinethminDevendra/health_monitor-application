@@ -20,6 +20,16 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  
+  double _siSize(double base) {
+    if (!mounted) return base;
+    try {
+      final isSi = AppLocalizations.of(context)?.localeName == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
 
   @override
   void dispose() {
@@ -76,14 +86,41 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authService = Provider.of<AuthService>(context);
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, 
+              color: isDark ? Colors.white70 : AppTheme.sapphire),
+            onPressed: () => authService.toggleTheme(),
+          ),
+          TextButton(
+            onPressed: () => authService.setLocale(
+              authService.locale.languageCode == 'en' ? const Locale('si') : const Locale('en')
+            ),
+            child: Text(
+              authService.locale.languageCode == 'en' ? 'සිං' : 'EN',
+              style: TextStyle(
+                color: isDark ? Colors.white70 : AppTheme.sapphire,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Container(
         color: isDark ? AppTheme.backgroundDark : AppTheme.alabaster,
-        child: Center(
-          child: SingleChildScrollView(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: MatteCard(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(_siSize(32)),
               color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
               child: Form(
                 key: _formKey,
@@ -94,8 +131,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context)!.titleWelcomeBack,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: _siSize(28),
                         fontWeight: FontWeight.w900,
                         color: isDark ? Colors.white : AppTheme.sapphire,
                         letterSpacing: -1,
@@ -103,6 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     Text(
                       AppLocalizations.of(context)!.descLogin,
+                      textAlign: TextAlign.center,
                       style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600]),
                     ),
                     SizedBox(height: 40),
@@ -139,9 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: (value) => (value == null || value.length < 6) ? AppLocalizations.of(context)!.errPasswordShort : null,
                     ),
                     const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 55, minWidth: double.infinity),
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
@@ -167,9 +205,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 55, minWidth: double.infinity),
                       child: OutlinedButton(
                         onPressed: _isLoading ? null : _loginWithGoogle,
                         style: OutlinedButton.styleFrom(
@@ -188,7 +225,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

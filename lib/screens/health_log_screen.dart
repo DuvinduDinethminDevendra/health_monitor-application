@@ -345,7 +345,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
           return Container(
             height: MediaQuery.of(context).size.height * 0.92,
             padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom),
+                bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -1872,7 +1872,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
             ),
           ),
         ),
-        const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+        SliverPadding(padding: EdgeInsets.only(bottom: 80 + MediaQuery.of(context).padding.bottom)),
       ],
     ),
           ),

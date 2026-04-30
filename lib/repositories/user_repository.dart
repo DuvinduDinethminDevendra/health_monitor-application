@@ -8,7 +8,11 @@ class UserRepository {
 
   Future<void> insertUser(User user) async {
     final db = await _dbHelper.database;
-    await db.insert('users', user.toMap());
+    await db.insert(
+      'users',
+      user.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   Future<User?> getUserByEmail(String email) async {
