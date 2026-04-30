@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #1c2333; --border: #30363d;
+    --accent: #58a6ff; --accent2: #3fb950; --accent3: #d2a8ff; --accent4: #ffa657;
+    --text: #e6edf3; --muted: #8b949e; --tag-bg: #1f2937;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; min-height: 100vh; }
+  .header {
+    background: linear-gradient(135deg,#0d1117,#161b22 50%,#1a1f2e);
+    border-bottom: 1px solid var(--border); padding: 28px 36px 24px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-top { display: flex; align-items: flex-start; gap: 16px; }
+  .header-badge { background: linear-gradient(135deg,#1d4ed8,#7c3aed); border-radius: 10px; padding: 8px 10px; font-size: 20px; flex-shrink: 0; }
+  .header-text h1 { font-size: 22px; font-weight: 700; letter-spacing: -.5px; }
+  .header-text h1 span { color: var(--accent); }
+  .header-meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag { background: var(--tag-bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-family: 'JetBrains Mono',monospace; color: var(--muted); }
+  .tag.green { border-color:#238636; color:var(--accent2); background:#0d2218; }
+  .tag.blue  { border-color:#1f6feb; color:var(--accent);  background:#0d1a2e; }
+  .tag.purple{ border-color:#6e40c9; color:var(--accent3); background:#1a0f2e; }
+  .nav { display:flex; gap:4px; padding:16px 36px 0; background:var(--bg); border-bottom:1px solid var(--border); overflow-x:auto; }
+  .nav-btn { background:none; border:none; padding:10px 18px; border-radius:8px 8px 0 0; font-family:'Sora',sans-serif; font-size:13px; font-weight:500; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s; margin-bottom:-1px; }
+  .nav-btn:hover { color:var(--text); background:var(--surface); }
+  .nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--surface); }
+  .content { padding:32px 36px; max-width:1400px; margin:0 auto; }
+  .panel { display:none; }
+  .panel.active { display:block; }
+  .diagram-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:28px; }
+  .diagram-header { padding:16px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; background:var(--surface2); }
+  .diagram-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .icon-blue   { background:#0d1a2e; border:1px solid #1f6feb; }
+  .icon-green  { background:#0d2218; border:1px solid #238636; }
+  .icon-purple { background:#1a0f2e; border:1px solid #6e40c9; }
+  .diagram-title h2 { font-size:15px; font-weight:600; color:var(--text); }
+  .diagram-title p  { font-size:12px; color:var(--muted); margin-top:2px; font-family:'JetBrains Mono',monospace; }
+  .diagram-body { padding:24px; overflow-x:auto; background:#0d1117; }
+  .mermaid { display:flex; justify-content:center; min-width:600px; }
+  .mermaid svg { max-width:100%; height:auto !important; }
+  .loading { display:flex; align-items:center; justify-content:center; padding:60px; color:var(--muted); font-size:13px; gap:10px; }
+  .spinner { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .notes-section { margin-top:8px; }
+  .notes-section h3 { font-size:13px; font-weight:600; color:var(--accent3); text-transform:uppercase; letter-spacing:.8px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .notes-section h3::before { content:''; display:block; width:3px; height:14px; background:var(--accent3); border-radius:2px; }
+  .notes-table { width:100%; border-collapse:collapse; font-size:13px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .notes-table th { background:var(--surface2); padding:10px 14px; text-align:left; font-weight:600; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+  .notes-table td { padding:10px 14px; border-bottom:1px solid #21262d; vertical-align:top; line-height:1.5; }
+  .notes-table tr:last-child td { border-bottom:none; }
+  .notes-table tr:nth-child(even) td { background:#0d1117; }
+  .notes-table td:first-child { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent4); white-space:nowrap; width:28%; }
+  .notes-table td:last-child { color:var(--muted); }
+  .source-footer { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px 18px; display:flex; align-items:flex-start; gap:10px; margin-top:8px; }
+  .source-footer .icon { font-size:14px; flex-shrink:0; margin-top:1px; }
+  .source-footer p { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.6; }
+  .source-footer p span { color:var(--accent2); }
+  @media(max-width:640px){.header,.nav{padding-left:16px;padding-right:16px;}.content{padding:20px 16px;}.diagram-body{padding:16px;}}
+
+  /* HIGH CONTRAST OVERRIDE FOR A & B (LIGHT THEME) */
+  #mermaid-a svg rect, #mermaid-b svg rect,
+  #mermaid-a svg .node rect, #mermaid-b svg .node rect,
+  #mermaid-a svg .cluster rect, #mermaid-b svg .cluster rect,
+  #mermaid-a svg .label-container, #mermaid-b svg .label-container,
+  #mermaid-b svg .node polygon, #mermaid-b svg .node path {
+    fill: #F8FAFC !important;
+    stroke: #000000 !important;
+    stroke-width: 1.5px !important;
+  }
+  #mermaid-a svg text, #mermaid-b svg text,
+  #mermaid-a svg span, #mermaid-b svg span,
+  #mermaid-a svg div, #mermaid-b svg div {
+    fill: #000000 !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+  }
+
+  /* HIGH VISIBILITY DARK MODE FOR DIAGRAM C (WHITE FONTS) */
+  #mermaid-c svg text,
+  #mermaid-c svg span,
+  #mermaid-c svg div,
+  #mermaid-c svg .messageText,
+  #mermaid-c svg .loopText,
+  #mermaid-c svg .actor,
+  #mermaid-c svg .actor-label,
+  #mermaid-c svg .actor-name {
+    fill: #FFFFFF !important;
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+    stroke: none !important;
+  }
+
+  /* TARGET TEXT INSIDE WHITE BOXES (ACTORS, PARTICIPANTS & NOTES) */
+  #mermaid-c svg .actor text,
+  #mermaid-c svg .actor tspan,
+  #mermaid-c svg .actor div,
+  #mermaid-c svg .actor span,
+  #mermaid-c svg .participant text,
+  #mermaid-c svg .participant tspan,
+  #mermaid-c svg .participant div,
+  #mermaid-c svg .participant span,
+  #mermaid-c svg .noteText,
+  #mermaid-c svg .noteText tspan,
+  #mermaid-c svg .noteText div,
+  #mermaid-c svg .loopLine text {
+    fill: #000000 !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Ensure Diagram C boxes stay white for readability */
+  #mermaid-c svg .participant, 
+  #mermaid-c svg .note,
+  #mermaid-c svg rect.actor {
+    fill: #FFFFFF !important;
+    stroke: #000000 !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-badge">🏗️</div>
+    <div class="header-text">
+      <h1><span>Uplift</span> — System Architecture Diagrams</h1>
+      <div class="header-meta">
+        <span class="tag blue">Group No. 13 — Descenders</span>
+        <span class="tag purple">ICT4153 Mobile Application Development</span>
+        <span class="tag green">University of Ruhuna</span>
+        <span class="tag">April 2026</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchTab('a',this)">🖥️ Diagram A — Layered Architecture</button>
+  <button class="nav-btn" onclick="switchTab('b',this)">🌐 Diagram B — Localisation &amp; Theming</button>
+  <button class="nav-btn" onclick="switchTab('c',this)">🔄 Diagram C — Data Sync Sequence</button>
+</nav>
+
+<div class="content">
+
+  <!-- PANEL A -->
+  <div class="panel active" id="panel-a">
+    <div class="diagram-card">
+      <div class="diagram-header">
+        <div class="diagram-icon icon-blue">🖥️</div>
+        <div class="diagram-title">
+          <h2>Diagram A — Layered Architecture (The Classic View)</h2>
+          <p>Strict four-layer dependency flow · Arrows represent allowed call directions only · State flows upward via ChangeNotifier</p>
+        </div>
+      </div>
+      <div class="diagram-body">
+        <div class="loading" id="loading-a"><div class="spinner"></div> Rendering diagram…</div>
+        <div class="mermaid" id="mermaid-a" style="display:none"></div>
+      </div>
+    </div>
+    <div class="notes-section">
+      <h3>Diagram Notes — Layered Architecture</h3>
+      <table class="notes-table">
+        <thead><tr><th>Decision</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td>Lazy getters across repositories</td><td>Prevents circular dependency &amp; startup memory overhead</td></tr>
+          <tr><td>SyncService as singleton</td><td>Ensures a single sync queue; avoids duplicate Firestore writes</td></tr>
+          <tr><td>BackgroundStepService in separate isolate</td><td>flutter_background_service requires its own Dart isolate; Firebase Auth unavailable there — bridged via SharedPreferences active_user_id</td></tr>
+          <tr><td>HiveCacheStore for Health Tips</td><td>Survives app restarts; dio_cache_interceptor serves cached response instantly before network call</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PANEL B -->
+  <div class="panel" id="panel-b">
+    <div class="diagram-card">
+      <div class="diagram-header">
+        <div class="diagram-icon icon-green">🌐</div>
+        <div class="diagram-title">
+          <h2>Diagram B — Localisation &amp; Theming Flowchart</h2>
+          <p>Exact code path when user switches UI language from English to Sinhala · AuthService.setLocale() · MaterialApp(locale:) · _siSize font helper</p>
+        </div>
+      </div>
+      <div class="diagram-body">
+        <div class="loading" id="loading-b"><div class="spinner"></div> Rendering diagram…</div>
+        <div class="mermaid" id="mermaid-b" style="display:none"></div>
+      </div>
+    </div>
+    <div class="notes-section">
+      <h3>Diagram Notes — Localisation</h3>
+      <table class="notes-table">
+        <thead><tr><th>Decision</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td>Locale state in AuthService</td><td>Single ChangeNotifier at root propagates locale to all consumers via MaterialApp(locale:)</td></tr>
+          <tr><td>_siSize() font reduction</td><td>Sinhala Unicode conjunct characters render ~15% wider than Latin at the same fontSize; explicit scaling prevents BottomNavigationBar label overflow</td></tr>
+          <tr><td>No database column for locale</td><td>Locale is a session preference held in AuthService._locale; it does not persist across reinstalls (by design)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PANEL C -->
+  <div class="panel" id="panel-c">
+    <div class="diagram-card">
+      <div class="diagram-header">
+        <div class="diagram-icon icon-purple">🔄</div>
+        <div class="diagram-title">
+          <h2>Diagram C — Data Synchronisation Sequence Diagram</h2>
+          <p>Full lifecycle of a Health Log entry · HealthLogRepository · SyncService.syncData() · SyncService.rehydrateData() · sync_status flag mechanism</p>
+        </div>
+      </div>
+      <div class="diagram-body">
+        <div class="loading" id="loading-c"><div class="spinner"></div> Rendering diagram…</div>
+        <div class="mermaid" id="mermaid-c" style="display:none"></div>
+      </div>
+    </div>
+    <div class="notes-section">
+      <h3>Diagram Notes — Sync Sequence</h3>
+      <table class="notes-table">
+        <thead><tr><th>Step</th><th>Implementation Detail</th></tr></thead>
+        <tbody>
+          <tr><td>Immediate local write</td><td>ConflictAlgorithm.replace ensures idempotency — safe to call multiple times</td></tr>
+          <tr><td>sync_status = 0 flag</td><td>Set at insert time; SyncService.syncData() queries for this flag to identify unsynced records</td></tr>
+          <tr><td>Error handling</td><td>All SyncService methods wrap Firestore calls in try/catch; failures are logged but do not block the UI — the record retains sync_status = 0 for the next sync cycle</td></tr>
+          <tr><td>Rehydration on login</td><td>AuthService constructor listens to _auth.authStateChanges() and calls rehydrateData() then syncData() on every authenticated state event</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="source-footer">
+    <div class="icon">📁</div>
+    <p>
+      <span>Source of Truth:</span> lib/services/auth_service.dart · lib/services/sync_service.dart · lib/providers/activity_provider.dart · lib/repositories/ · lib/database/database_helper.dart (v11)<br>
+      Group No. 13 — Descenders | ICT4153 Mobile Application Development | University of Ruhuna | April 2026
+    </p>
+  </div>
+
+</div>
+
+<script>
+const DIAGRAMS = {
+  a: `graph TD
+    subgraph PRESENTATION ["🖥️  Layer 1 — Presentation (UI)"]
+        direction LR
+        L[LoginScreen] --- D[DashboardScreen]
+        D --- A[ActivityScreen]
+        A --- HL[HealthLogScreen]
+        HL --- G[GoalsScreen]
+        G --- HT[HealthTipsScreen]
+        HT --- P[ProfileScreen]
+        P --- R[RemindersScreen]
+        P --- C[ChartsScreen]
+        D --- WIDGETS["Matte-Glass Widgets\nGlassCard · WeeklyActivityChart\nSemiCircleProgressPainter · ShimmerCard"]
+    end
+    subgraph DOMAIN ["⚙️  Layer 2 — Business Logic (Providers & Services)"]
+        direction LR
+        AUTH["AuthService : ChangeNotifier\n─────────────────────\n• authStateChanges() listener\n• signIn / register / logout\n• toggleTheme() → SQLite + Firestore\n• setLocale() → notifyListeners()\n• updateUserProfile()"]
+        ACT_PROV["ActivityProvider : ChangeNotifier\n─────────────────────\n• loadData() → persists active_user_id\n• _runCatchUpCheck() missed-midnight fix\n• listenToPedometer()\n• getHourlyDistribution()\n• getWeeklySteps()"]
+        TIPS_PROV["HealthTipsProvider : ChangeNotifier\n─────────────────────\n• fetchTipsByTag() / fetchBySearch()\n• toggleFavorite()\n• refreshCurrentList(forceRefresh)"]
+        SYNC["SyncService : Singleton\n─────────────────────\n• syncData(userId)  Local→Cloud\n• rehydrateData(userId)  Cloud→Local\n• syncUserProfile(user)"]
+    end
+    subgraph REPO ["📦  Layer 3 — Data Access (Repository Pattern)"]
+        direction LR
+        UR["UserRepository\ninsertUser · updateUser\ngetUserById"]
+        GR["GoalRepository\ninsertGoal · getGoalsByUser\nmarkCompleted · getPredictiveInsight()\ngetUnsyncedGoals · updateSyncStatus"]
+        AR["ActivityRepository\ninsertActivity · getActivitiesByUser\nupsertActivity · getUnsyncedActivities"]
+        HLR["HealthLogRepository\ninsertLog · getLogsByUser\nupsertLog · getUnsyncedLogs"]
+        SR["StepRecordRepository\nupsertRecord (INSERT OR REPLACE)\ngetLast7DaysSteps(userId)\ngetRecordByDate()"]
+        NR["NotificationService\nscheduleDaily() · showNotification()\ncancelNotification()\nBanner / Alarm channels"]
+        HTS["HealthTipsService\nfetchHealthTips(keyword)\nsaveFavoriteTip · getFavoriteTips\nsaveRecentTip · getRecentTips"]
+    end
+    subgraph INFRA ["🗄️  Layer 4 — Infrastructure"]
+        direction LR
+        SQLITE[("SQLite — Primary\nhealth_monitor.db\nSchema v11\n9 Tables")]
+        FIREBASE_AUTH["Firebase Auth\nEmail/Password\nGoogle OAuth"]
+        FIRESTORE[("Cloud Firestore — Secondary\nusers/{uid}/goals\nusers/{uid}/activities\nusers/{uid}/health_logs")]
+        HIVE[("Hive Disk Cache\ndio_cache_interceptor\nHealth Tips HTTP cache\n7-day TTL")]
+        HEALTH_API["MyHealthFinder API\nhealth.gov REST\nKeyword search\nJSON response"]
+        SHARED_PREF["SharedPreferences\nactive_user_id\nlast_active_date\ncurrent_steps\ntutorial flags"]
+        SENSOR["Android Pedometer\nHardware Step Sensor\nMonotonic step count\nsince last reboot"]
+        BG_SERVICE["flutter_background_service\nBackground Isolate\nMidnight step capture\nPeriodic sync trigger"]
+    end
+    PRESENTATION -->|"context.watch / Consumer\ndispatches user events"| DOMAIN
+    DOMAIN -->|"CRUD operations\nasync/await"| REPO
+    REPO -->|"db.insert / db.query\nConflictAlgorithm.replace"| SQLITE
+    SYNC -->|".set(toMap())\n.get() subcollections"| FIRESTORE
+    AUTH -->|"createUserWithEmailAndPassword\nsignInWithCredential"| FIREBASE_AUTH
+    HTS -->|"Dio GET + cache interceptor"| HIVE
+    HIVE -->|"Cache miss → HTTP GET"| HEALTH_API
+    ACT_PROV -->|"read/write\nactive_user_id"| SHARED_PREF
+    BG_SERVICE -->|"reads active_user_id\nwrites step_records"| SQLITE
+    BG_SERVICE -->|"reads stepCount stream"| SENSOR
+    NR -->|"zonedSchedule()\nflutter_local_notifications"| SHARED_PREF
+    style SQLITE         fill:#e8d5f5,stroke:#7c3aed,stroke-width:2px
+    style FIRESTORE      fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    style HIVE           fill:#dcfce7,stroke:#16a34a,stroke-width:1px
+    style AUTH           fill:#dbeafe,stroke:#2563eb,stroke-width:1px
+    style SYNC           fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+    style ACT_PROV       fill:#dbeafe,stroke:#2563eb,stroke-width:1px
+    style TIPS_PROV      fill:#dbeafe,stroke:#2563eb,stroke-width:1px
+    style BG_SERVICE     fill:#fce7f3,stroke:#be185d,stroke-width:2px
+    style SENSOR         fill:#fce7f3,stroke:#be185d,stroke-width:1px`,
+
+  b: `flowchart LR
+    A(["👤 User selects\n'සිංහල' in ProfileScreen"])
+    subgraph PROFILE ["ProfileScreen — Presentation Layer"]
+        B["Calls\ncontext.read AuthService\n.setLocale(Locale('si'))"]
+    end
+    subgraph AUTH_SVC ["AuthService — Domain Layer"]
+        C{"_locale == newLocale?"}
+        D["_locale = Locale('si')\nnotifyListeners()"]
+    end
+    subgraph MATERIAL ["MaterialApp — Root Widget"]
+        E["Consumer AuthService\nrebuilds MaterialApp\nlocale: authService.locale"]
+        F["Flutter framework loads\nlocalizations delegate:\nAppLocalizations.delegate\nGlobalMaterialLocalizations.delegate\nGlobalWidgetsLocalizations.delegate"]
+        G["Resolves app_si.arb\nARB key-value translations\nloaded into AppLocalizations"]
+    end
+    subgraph FONT_SCALE ["UI Render — Font Scaling"]
+        H{"Active locale\n== 'si'?"}
+        I["Apply _siSize()\nreduced scale factor\ne.g. 16px → ~14px\n~15% reduction for\nSinhala conjunct characters"]
+        J["Standard font size\napplied\nno scaling override"]
+        K(["✅ UI renders in Sinhala\nNo text overflow in\nBottomNavigationBar labels\nor fixed-width card headers"])
+    end
+    A --> B
+    B --> C
+    C -->|"No — same locale"| K
+    C -->|"Yes — new locale"| D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H -->|"Yes"| I
+    H -->|"No (en)"| J
+    I --> K
+    J --> K
+    style A         fill:#f0fdf4,stroke:#16a34a
+    style D         fill:#dbeafe,stroke:#2563eb
+    style G         fill:#fef3c7,stroke:#d97706
+    style I         fill:#fce7f3,stroke:#be185d,stroke-width:2px
+    style K         fill:#dcfce7,stroke:#16a34a,stroke-width:2px`,
+
+  c: `sequenceDiagram
+    actor User
+    participant UI as HealthLogScreen (Presentation Layer)
+    participant Provider as ChangeNotifier (Business Logic)
+    participant Repo as HealthLogRepository (Data Access Layer)
+    participant SQLite as SQLite DB (health_monitor.db)
+    participant SyncSvc as SyncService (Sync Engine)
+    participant Firestore as Cloud Firestore (users/{uid}/health_logs)
+    User->>UI: Submits Health Log form (weight, height, tags, notes, unit)
+    UI->>UI: Validates input fields — Form validation passes
+    UI->>Provider: Calls notifyListeners() or directly calls repository
+    Provider->>Repo: insertLog(HealthLog)
+    Repo->>Repo: log.toMap() generates Map String dynamic
+    Repo->>SQLite: db.insert('health_logs', log.toMap(), conflictAlgorithm: ConflictAlgorithm.replace)
+    SQLite-->>Repo: Returns new row id (INTEGER)
+    Note over SQLite: sync_status = 0 (unsynced flag set)
+    Repo-->>Provider: Record persisted ✓
+    Provider-->>UI: notifyListeners() → UI updates — New log visible instantly
+    Repo->>SyncSvc: syncActivity(log) immediate trigger OR Deferred via syncData(userId) on next pull-to-refresh / login event
+    SyncSvc->>SQLite: SELECT * FROM health_logs WHERE user_id = ? AND sync_status = 0
+    SQLite-->>SyncSvc: Returns List of HealthLog unsyncedLogs
+    loop For each unsynced health_log record
+        SyncSvc->>Firestore: .collection('users').doc(userId).collection('health_logs').doc(log.id).set(log.toMap())
+        Firestore-->>SyncSvc: Write acknowledged ✓
+        SyncSvc->>SQLite: UPDATE health_logs SET sync_status = 1 WHERE id = log.id
+        Note over SQLite: sync_status = 1 (synced flag confirmed)
+    end
+    Note over SyncSvc,Firestore: On next login on any device, rehydrateData(userId) is called by AuthService automatically
+    SyncSvc->>Firestore: .collection('users').doc(userId).collection('health_logs').get()
+    Firestore-->>SyncSvc: QuerySnapshot — all cloud health_logs
+    loop For each Firestore document
+        SyncSvc->>Repo: upsertLog(HealthLog.fromMap(data))
+        Repo->>SQLite: db.insert('health_logs', data, conflictAlgorithm: ConflictAlgorithm.replace)
+        Note over SQLite: Idempotent upsert — existing rows updated, missing rows inserted
+    end
+    SQLite-->>UI: Provider reloads data — All logs available offline ✓`
+};
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    darkMode: true, background: '#0d1117', primaryColor: '#1c2333',
+    primaryTextColor: '#e6edf3', primaryBorderColor: '#30363d',
+    lineColor: '#58a6ff', secondaryColor: '#161b22', tertiaryColor: '#1a1f2e',
+    fontSize: '13px'
+  },
+  flowchart: { curve: 'basis', htmlLabels: false },
+  sequence: { diagramMarginX: 20, diagramMarginY: 20, actorFontSize: 13, noteFontSize: 12, messageFontSize: 12 }
+});
+
+async function renderAll() {
+  for (const [key, code] of Object.entries(DIAGRAMS)) {
+    const el = document.getElementById('mermaid-' + key);
+    const loader = document.getElementById('loading-' + key);
+    try {
+      const { svg } = await mermaid.render('svg-' + key, code);
+      el.innerHTML = svg;
+      el.style.display = 'flex';
+      loader.style.display = 'none';
+    } catch(e) {
+      loader.innerHTML = '⚠️ Render error — ' + e.message;
+      console.error(key, e);
+    }
+  }
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+window.addEventListener('load', renderAll);
+</script>
+</body>
+</html>
