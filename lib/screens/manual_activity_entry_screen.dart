@@ -38,18 +38,6 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: ActivityTheme.primaryBlue,
-              onPrimary: Colors.white,
-              onSurface: ActivityTheme.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -98,12 +86,10 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: ActivityTheme.background,
       appBar: AppBar(
-        title: Text(loc.titleLogActivity, style: const TextStyle(color: ActivityTheme.textPrimary)),
-        backgroundColor: ActivityTheme.cardBackground,
-        iconTheme: const IconThemeData(color: ActivityTheme.textPrimary),
-        elevation: 1,
+        title: Text(loc.titleLogActivity),
+        elevation: 0,
+        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -219,15 +205,21 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
   }
 
   Widget _buildCard({required Widget child}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: ActivityTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(5),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
