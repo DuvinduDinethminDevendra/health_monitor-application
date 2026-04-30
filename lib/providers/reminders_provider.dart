@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/reminder.dart';
 import '../repositories/reminder_repository.dart';
+import '../repositories/goal_repository.dart';
 import '../services/notification_service.dart';
 
 class RemindersProvider with ChangeNotifier {
@@ -117,19 +118,33 @@ class RemindersProvider with ChangeNotifier {
               ? 'Alarm schedule active. Set for: $timeStrings.'
               : 'Banner notification scheduled for: $timeStrings.',
         );
-        // Actual daily schedule — uses the chosen alert style (alarm or banner)
+        // Actual schedule — uses the chosen alert style (alarm or banner)
         for (var i = 0; i < updatedReminder.times.length; i++) {
           final time = updatedReminder.times[i];
-          await _notificationService.scheduleDaily(
-            id: (updatedReminder.id * 100) + i,
-            title: updatedReminder.title,
-            body: updatedReminder.body,
-            hour: time['hour']!,
-            minute: time['minute']!,
-            alertStyle: updatedReminder.alertStyle,
-            vibration: updatedReminder.vibration,
-            soundName: updatedReminder.soundName,
-          );
+          if (updatedReminder.oneTimeDate != null) {
+            await _notificationService.scheduleOnce(
+              id: (updatedReminder.id * 100) + i,
+              title: updatedReminder.title,
+              body: updatedReminder.body,
+              date: DateTime.parse(updatedReminder.oneTimeDate!),
+              hour: time['hour']!,
+              minute: time['minute']!,
+              alertStyle: updatedReminder.alertStyle,
+              vibration: updatedReminder.vibration,
+              soundName: updatedReminder.soundName,
+            );
+          } else {
+            await _notificationService.scheduleDaily(
+              id: (updatedReminder.id * 100) + i,
+              title: updatedReminder.title,
+              body: updatedReminder.body,
+              hour: time['hour']!,
+              minute: time['minute']!,
+              alertStyle: updatedReminder.alertStyle,
+              vibration: updatedReminder.vibration,
+              soundName: updatedReminder.soundName,
+            );
+          }
         }
       } else {
         debugPrint('[RemindersProvider] Permission DENIED — reverting');
@@ -160,16 +175,30 @@ class RemindersProvider with ChangeNotifier {
     if (updated.isEnabled) {
       for (var i = 0; i < updated.times.length; i++) {
         final time = updated.times[i];
-        await _notificationService.scheduleDaily(
-          id: (updated.id * 100) + i,
-          title: updated.title,
-          body: updated.body,
-          hour: time['hour']!,
-          minute: time['minute']!,
-          alertStyle: updated.alertStyle,
-          vibration: updated.vibration,
-          soundName: updated.soundName,
-        );
+        if (updated.oneTimeDate != null) {
+          await _notificationService.scheduleOnce(
+            id: (updated.id * 100) + i,
+            title: updated.title,
+            body: updated.body,
+            date: DateTime.parse(updated.oneTimeDate!),
+            hour: time['hour']!,
+            minute: time['minute']!,
+            alertStyle: updated.alertStyle,
+            vibration: updated.vibration,
+            soundName: updated.soundName,
+          );
+        } else {
+          await _notificationService.scheduleDaily(
+            id: (updated.id * 100) + i,
+            title: updated.title,
+            body: updated.body,
+            hour: time['hour']!,
+            minute: time['minute']!,
+            alertStyle: updated.alertStyle,
+            vibration: updated.vibration,
+            soundName: updated.soundName,
+          );
+        }
       }
     }
   }
@@ -183,6 +212,8 @@ class RemindersProvider with ChangeNotifier {
     String repeatDays = '1111111',
     bool vibration = true,
     String soundName = 'default',
+    String? linkedGoalId,
+    String? oneTimeDate,
   }) async {
     final maxId = _reminders.isEmpty
         ? 100
@@ -199,6 +230,8 @@ class RemindersProvider with ChangeNotifier {
       repeatDays: repeatDays,
       vibration: vibration,
       soundName: soundName,
+      linkedGoalId: linkedGoalId,
+      oneTimeDate: oneTimeDate,
     );
 
     await _repository.insertReminder(newReminder);
@@ -209,16 +242,30 @@ class RemindersProvider with ChangeNotifier {
     if (granted) {
       for (var i = 0; i < newReminder.times.length; i++) {
         final time = newReminder.times[i];
-        await _notificationService.scheduleDaily(
-          id: (newReminder.id * 100) + i,
-          title: newReminder.title,
-          body: newReminder.body,
-          hour: time['hour']!,
-          minute: time['minute']!,
-          alertStyle: newReminder.alertStyle,
-          vibration: newReminder.vibration,
-          soundName: newReminder.soundName,
-        );
+        if (newReminder.oneTimeDate != null) {
+          await _notificationService.scheduleOnce(
+            id: (newReminder.id * 100) + i,
+            title: newReminder.title,
+            body: newReminder.body,
+            date: DateTime.parse(newReminder.oneTimeDate!),
+            hour: time['hour']!,
+            minute: time['minute']!,
+            alertStyle: newReminder.alertStyle,
+            vibration: newReminder.vibration,
+            soundName: newReminder.soundName,
+          );
+        } else {
+          await _notificationService.scheduleDaily(
+            id: (newReminder.id * 100) + i,
+            title: newReminder.title,
+            body: newReminder.body,
+            hour: time['hour']!,
+            minute: time['minute']!,
+            alertStyle: newReminder.alertStyle,
+            vibration: newReminder.vibration,
+            soundName: newReminder.soundName,
+          );
+        }
       }
     }
 
@@ -228,6 +275,7 @@ class RemindersProvider with ChangeNotifier {
   // ── Delete single ──
   Future<void> deleteReminder(Reminder reminder) async {
     await _cancelAllForReminder(reminder.id);
+    await _handleLinkedGoalCleanup(reminder);
     await _repository.deleteReminder(reminder.id);
     _reminders.removeWhere((r) => r.id == reminder.id);
     _selectedIds.remove(reminder.id);
@@ -258,6 +306,7 @@ class RemindersProvider with ChangeNotifier {
     final toDelete = _reminders.where((r) => _selectedIds.contains(r.id)).toList();
     for (final r in toDelete) {
       await _cancelAllForReminder(r.id);
+      await _handleLinkedGoalCleanup(r);
       await _repository.deleteReminder(r.id);
     }
     _reminders.removeWhere((r) => _selectedIds.contains(r.id));
@@ -278,6 +327,21 @@ class RemindersProvider with ChangeNotifier {
     // We cancel up to 20 sub-IDs to ensure no orphaned alarms exist if the user reduced the number of times.
     for (var i = 0; i < 20; i++) {
       await _notificationService.cancelNotification((reminderId * 100) + i);
+    }
+  }
+
+  Future<void> _handleLinkedGoalCleanup(Reminder reminder) async {
+    if (reminder.linkedGoalId != null) {
+      final goalId = int.tryParse(reminder.linkedGoalId!);
+      if (goalId != null) {
+        final goalRepo = GoalRepository();
+        final goal = await goalRepo.getGoalById(goalId);
+        if (goal != null) {
+          // Clear the reminder time in the goal since the reminder was manually deleted
+          await goalRepo.updateGoal(goal.copyWith(reminderTime: null));
+          debugPrint('[RemindersProvider] Linked goal ${goal.id} reminderTime cleared.');
+        }
+      }
     }
   }
 }

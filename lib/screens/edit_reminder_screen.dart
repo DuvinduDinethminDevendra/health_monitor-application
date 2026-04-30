@@ -75,6 +75,12 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
 
   String _repeatSummary(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    
+    // If it's a goal-linked one-time reminder, show the specific date
+    if (widget.reminder?.oneTimeDate != null) {
+      return 'Once on ${widget.reminder!.oneTimeDate}';
+    }
+
     final all = _repeatDays.every((d) => d);
     final none = _repeatDays.every((d) => !d);
     if (all) return loc.repeatEveryDay;
@@ -306,19 +312,23 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   ),
                 ],
               ),
-              child: TextFormField(
-                controller: _titleController,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  labelText: AppLocalizations.of(context)!.lblGoalTitle,
-                  hintText: AppLocalizations.of(context)!.hintReminderTitle,
-                  prefixIcon: Icon(Icons.label_outline, color: Colors.grey),
-                  border: InputBorder.none,
+                child: TextFormField(
+                  controller: _titleController,
+                  textCapitalization: TextCapitalization.sentences,
+                  enabled: widget.reminder?.linkedGoalId == null,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    labelText: AppLocalizations.of(context)!.lblGoalTitle,
+                    hintText: AppLocalizations.of(context)!.hintReminderTitle,
+                    prefixIcon: Icon(Icons.label_outline, color: Colors.grey),
+                    suffixIcon: widget.reminder?.linkedGoalId != null 
+                        ? const Icon(Icons.lock_outline, size: 18, color: Colors.amber)
+                        : null,
+                    border: InputBorder.none,
+                  ),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.reqField : null,
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.reqField : null,
-              ),
             ),
             SizedBox(height: 14),
             Container(

@@ -221,7 +221,46 @@ class NotificationService {
     }
   }
 
-  /// Schedules a daily repeating notification.
+  Future<void> scheduleOnce({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime date,
+    required int hour,
+    required int minute,
+    AlertStyle alertStyle = AlertStyle.banner,
+    bool vibration = true,
+    String soundName = 'default',
+  }) async {
+    try {
+      final scheduledDate = tz.TZDateTime(
+          tz.local, date.year, date.month, date.day, hour, minute);
+
+      debugPrint('[NotificationService] Scheduling ONCE "$title" (id=$id) at $scheduledDate');
+
+      final androidDetails = _channelFor(
+        alertStyle: alertStyle,
+        vibration: vibration,
+        soundName: soundName,
+      );
+      const iosDetails = DarwinNotificationDetails();
+      final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+
+      await _notifications.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+
+      debugPrint('[NotificationService] ✓ Scheduled once successfully');
+    } catch (e) {
+      debugPrint('[NotificationService] ✗ ERROR scheduling once: $e');
+    }
+  }
+
   Future<void> scheduleDaily({
     required int id,
     required String title,

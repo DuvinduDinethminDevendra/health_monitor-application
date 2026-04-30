@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../providers/reminders_provider.dart';
+import '../models/reminder.dart';
 import 'package:intl/intl.dart';
 import '../models/goal.dart';
 import '../models/activity.dart';
@@ -86,11 +88,13 @@ class _GoalsScreenState extends State<GoalsScreen> {
           debugPrint('[GoalsScreen] Received goal to save: ${goal.title}');
           try {
             if (existingGoal == null) {
-              await _goalRepo.insertGoal(goal);
-              debugPrint('[GoalsScreen] Goal inserted successfully.');
+              final id = await _goalRepo.insertGoal(goal);
+              debugPrint('[GoalsScreen] Goal inserted successfully (ID: $id).');
+              if (mounted) await _syncGoalReminder(goal.copyWith(id: id));
             } else {
               await _goalRepo.updateGoal(goal);
               debugPrint('[GoalsScreen] Goal updated successfully.');
+              if (mounted) await _syncGoalReminder(goal);
             }
             _loadGoals();
           } catch (e) {
@@ -104,6 +108,66 @@ class _GoalsScreenState extends State<GoalsScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _syncGoalReminder(Goal goal) async {
+    if (!mounted || goal.id == null) return;
+    
+    final remindersProvider = Provider.of<RemindersProvider>(context, listen: false);
+    final goalIdStr = goal.id.toString();
+    
+    // Find any existing reminder linked to this goal
+    final existingReminders = remindersProvider.reminders.where((r) => r.linkedGoalId == goalIdStr).toList();
+    
+    if (goal.reminderTime != null) {
+      try {
+        // Parse time (e.g., "08:00 AM")
+        final timeParts = goal.reminderTime!.split(' ');
+        final hm = timeParts[0].split(':');
+        int hour = int.parse(hm[0]);
+        final minute = int.parse(hm[1]);
+        if (timeParts.length > 1 && timeParts[1].toUpperCase() == 'PM' && hour < 12) hour += 12;
+        if (timeParts.length > 1 && timeParts[1].toUpperCase() == 'AM' && hour == 12) hour = 0;
+        final newTime = {'hour': hour, 'minute': minute};
+
+        final isDaily = goal.category.toLowerCase().contains('(daily)');
+
+        if (existingReminders.isNotEmpty) {
+          // Update the first one found
+          final r = existingReminders.first;
+          final updated = r.copyWith(
+            title: 'Goal: ${goal.title}',
+            body: 'Time to work on your ${goal.category} goal!',
+            times: [newTime],
+            alertStyle: AlertStyle.alarm,
+            oneTimeDate: goal.deadline,
+            repeatDays: '0000000',
+          );
+          await remindersProvider.updateReminder(updated);
+          debugPrint('[GoalsScreen] Linked reminder updated for ${goal.deadline}.');
+        } else {
+          // Create new if none exists
+          await remindersProvider.addReminder(
+            title: 'Goal: ${goal.title}',
+            body: 'Time to work on your ${goal.category} goal!',
+            times: [newTime],
+            linkedGoalId: goalIdStr,
+            alertStyle: AlertStyle.alarm,
+            oneTimeDate: goal.deadline,
+            repeatDays: '0000000',
+          );
+          debugPrint('[GoalsScreen] Linked reminder created for ${goal.deadline}.');
+        }
+      } catch (e) {
+        debugPrint('[GoalsScreen] Error syncing goal reminder: $e');
+      }
+    } else {
+      // No reminder time set in goal - delete any orphaned linked reminders
+      for (var r in existingReminders) {
+        await remindersProvider.deleteReminder(r);
+        debugPrint('[GoalsScreen] Orphaned linked reminder deleted.');
+      }
+    }
   }
 
   String _getBaseType(Goal goal) {
