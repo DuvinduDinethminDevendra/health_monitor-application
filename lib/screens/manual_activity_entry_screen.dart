@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/activity_provider.dart';
 import '../services/auth_service.dart';
 import '../theme/activity_theme.dart';
+import '../l10n/app_localizations.dart';
 
 class ManualActivityEntryScreen extends StatefulWidget {
   const ManualActivityEntryScreen({super.key});
@@ -86,7 +87,7 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
         provider.clearError();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Activity saved successfully!'), backgroundColor: ActivityTheme.success),
+          SnackBar(content: Text(AppLocalizations.of(context)!.msgActivitySaved), backgroundColor: ActivityTheme.success),
         );
         Navigator.pop(context);
       }
@@ -95,10 +96,11 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: ActivityTheme.background,
       appBar: AppBar(
-        title: const Text('Log Activity', style: TextStyle(color: ActivityTheme.textPrimary)),
+        title: Text(loc.titleLogActivity, style: const TextStyle(color: ActivityTheme.textPrimary)),
         backgroundColor: ActivityTheme.cardBackground,
         iconTheme: const IconThemeData(color: ActivityTheme.textPrimary),
         elevation: 1,
@@ -114,11 +116,19 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
                 _buildCard(
                   child: DropdownButtonFormField<String>(
                     value: _type,
-                    decoration: const InputDecoration(labelText: 'Activity Type'),
+                    decoration: InputDecoration(labelText: loc.lblActivityType),
                     items: _types.map((String value) {
+                      String label = value[0].toUpperCase() + value.substring(1);
+                      if (value == 'steps') label = 'Steps';
+                      if (value == 'workout') label = 'Workout';
+                      if (value == 'running') label = loc.activityTypeRunning;
+                      if (value == 'cycling') label = loc.activityTypeCycling;
+                      if (value == 'swimming') label = loc.activityTypeSwimming;
+                      if (value == 'yoga') label = loc.activityTypeYoga;
+                      if (value == 'custom') label = loc.activityTypeCustom;
                       return DropdownMenuItem<String>(
                         value: value,
-                        child: Text(value[0].toUpperCase() + value.substring(1)),
+                        child: Text(label),
                       );
                     }).toList(),
                     onChanged: (newValue) => setState(() => _type = newValue!),
@@ -130,8 +140,8 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
                   _buildCard(
                     child: TextFormField(
                       controller: _customTypeController,
-                      decoration: const InputDecoration(labelText: 'Custom Activity Name'),
-                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                      decoration: InputDecoration(labelText: loc.lblCustomActivityName),
+                      validator: (value) => value == null || value.isEmpty ? loc.reqField : null,
                     ),
                   ),
                 ],
@@ -142,12 +152,12 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
                     controller: _valueController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
-                      labelText: _type == 'steps' ? 'Number of Steps' : 'Distance (km) / Amount',
+                      labelText: _type == 'steps' ? loc.lblNumSteps : loc.lblDistanceAmount,
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
-                      if (double.tryParse(value) == null) return 'Enter a valid number';
-                      if (double.parse(value) < 0) return 'Must be positive';
+                      if (value == null || value.isEmpty) return loc.reqField;
+                      if (double.tryParse(value) == null) return loc.errValidNumber;
+                      if (double.parse(value) < 0) return loc.errPositive;
                       return null;
                     },
                   ),
@@ -158,11 +168,11 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
                   child: TextFormField(
                     controller: _durationController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Duration (minutes)'),
+                    decoration: InputDecoration(labelText: loc.lblDurationMin),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
-                      if (int.tryParse(value) == null) return 'Enter a valid integer';
-                      if (int.parse(value) < 0) return 'Must be positive';
+                      if (value == null || value.isEmpty) return loc.reqField;
+                      if (int.tryParse(value) == null) return loc.errValidInt;
+                      if (int.parse(value) < 0) return loc.errPositive;
                       return null;
                     },
                   ),
@@ -173,7 +183,7 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
                   child: InkWell(
                     onTap: () => _selectDate(context),
                     child: InputDecorator(
-                      decoration: const InputDecoration(labelText: 'Date'),
+                      decoration: InputDecoration(labelText: loc.lblDate),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -197,7 +207,7 @@ class _ManualActivityEntryScreenState extends State<ManualActivityEntryScreen> {
                     ),
                     child: _isLoading 
                         ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Save Activity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : Text(loc.btnSaveActivity, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

@@ -10,6 +10,7 @@ import '../models/activity.dart';
 import '../models/health_log.dart';
 import '../models/goal.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 
 class ChartsScreen extends StatefulWidget {
   final int initialIndex;
@@ -110,7 +111,7 @@ class _ChartsScreenState extends State<ChartsScreen>
     return Scaffold(
       backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
       appBar: AppBar(
-        title: Text('Health Insights', 
+        title: Text(AppLocalizations.of(context)!.titleHealthInsights, 
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isDark ? Colors.white : AppTheme.sapphire, letterSpacing: -1)),
         backgroundColor: Colors.transparent,
         actions: [
@@ -139,10 +140,10 @@ class _ChartsScreenState extends State<ChartsScreen>
               labelColor: Colors.white,
               unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withOpacity(0.4),
               labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-              tabs: const [
-                Tab(text: 'Activity'),
-                Tab(text: 'Trends'),
-                Tab(text: 'Insights'),
+              tabs: [
+                Tab(text: AppLocalizations.of(context)!.tabActivity),
+                Tab(text: AppLocalizations.of(context)!.tabTrends),
+                Tab(text: AppLocalizations.of(context)!.tabInsights),
               ],
             ),
           ),
@@ -165,9 +166,9 @@ class _ChartsScreenState extends State<ChartsScreen>
   Widget _buildGoalInsights() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_goals.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No goals set yet.\nAdd goals to see your predictive insights!',
+          AppLocalizations.of(context)!.emptyGoalInsights,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
@@ -221,22 +222,22 @@ class _ChartsScreenState extends State<ChartsScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Goal Performance',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              Text(
+                AppLocalizations.of(context)!.titleGoalPerformance,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
               ),
             ],
           ),
           SizedBox(height: 8),
           Text(
-            'Visual breakdown of your active health targets',
+            AppLocalizations.of(context)!.descGoalPerformance,
             style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           SizedBox(height: 32),
           if (cumulativeGoals.isNotEmpty) ...[
             Text(
-              'Cumulative Progress',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              AppLocalizations.of(context)!.titleCumulativeProgress,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             MatteCard(
@@ -340,9 +341,9 @@ class _ChartsScreenState extends State<ChartsScreen>
             const SizedBox(height: 32),
           ],
           if (dailyGoals.isNotEmpty) ...[
-            const Text(
-              'Daily Goals (Weekly Trend)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.titleDailyGoals,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             ...dailyGoals.asMap().entries.map((entry) {
@@ -511,8 +512,8 @@ class _ChartsScreenState extends State<ChartsScreen>
           ],
           SizedBox(height: 16),
           Text(
-            'Predictive Insights',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            AppLocalizations.of(context)!.titlePredictiveInsights,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 12),
           ..._goals.map((goal) {
@@ -644,10 +645,10 @@ class _ChartsScreenState extends State<ChartsScreen>
           children: [
             Icon(Icons.bar_chart, size: 80, color: Colors.grey[300]),
             const SizedBox(height: 16),
-            Text('No activity data for charts',
+            Text(AppLocalizations.of(context)!.emptyActivityChart,
                 style: TextStyle(fontSize: 18, color: Colors.grey[600])),
             const SizedBox(height: 8),
-            Text('Log some activities to see trends',
+            Text(AppLocalizations.of(context)!.descEmptyActivity,
                 style: TextStyle(color: Colors.grey[400])),
           ],
         ),
@@ -684,15 +685,15 @@ class _ChartsScreenState extends State<ChartsScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Activity Timeline',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+              Text(
+                AppLocalizations.of(context)!.titleActivityTimeline,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.5),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            'Your performance over the last 30 days',
+            AppLocalizations.of(context)!.descActivityTimeline,
             style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
           ),
           const SizedBox(height: 24),

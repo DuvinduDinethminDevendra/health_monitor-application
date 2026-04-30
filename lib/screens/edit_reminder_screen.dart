@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/reminder.dart';
 import '../providers/reminders_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class EditReminderScreen extends StatefulWidget {
   /// Pass an existing reminder to edit, or null to create a new one.
@@ -72,24 +73,35 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     return '$h:$m $period';
   }
 
-  String _repeatSummary() {
+  String _repeatSummary(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final all = _repeatDays.every((d) => d);
     final none = _repeatDays.every((d) => !d);
-    if (all) return 'Every day';
-    if (none) return 'Never';
+    if (all) return loc.repeatEveryDay;
+    if (none) return loc.repeatNever;
     final weekdays = _repeatDays.sublist(0, 5).every((d) => d) &&
         !_repeatDays[5] &&
         !_repeatDays[6];
-    if (weekdays) return 'Weekdays';
+    if (weekdays) return loc.repeatWeekdays;
     final weekends = !_repeatDays.sublist(0, 5).any((d) => d) &&
         _repeatDays[5] &&
         _repeatDays[6];
-    if (weekends) return 'Weekends';
+    if (weekends) return loc.repeatWeekends;
     final names = <String>[];
     for (int i = 0; i < 7; i++) {
       if (_repeatDays[i]) names.add(_dayNames[i]);
     }
     return names.join(', ');
+  }
+
+  String _getSoundLabel(String value, AppLocalizations loc) {
+    switch (value) {
+      case 'default': return loc.soundDefault;
+      case 'gentle': return loc.soundGentle;
+      case 'urgent': return loc.soundUrgent;
+      case 'silent': return loc.soundSilent;
+      default: return value;
+    }
   }
 
   Future<void> _pickTime({int? index}) async {
@@ -182,17 +194,17 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Reminder'),
+        title: Text(AppLocalizations.of(context)!.btnDeleteReminder),
         content: Text('Are you sure you want to delete \'${widget.reminder!.title}\'?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.btnDelete),
           ),
         ],
       ),
@@ -221,7 +233,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isCreateMode ? 'New Reminder' : 'Edit Reminder'),
+        title: Text(_isCreateMode ? AppLocalizations.of(context)!.titleNewReminder : AppLocalizations.of(context)!.titleEditReminder),
         backgroundColor: accent,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -234,7 +246,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             // ═══════════════════════════════════════════════════
             // ── SCHEDULE TIMES ──
             // ═══════════════════════════════════════════════════
-            _sectionLabel('Schedule'),
+            _sectionLabel(AppLocalizations.of(context)!.lblSchedule),
             SizedBox(height: 8),
             ...List.generate(_selectedTimes.length, (index) {
               return Container(
@@ -271,7 +283,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
               child: TextButton.icon(
                 onPressed: () => _pickTime(),
                 icon: Icon(Icons.add, color: accent),
-                label: Text('Add Time', style: TextStyle(color: accent, fontWeight: FontWeight.bold)),
+                label: Text(AppLocalizations.of(context)!.btnAddTime, style: TextStyle(color: accent, fontWeight: FontWeight.bold)),
               ),
             ),
             SizedBox(height: 32),
@@ -279,7 +291,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             // ═══════════════════════════════════════════════════
             // ── TITLE & MESSAGE ──
             // ═══════════════════════════════════════════════════
-            _sectionLabel('Details'),
+            _sectionLabel(AppLocalizations.of(context)!.lblDetails),
             SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -299,13 +311,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  labelText: 'Title',
-                  hintText: 'e.g. Take Vitamins',
+                  labelText: AppLocalizations.of(context)!.lblGoalTitle,
+                  hintText: AppLocalizations.of(context)!.hintReminderTitle,
                   prefixIcon: Icon(Icons.label_outline, color: Colors.grey),
                   border: InputBorder.none,
                 ),
                 validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
+                    (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.reqField : null,
               ),
             ),
             SizedBox(height: 14),
@@ -328,8 +340,8 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  labelText: 'Message (optional)',
-                  hintText: 'e.g. Don\'t skip your daily vitamins!',
+                  labelText: AppLocalizations.of(context)!.lblMessage,
+                  hintText: AppLocalizations.of(context)!.hintReminderMessage,
                   prefixIcon: const Icon(Icons.message_outlined, color: Colors.grey),
                   border: InputBorder.none,
                 ),
@@ -340,7 +352,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             // ═══════════════════════════════════════════════════
             // ── ALERT STYLE ──
             // ═══════════════════════════════════════════════════
-            _sectionLabel('Alert Style'),
+            _sectionLabel(AppLocalizations.of(context)!.lblAlertStyle),
             SizedBox(height: 8),
             Container(
               height: 56,
@@ -365,7 +377,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            'Banner',
+                            AppLocalizations.of(context)!.alertBanner,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: _alertStyle == AlertStyle.banner ? Colors.white : (isDark ? Colors.white60 : Colors.grey[600]),
@@ -389,7 +401,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            'Alarm',
+                            AppLocalizations.of(context)!.alertAlarm,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: _alertStyle == AlertStyle.alarm ? Colors.white : (isDark ? Colors.white60 : Colors.grey[600]),
@@ -407,10 +419,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             // ═══════════════════════════════════════════════════
             // ── REPEAT DAYS ──
             // ═══════════════════════════════════════════════════
-            _sectionLabel('Repeat'),
+            _sectionLabel(AppLocalizations.of(context)!.lblRepeat),
             SizedBox(height: 4),
             Text(
-              _repeatSummary(),
+              _repeatSummary(context),
               style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey[500]),
             ),
             const SizedBox(height: 10),
@@ -451,7 +463,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             // ═══════════════════════════════════════════════════
             // ── SOUND ──
             // ═══════════════════════════════════════════════════
-            _sectionLabel('Sound'),
+            _sectionLabel(AppLocalizations.of(context)!.lblSound),
             SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -468,7 +480,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                         color: isActive ? Colors.white : (isDark ? Colors.white60 : Colors.grey[600]),
                       ),
                       SizedBox(width: 6),
-                      Text(opt['label'] as String),
+                      Text(_getSoundLabel(opt['value'] as String, AppLocalizations.of(context)!)),
                     ],
                   ),
                   selected: isActive,
@@ -498,9 +510,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
               color: isDark ? const Color(0xFF1E293B) : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: SwitchListTile(
-                title: Text('Vibration', style: TextStyle(fontWeight: FontWeight.w500)),
+                title: Text(AppLocalizations.of(context)!.lblVibration, style: const TextStyle(fontWeight: FontWeight.w500)),
                 subtitle: Text(
-                  _vibration ? 'Device will vibrate' : 'No vibration',
+                  _vibration ? AppLocalizations.of(context)!.txtVibrateOn : AppLocalizations.of(context)!.txtVibrateOff,
                   style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey[500]),
                 ),
                 secondary: Icon(
@@ -525,7 +537,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 onPressed: _save,
                 icon: Icon(_isCreateMode ? Icons.check_circle_outline : Icons.save_outlined),
                 label: Text(
-                  _isCreateMode ? 'Create Reminder' : 'Save Changes',
+                  _isCreateMode ? AppLocalizations.of(context)!.btnSave : AppLocalizations.of(context)!.btnSaveChanges,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -550,9 +562,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _confirmDelete,
                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  label: const Text(
-                    'Delete Reminder',
-                    style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                  label: Text(
+                    AppLocalizations.of(context)!.btnDeleteReminder,
+                    style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.redAccent),

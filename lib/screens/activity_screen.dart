@@ -24,6 +24,7 @@ import '../widgets/activity/smart_insight_card.dart';
 import '../widgets/activity/step_progress_card.dart';
 import '../widgets/activity/sync_status_badge.dart';
 import '../widgets/activity/weekly_activity_chart.dart';
+import '../l10n/app_localizations.dart';
 
 import 'activity/activity_history_screen.dart';
 import 'manual_activity_entry_screen.dart';
@@ -137,11 +138,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   /// Returns "Good Morning", "Good Afternoon", or "Good Evening" based on
   /// the current hour so the header feels contextual.
-  String _greeting() {
+  String _greeting(BuildContext context) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    final loc = AppLocalizations.of(context)!;
+    if (hour < 12) return loc.greetingMorning;
+    if (hour < 17) return loc.greetingAfternoon;
+    return loc.greetingEvening;
   }
 
   // ── Workout type picker bottom sheet ──────────────────────────────────────
@@ -248,11 +250,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final name = (user != null && user.name.isNotEmpty)
         ? user.name.trim().split(' ').first
         : 'there';
+    final loc = AppLocalizations.of(context)!;
 
     // Format the last sync time as "hh:mm AM/PM"
     final syncLabel = _lastSyncTime != null
-        ? 'Synced ${DateFormat('hh:mm a').format(_lastSyncTime!)}'
-        : 'Syncing…';
+        ? '${loc.syncedAt} ${DateFormat('hh:mm a').format(_lastSyncTime!)}'
+        : loc.syncing;
 
     return SliverAppBar(
       backgroundColor: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
@@ -280,7 +283,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '${_greeting()}, $name 👋',
+                      '${_greeting(context)}, $name 👋',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -316,14 +319,15 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   /// Three stat cards: Distance · Calories · Active Minutes
   Widget _buildQuickStatsRow(ActivityProvider provider) {
+    final loc = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: ActivityStatCard(
-            title: 'Distance',
+            title: loc.statDistance,
             // steps × 0.000762 km (average stride length)
             value: provider.todayDistanceKm.toStringAsFixed(2),
-            unit: 'km',
+            unit: loc.unitKm,
             icon: Icons.map_outlined,
             iconColor: ActivityTheme.tealAccent,
           ),
@@ -331,10 +335,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: ActivityStatCard(
-            title: 'Calories',
+            title: loc.statCalories,
             // steps × 0.04 kcal + workout calories
             value: provider.todayCalories.toString(),
-            unit: 'kcal',
+            unit: loc.unitKcal,
             icon: Icons.local_fire_department_outlined,
             iconColor: ActivityTheme.warning,
           ),
@@ -342,10 +346,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: ActivityStatCard(
-            title: 'Active',
+            title: loc.statActive,
             // (steps / 100) floor + total workout minutes
             value: provider.todayActiveMinutes.toString(),
-            unit: 'min',
+            unit: loc.unitMin,
             icon: Icons.timer_outlined,
             iconColor: const Color(0xFFAB47BC), // Purple
           ),
@@ -356,11 +360,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   /// Three action buttons: Start Workout · Log Activity · History
   Widget _buildActionButtonsRow() {
+    final loc = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: QuickActionButton(
-            label: 'Start\nWorkout',
+            label: loc.btnStartWorkout,
             icon: Icons.play_circle_outline,
             color: ActivityTheme.success,
             onTap: _showWorkoutPicker,
@@ -369,7 +374,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: QuickActionButton(
-            label: 'Log\nActivity',
+            label: loc.btnLogActivity,
             icon: Icons.add_circle_outline,
             color: ActivityTheme.primaryBlue,
             onTap: _openLogActivity,
@@ -378,7 +383,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: QuickActionButton(
-            label: 'History',
+            label: loc.btnHistory,
             icon: Icons.history,
             color: const Color(0xFFAB47BC),
             onTap: () => Navigator.push(
@@ -403,12 +408,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   /// Weekly fl_chart bar chart with dashed goal line
   Widget _buildWeeklyChartSection(ActivityProvider provider) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Weekly Activity',
-          actionText: 'Details',
+          title: loc.sectionWeeklyActivity,
+          actionText: loc.btnDetails,
           onActionTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const ActivityHistoryScreen()),
@@ -425,6 +431,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   /// Goal progress bars — Step Goal + Workout Goal pulled from GoalRepository
   Widget _buildGoalProgressSection(ActivityProvider provider) {
+    final loc = AppLocalizations.of(context)!;
     // Always show at least the implicit step goal derived from provider
     final stepProgress = provider.stepProgress.clamp(0.0, 1.0);
     final stepPct      = '${(stepProgress * 100).toInt()}%';
@@ -451,23 +458,23 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'Goal Progress'),
+        SectionHeader(title: loc.sectionGoalProgress),
         GoalProgressTile(
-          title: 'Step Goal',
+          title: loc.titleStepGoal,
           progress: stepProgress,
           remainingText: stepRemaining > 0
-              ? '$stepRemaining steps remaining'
-              : 'Daily goal reached! 🎉',
+              ? '$stepRemaining ${loc.stepsRemaining}'
+              : loc.goalReached,
           percentageText: stepPct,
           icon: Icons.directions_walk,
           color: ActivityTheme.primaryBlue,
         ),
         GoalProgressTile(
-          title: 'Workout Goal',
+          title: loc.titleWorkoutGoal,
           progress: workoutProg,
           remainingText: workoutsLeft > 0
-              ? '$workoutsLeft workout(s) left today'
-              : 'Workout goal complete! 💪',
+              ? '$workoutsLeft ${loc.workoutsLeft}'
+              : loc.workoutGoalComplete,
           percentageText: workoutPct,
           icon: Icons.fitness_center,
           color: ActivityTheme.success,
@@ -479,12 +486,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   /// Last 3 recent activities with a "See All" link
   Widget _buildRecentActivitySection(ActivityProvider provider) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Recent Activity',
-          actionText: 'See All',
+          title: loc.sectionRecentActivity,
+          actionText: loc.btnSeeAll,
           onActionTap: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const ActivityHistoryScreen()),
@@ -564,7 +572,7 @@ class _EmptyActivityPlaceholder extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 16),
       child: Center(
         child: Text(
-          'No recent activities recorded yet.\nStart moving to see your history here!',
+          AppLocalizations.of(context)!.emptyRecentActivity,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
@@ -606,7 +614,7 @@ class _WorkoutPickerSheet extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Text(
-            'Choose Workout Type',
+            AppLocalizations.of(context)!.chooseWorkoutType,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -623,8 +631,18 @@ class _WorkoutPickerSheet extends StatelessWidget {
             childAspectRatio: 1.15,
             physics: const NeverScrollableScrollPhysics(),
             children: _kWorkoutTypes.map((type) {
+              String localizedLabel = type;
+              final loc = AppLocalizations.of(context)!;
+              if (type == 'Walking') localizedLabel = loc.activityTypeWalking;
+              if (type == 'Running') localizedLabel = loc.activityTypeRunning;
+              if (type == 'Cycling') localizedLabel = loc.activityTypeCycling;
+              if (type == 'Gym') localizedLabel = loc.activityTypeGym;
+              if (type == 'Yoga') localizedLabel = loc.activityTypeYoga;
+              if (type == 'Swimming') localizedLabel = loc.activityTypeSwimming;
+              if (type == 'Other') localizedLabel = loc.activityTypeOther;
+
               return _WorkoutTypeTile(
-                label: type,
+                label: localizedLabel,
                 icon: _kWorkoutIcons[type] ?? Icons.sports,
                 onTap: () => Navigator.pop(context, type),
               );
@@ -634,7 +652,7 @@ class _WorkoutPickerSheet extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context)!.btnCancel,
               style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
             ),
           ),

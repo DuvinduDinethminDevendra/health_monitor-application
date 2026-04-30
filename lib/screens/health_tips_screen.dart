@@ -13,6 +13,7 @@ import '../services/health_tips_service.dart';
 import '../services/auth_service.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'dart:ui';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class HealthTipsScreen extends StatefulWidget {
   const HealthTipsScreen({super.key});
@@ -126,14 +127,14 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                             ElevatedButton.icon(
                               onPressed: provider.loadFallbackTips,
                               icon: const Icon(Icons.offline_bolt),
-                              label: const Text('Load Offline Tips'),
+                              label: Text(AppLocalizations.of(context)!.loadOfflineTips),
                             ),
                           ],
                         ),
                       ),
                     );
                   case HealthTipsState.empty:
-                    return const Center(
+                    return Center(
                       child: Padding(
                         padding: EdgeInsets.only(top: 140.0),
                         child: Column(
@@ -141,7 +142,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                           children: [
                             Icon(Icons.search_off, size: 64, color: Colors.grey),
                             SizedBox(height: 16),
-                            Text('No health tips found for that keyword.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                            Text(AppLocalizations.of(context)!.noTipsFound, style: TextStyle(fontSize: 16, color: Colors.grey)),
                           ],
                         ),
                       ),
@@ -173,8 +174,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                 if (index == 0) {
                                   wrappedCard = Showcase(
                                     key: _cardKey,
-                                    title: 'Read & Save',
-                                    description: 'Tap any card to read the full article, or tap the heart to save it offline.',
+                                    title: AppLocalizations.of(context)!.readAndSave,
+                                    description: AppLocalizations.of(context)!.readAndSaveDesc,
                                     tooltipBackgroundColor: const Color(0xFFFFA726),
                                     textColor: Colors.white,
                                     titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
@@ -195,8 +196,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 24.0),
                               child: InkWell(
                                 onTap: () => launchUrl(Uri.parse('https://health.gov')),
-                                child: const Text(
-                                  'Source: MyHealthfinder (health.gov)',
+                                child: Text(
+                                  AppLocalizations.of(context)!.sourceHealthGov,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
@@ -233,7 +234,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
                               Text(
-                                'Health Tips',
+                                AppLocalizations.of(context)!.healthTips,
                                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
                               ),
                             ],
@@ -243,8 +244,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                           padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
                           child: Showcase(
                             key: _searchKey,
-                            title: 'Search Tips',
-                            description: 'Type here to find specific health advice or keywords.',
+                            title: AppLocalizations.of(context)!.searchTips,
+                            description: AppLocalizations.of(context)!.searchTipsDesc,
                             tooltipBackgroundColor: const Color(0xFF1A73E8),
                             textColor: Colors.white,
                             titleTextStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
@@ -258,7 +259,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                 filled: true,
                                 fillColor: isDark ? const Color(0xFF1E293B) : Colors.grey[200],
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                                hintText: 'Search health tips...',
+                                hintText: AppLocalizations.of(context)!.searchHint,
                                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                                 suffixIcon: IconButton(
                                   icon: const Icon(Icons.clear, color: Colors.grey),
@@ -297,6 +298,29 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
     );
   }
 
+
+  String _translateTag(String tag, BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    switch (tag.toLowerCase()) {
+      case 'favorites': return loc.favorites;
+      case 'recent': return loc.recent;
+      case 'trending': return loc.trending;
+      case 'fitness': return loc.fitness;
+      case 'nutrition': return loc.nutrition;
+      case 'diet': return loc.diet;
+      case 'sleep': return loc.sleep;
+      case 'mental health': return loc.mentalHealth;
+      case 'meditation': return loc.meditation;
+      case 'hydration': return loc.hydration;
+      case 'weight loss': return loc.weightLoss;
+      case 'muscle gain': return loc.muscleGain;
+      case 'running': return loc.running;
+      case 'yoga': return loc.yoga;
+      case 'healthy habits': return loc.healthyHabits;
+      default: return tag;
+    }
+  }
+
   Widget _buildTagChips(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.watch<HealthTipsProvider>();
@@ -322,7 +346,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ChoiceChip(
-              label: Text(tag),
+              label: Text(_translateTag(tag, context)),
               selected: isSelected,
               showCheckmark: false,
               backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.grey[100],
@@ -488,13 +512,13 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Data Source:',
+                                Text(
+                                  AppLocalizations.of(context)!.dataSource,
                                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'MyHealthfinder API (health.gov)',
+                                  AppLocalizations.of(context)!.healthfinderApi,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: color,
@@ -502,8 +526,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  'Information provided by the Office of Disease Prevention and Health Promotion, U.S. Department of Health and Human Services.',
+                                Text(
+                                  AppLocalizations.of(context)!.healthGovInfo,
                                   style: TextStyle(fontSize: 11, color: Colors.grey),
                                 ),
                               ],
@@ -538,8 +562,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                         final isFav = provider.isFavorite(tip.id);
                         return Showcase(
                           key: _favKey,
-                          title: 'Save Offline',
-                          description: 'Tap the heart to save this article to your Favorites for offline reading.',
+                          title: AppLocalizations.of(context)!.saveOffline,
+                          description: AppLocalizations.of(context)!.saveOfflineDesc,
                           tooltipBackgroundColor: Colors.redAccent,
                           textColor: Colors.white,
                           titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
@@ -552,7 +576,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                             onPressed: () {
                               provider.toggleFavorite(tip);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(isFav ? 'Removed from Favorites' : 'Saved to Favorites!')),
+                                SnackBar(content: Text(isFav ? AppLocalizations.of(context)!.removedFav : AppLocalizations.of(context)!.savedFav)),
                               );
                             },
                           ),
@@ -561,8 +585,8 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     ),
                     Showcase(
                       key: _shareKey,
-                      title: 'Spread the Word',
-                      description: 'Share this helpful health tip with your friends and family.',
+                      title: AppLocalizations.of(context)!.spreadWord,
+                      description: AppLocalizations.of(context)!.spreadWordDesc,
                       tooltipBackgroundColor: Colors.blueAccent,
                       textColor: Colors.white,
                       titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),

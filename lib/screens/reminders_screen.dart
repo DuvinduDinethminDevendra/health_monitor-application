@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/reminders_provider.dart';
 import '../models/reminder.dart';
 import 'edit_reminder_screen.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class RemindersScreen extends StatelessWidget {
   const RemindersScreen({super.key});
@@ -54,17 +55,17 @@ class RemindersScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Reminders'),
-        content: Text('Are you sure you want to delete $count reminder${count > 1 ? 's' : ''}?'),
+        title: Text(AppLocalizations.of(context)!.delete),
+        content: Text('${AppLocalizations.of(context)!.confirmDeleteMsg} $count?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -96,8 +97,8 @@ class RemindersScreen extends StatelessWidget {
           backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey[50],
           appBar: AppBar(
             title: isSelecting
-                ? Text('${provider.selectedIds.length} selected')
-                : const Text('Health Reminders'),
+                ? Text('${provider.selectedIds.length} ${AppLocalizations.of(context)!.selected}')
+                : Text(AppLocalizations.of(context)!.healthReminders),
             backgroundColor: isSelecting ? Colors.grey[700] : primaryColor,
             foregroundColor: Colors.white,
             elevation: 0,
@@ -125,7 +126,7 @@ class RemindersScreen extends StatelessWidget {
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   icon: const Icon(Icons.add_alarm),
-                  label: const Text('New Reminder'),
+                  label: Text(AppLocalizations.of(context)!.newReminder),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
           bottomNavigationBar: isSelecting
@@ -138,7 +139,7 @@ class RemindersScreen extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => _confirmDeleteSelected(context, provider),
                         icon: const Icon(Icons.delete_outline),
-                        label: Text('Delete (${provider.selectedIds.length})'),
+                        label: Text('${AppLocalizations.of(context)!.delete} (${provider.selectedIds.length})'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
                           foregroundColor: Colors.white,
@@ -167,12 +168,12 @@ class RemindersScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Stay On Track',
+                              AppLocalizations.of(context)!.stayOnTrack,
                               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5, color: isDark ? Colors.white : Colors.black87),
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Enable reminders to maintain healthy habits',
+                              AppLocalizations.of(context)!.enableRemindersDesc,
                               style: TextStyle(color: Colors.grey, fontSize: 16),
                             ),
                           ],
@@ -207,12 +208,12 @@ class RemindersScreen extends StatelessWidget {
           color: Colors.redAccent,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.delete_outline, color: Colors.white, size: 28),
-            SizedBox(height: 4),
-            Text('Delete', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+            const SizedBox(height: 4),
+            Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -221,17 +222,17 @@ class RemindersScreen extends StatelessWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text('Delete Reminder'),
-            content: Text('Are you sure you want to delete \'${reminder.title}\'?'),
+            title: Text(AppLocalizations.of(context)!.deleteReminder),
+            content: Text('${AppLocalizations.of(context)!.confirmDeleteMsg} \'${reminder.title}\'?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-                child: const Text('Delete'),
+                child: Text(AppLocalizations.of(context)!.delete),
               ),
             ],
           ),
@@ -294,7 +295,7 @@ class RemindersScreen extends StatelessWidget {
                           children: [
                             Text(
                               reminder.times.isEmpty
-                                  ? 'No time'
+                                  ? AppLocalizations.of(context)!.noTime
                                   : _formatTime(reminder.times.first['hour']!, reminder.times.first['minute']!),
                               style: TextStyle(
                                 fontSize: 36,
@@ -312,7 +313,7 @@ class RemindersScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  '+ ${reminder.times.length - 1} more',
+                                  '+ ${reminder.times.length - 1} ${AppLocalizations.of(context)!.more}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: isDark ? Colors.white70 : Colors.grey[700],
@@ -349,7 +350,7 @@ class RemindersScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  'Custom',
+                                  AppLocalizations.of(context)!.custom,
                                   style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
                                 ),
                               ),

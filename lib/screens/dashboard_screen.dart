@@ -17,6 +17,7 @@ import '../widgets/horizontal_week_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -117,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildAddOption(
-                  'Activity',
+                  AppLocalizations.of(context)!.activity,
                   Icons.directions_run_rounded,
                   AppTheme.scooter,
                   () {
@@ -126,7 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
                 _buildAddOption(
-                  'Goal',
+                  AppLocalizations.of(context)!.goals,
                   Icons.flag_rounded,
                   AppTheme.warmOrange,
                   () {
@@ -135,7 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
                 _buildAddOption(
-                  'Health',
+                  AppLocalizations.of(context)!.health,
                   Icons.monitor_weight_rounded,
                   AppTheme.skyBlue,
                   () {
@@ -185,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final screens = [
-      _buildDashboardHome(authService.currentUser?.name ?? 'User'),
+      _buildDashboardHome(authService.currentUser?.name ?? AppLocalizations.of(context)!.user),
       const ActivityScreen(),
       const ChartsScreen(initialIndex: 0),
       const GoalsScreen(),
@@ -206,11 +207,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.grid_view_rounded, 'Home'),
-              _buildNavItem(1, Icons.directions_run_rounded, 'Activity'),
+              _buildNavItem(0, Icons.grid_view_rounded, AppLocalizations.of(context)!.home),
+              _buildNavItem(1, Icons.directions_run_rounded, AppLocalizations.of(context)!.activity),
               _buildAddButton(),
-              _buildNavItem(2, Icons.bar_chart_rounded, 'Progress'),
-              _buildNavItem(3, Icons.flag_rounded, 'Goals'),
+              _buildNavItem(2, Icons.bar_chart_rounded, AppLocalizations.of(context)!.progress),
+              _buildNavItem(3, Icons.flag_rounded, AppLocalizations.of(context)!.goals),
             ],
           ),
         ),
@@ -327,7 +328,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Daily Progress',
+                                AppLocalizations.of(context)!.dailyProgress,
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
@@ -337,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'Your health at a glance',
+                                AppLocalizations.of(context)!.healthAtGlance,
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -411,7 +412,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _touchedIndex == 1 ? '${_activeGoals}' : (_touchedIndex == 2 ? 'Optimal' : '${_totalSteps}'),
+                                    _touchedIndex == 1 ? '${_activeGoals}' : (_touchedIndex == 2 ? AppLocalizations.of(context)!.optimal : '${_totalSteps}'),
                                     style: TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.w900,
@@ -420,7 +421,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   Text(
-                                    _touchedIndex == 1 ? 'ACTIVE GOALS' : (_touchedIndex == 2 ? 'HEALTH STATE' : 'STEPS TODAY'),
+                                    _touchedIndex == 1 ? AppLocalizations.of(context)!.activeGoalsUpper : (_touchedIndex == 2 ? AppLocalizations.of(context)!.healthStateUpper : AppLocalizations.of(context)!.stepsTodayUpper),
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,
@@ -437,9 +438,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildMiniLegend('Activity', AppTheme.emeraldGreen),
-                            _buildMiniLegend('Goals', AppTheme.warmOrange),
-                            _buildMiniLegend('Health', AppTheme.skyBlue),
+                            _buildMiniLegend(AppLocalizations.of(context)!.activity, AppTheme.emeraldGreen),
+                            _buildMiniLegend(AppLocalizations.of(context)!.goals, AppTheme.warmOrange),
+                            _buildMiniLegend(AppLocalizations.of(context)!.health, AppTheme.skyBlue),
                           ],
                         ),
                       ],
@@ -452,7 +453,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildStatCard(
-                          'Active Goals',
+                          AppLocalizations.of(context)!.activeGoals,
                           _activeGoals.toString(),
                           Icons.insights_rounded,
                           AppTheme.emeraldGreen,
@@ -461,7 +462,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildStatCard(
-                          'Current BMI',
+                          AppLocalizations.of(context)!.currentBmi,
                           _latestBmi > 0 ? _latestBmi.toString() : '22.4',
                           Icons.speed_rounded,
                           AppTheme.skyBlue,
@@ -474,8 +475,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildStatCard(
-                          'Health State',
-                          _bmiCategory != 'N/A' ? _bmiCategory : 'Optimal',
+                          AppLocalizations.of(context)!.healthState,
+                          _bmiCategory != 'N/A' ? _bmiCategory : AppLocalizations.of(context)!.optimal,
                           Icons.favorite_rounded,
                           AppTheme.warmOrange,
                         ),
@@ -483,8 +484,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildStatCard(
-                          'Health Tips',
-                          'Explore',
+                          AppLocalizations.of(context)!.healthTips,
+                          AppLocalizations.of(context)!.explore,
                           Icons.auto_awesome_rounded,
                           AppTheme.darkCharcoal,
                           onTap: () => Navigator.push(
@@ -498,7 +499,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   SizedBox(height: 24),
                   Text(
-                    'Quick Actions',
+                    AppLocalizations.of(context)!.quickActions,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.darkCharcoal),
                   ),
                   const SizedBox(height: 16),
@@ -506,7 +507,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildQuickActionBtn(
-                          'Health Logs',
+                          AppLocalizations.of(context)!.healthLogs,
                           Icons.assignment_rounded,
                           AppTheme.skyBlue,
                           () => Navigator.push(
@@ -518,7 +519,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionBtn(
-                          'Reminders',
+                          AppLocalizations.of(context)!.reminders,
                           Icons.notifications_active_rounded,
                           AppTheme.emeraldGreen,
                           () => Navigator.push(
@@ -561,7 +562,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const Icon(Icons.stars_rounded, color: AppTheme.scooter, size: 32),
                         const SizedBox(height: 12),
                         Text(
-                          'Keep pushing, $userName!',
+                          '${AppLocalizations.of(context)!.keepPushing}$userName!',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 18,
@@ -572,7 +573,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Your health journey is looking great.',
+                          AppLocalizations.of(context)!.healthJourneyGreat,
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white.withOpacity(0.6),
@@ -616,23 +617,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 14),
               ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: -0.5,
+            const SizedBox(height: 16),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                  height: 1.1,
+                ),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               title,
-              style: TextStyle(
-                  fontSize: 13,
+              style: const TextStyle(
+                  fontSize: 12, // Reduced from 13
                   fontWeight: FontWeight.w700,
-                  color: Colors.white), 
+                  color: Colors.white,
+                  height: 1.1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -652,14 +662,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isDark ? AppTheme.scooter : color, size: 22),
-            SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: isDark ? Colors.white : color,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+            Icon(icon, color: isDark ? AppTheme.scooter : color, size: 20),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: isDark ? Colors.white : color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

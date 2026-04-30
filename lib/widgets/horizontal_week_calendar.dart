@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../theme/app_theme.dart';
+import 'package:health_monitor/l10n/app_localizations.dart';
 
 class HorizontalWeekCalendar extends StatefulWidget {
   final DateTime selectedDate;
@@ -142,36 +143,40 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hello, ${widget.userName}',
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${AppLocalizations.of(context)!.greetingHello}${widget.userName}',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 22, // Slightly smaller for better fit
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      GestureDetector(
-                        onTap: _selectFullDate,
-                        child: Row(
-                          children: [
-                            Text(
-                              DateFormat('MMMM, yyyy').format(widget.selectedDate),
-                              style: TextStyle(
-                                color: subTextColor,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
+                        const SizedBox(height: 2),
+                        GestureDetector(
+                          onTap: _selectFullDate,
+                          child: Row(
+                            children: [
+                              Text(
+                                DateFormat('MMMM, yyyy').format(widget.selectedDate),
+                                style: TextStyle(
+                                  color: subTextColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                            Icon(Icons.keyboard_arrow_down_rounded, color: subTextColor, size: 18),
-                          ],
+                              Icon(Icons.keyboard_arrow_down_rounded, color: subTextColor, size: 18),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   GestureDetector(
                     onTap: widget.onProfileTap,

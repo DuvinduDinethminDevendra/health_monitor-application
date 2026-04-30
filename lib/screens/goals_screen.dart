@@ -8,6 +8,7 @@ import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -159,6 +160,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (_isLoading) {
@@ -168,7 +170,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Health Goals',
+        title: Text(loc.titleHealthGoals,
             style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : AppTheme.sapphire,
@@ -196,7 +198,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       color: AppTheme.heather.withOpacity(0.2)),
                   SizedBox(height: 16),
                   Text(
-                    'No goals set yet',
+                    loc.noGoalsSet,
                     style: TextStyle(
                         fontSize: 18,
                         color: isDark ? Colors.white : AppTheme.sapphire,
@@ -204,7 +206,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the + button to set your first goal',
+                    loc.tapToAddGoal,
                     style: TextStyle(color: AppTheme.heather),
                   ),
                 ],
@@ -342,7 +344,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 onPressed: () => _showProgressDialog(goal),
                 icon: Icon(Icons.add_circle_outline, size: 18, color: accentColor),
                 label: Text(
-                  'Log Progress',
+                  AppLocalizations.of(context)!.btnLogProgress,
                   style: TextStyle(
                     color: accentColor,
                     fontWeight: FontWeight.w900,
@@ -392,9 +394,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ),
             SizedBox(height: 24),
-            Text('Update ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+            Text('${AppLocalizations.of(context)!.titleUpdateGoal} ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
             SizedBox(height: 12),
-            Text('Current: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
+            Text('${AppLocalizations.of(context)!.lblCurrentValue}: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
               style: TextStyle(color: AppTheme.heather, fontSize: 14, fontWeight: FontWeight.w600)),
             SizedBox(height: 24),
             TextField(
@@ -403,7 +405,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               autofocus: true,
               style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
               decoration: InputDecoration(
-                labelText: 'New Current Value (${goal.unit})',
+                labelText: '${AppLocalizations.of(context)!.lblNewCurrentValue} (${goal.unit})',
                 labelStyle: TextStyle(color: AppTheme.heather),
                 prefixIcon: Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
                 enabledBorder: OutlineInputBorder(
@@ -428,7 +430,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
-              child: const Text('Save Progress', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.btnSaveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -600,7 +602,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 ),
               ),
               SizedBox(height: 24),
-              Text(widget.existingGoal == null ? 'Create New Goal' : 'Edit Goal', 
+              Text(widget.existingGoal == null ? AppLocalizations.of(context)!.titleCreateNewGoal : AppLocalizations.of(context)!.titleEditGoal, 
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
               SizedBox(height: 24),
 
@@ -608,7 +610,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 controller: _titleController,
                 style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                 decoration: InputDecoration(
-                  labelText: 'Goal Title',
+                  labelText: AppLocalizations.of(context)!.lblGoalTitle,
                   labelStyle: TextStyle(color: AppTheme.heather),
                   prefixIcon: Icon(Icons.flag_outlined, color: AppTheme.scooter),
                   enabledBorder: OutlineInputBorder(
@@ -618,7 +620,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(color: AppTheme.scooter)),
                 ),
-                validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
+                validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.reqField : null,
               ),
               SizedBox(height: 16),
 
@@ -634,7 +636,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('Select Goal Category', 
+                          Text(AppLocalizations.of(context)!.lblSelectCategory, 
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
                           const SizedBox(height: 24),
                           SizedBox(
@@ -693,7 +695,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Category / Tracking Type', style: TextStyle(fontSize: 12, color: AppTheme.heather)),
+                            Text(AppLocalizations.of(context)!.lblCategoryType, style: TextStyle(fontSize: 12, color: AppTheme.heather)),
                             Text(_selectedCategory, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : AppTheme.sapphire)),
                           ],
                         ),
@@ -713,7 +715,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       keyboardType: TextInputType.number,
                       style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
-                        labelText: 'Target Value',
+                        labelText: AppLocalizations.of(context)!.lblTargetValue,
                         labelStyle: TextStyle(color: AppTheme.heather),
                         prefixIcon: Icon(Icons.track_changes, color: AppTheme.scooter),
                         enabledBorder: OutlineInputBorder(
@@ -723,7 +725,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: AppTheme.scooter)),
                       ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                      validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.reqField : null,
                     ),
                   ),
                   SizedBox(width: 16),
@@ -733,7 +735,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                       controller: _unitController,
                       style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
                       decoration: InputDecoration(
-                        labelText: 'Unit',
+                        labelText: AppLocalizations.of(context)!.lblUnit,
                         labelStyle: TextStyle(color: AppTheme.heather),
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -742,7 +744,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(color: AppTheme.scooter)),
                       ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                      validator: (v) => v!.isEmpty ? AppLocalizations.of(context)!.reqField : null,
                     ),
                   ),
                 ],
@@ -769,7 +771,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                     child: OutlinedButton.icon(
                       onPressed: _pickTime,
                       icon: Icon(Icons.alarm, size: 18),
-                      label: Text(_selectedReminderTime ?? 'Set Reminder'),
+                      label: Text(_selectedReminderTime ?? AppLocalizations.of(context)!.btnSetReminder),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
@@ -792,7 +794,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                   elevation: 0,
                 ),
                 child: Text(
-                  widget.existingGoal == null ? 'Create Goal' : 'Save Changes',
+                  widget.existingGoal == null ? AppLocalizations.of(context)!.btnCreateGoal : AppLocalizations.of(context)!.btnSaveChanges,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),

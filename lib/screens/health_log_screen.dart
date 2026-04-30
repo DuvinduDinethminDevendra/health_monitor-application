@@ -12,6 +12,7 @@ import '../services/auth_service.dart';
 import 'widgets/error_widget.dart';
 import 'widgets/shimmer_loading.dart';
 import 'widgets/liquid_health_indicator.dart';
+import '../l10n/app_localizations.dart';
 
 class HealthLogScreen extends StatefulWidget {
   const HealthLogScreen({super.key});
@@ -89,7 +90,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Failed to load health logs. Please try again.';
+        _errorMessage = AppLocalizations.of(context)!.errLoadHealthLogs;
       });
     } finally {
       if (mounted) {
@@ -261,7 +262,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
                 title: Text(
-                  isEdit ? 'Edit Tag' : 'Add Custom Tag',
+                  isEdit ? AppLocalizations.of(context)!.btnEditTag : AppLocalizations.of(context)!.btnAddCustomTag,
                   style: TextStyle(
                       fontWeight: FontWeight.bold, color: (isDark ? Colors.white : const Color(0xFF1E293B))),
                 ),
@@ -269,7 +270,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                   controller: tagController,
                   autofocus: true,
                   decoration: InputDecoration(
-                    hintText: 'e.g., 🍷 Drank Alcohol',
+                    hintText: AppLocalizations.of(context)!.hintCustomTag,
                     filled: true,
                     fillColor: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
                     border: OutlineInputBorder(
@@ -292,14 +293,14 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                         Navigator.pop(dialogCtx);
                       },
                       icon: Icon(Icons.delete, size: 18),
-                      label: Text('Delete'),
+                      label: Text(AppLocalizations.of(context)!.btnDelete),
                     ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(dialogCtx),
-                        child: Text('Cancel',
+                        child: Text(AppLocalizations.of(context)!.btnCancel,
                             style: TextStyle(color: Colors.grey)),
                       ),
                       ElevatedButton(
@@ -332,7 +333,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                           }
                           Navigator.pop(dialogCtx);
                         },
-                        child: Text(isEdit ? 'Save' : 'Add'),
+                        child: Text(isEdit ? AppLocalizations.of(context)!.btnSave : AppLocalizations.of(context)!.btnAdd),
                       ),
                     ],
                   ),
@@ -369,7 +370,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              existingLog != null ? 'Edit Data' : 'Log Health Data',
+                              existingLog != null ? AppLocalizations.of(context)!.editData : AppLocalizations.of(context)!.logHealthData,
                               style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -531,7 +532,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text('Estimated BMI',
+                                        Text(AppLocalizations.of(context)!.estimatedBmi,
                                             style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
@@ -642,7 +643,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                               ).animate().fade().scale(
                                   duration: 400.ms, curve: Curves.easeOutBack),
                               SizedBox(height: 24),
-                              Text('DATE',
+                              Text(AppLocalizations.of(context)!.lblDate.toUpperCase(),
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -708,7 +709,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                         children: [
                                           Row(
                                             children: [
-                                              Text('ADVANCED BODY METRICS',
+                                              Text(AppLocalizations.of(context)!.lblAdvancedMetrics,
                                                   style: TextStyle(
                                                       fontSize: 12,
                                                       fontWeight: FontWeight.bold,
@@ -732,7 +733,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           ),
                                           SizedBox(height: 2),
                                           Text(
-                                              'Track these to unlock deeper body composition insights',
+                                              AppLocalizations.of(context)!.txtAdvancedMetrics,
                                               style: TextStyle(
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.w500,
@@ -754,14 +755,14 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   children: [
                                     Expanded(
                                         child: buildMeasurementField(
-                                            'WAIST (${_systemUnit == 'metric' ? 'CM' : 'IN'})',
+                                            '${AppLocalizations.of(context)!.lblWaist} (${_systemUnit == 'metric' ? 'CM' : 'IN'})',
                                             waistController,
                                             waistShake,
                                             _systemUnit == 'metric' ? '80' : '32')),
                                     const SizedBox(width: 16),
                                     Expanded(
                                         child: buildMeasurementField(
-                                            'HIP (${_systemUnit == 'metric' ? 'CM' : 'IN'})',
+                                            '${AppLocalizations.of(context)!.lblHip} (${_systemUnit == 'metric' ? 'CM' : 'IN'})',
                                             hipController,
                                             hipShake,
                                             _systemUnit == 'metric' ? '100' : '40')),
@@ -772,14 +773,14 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                   children: [
                                     Expanded(
                                         child: buildMeasurementField(
-                                            'CHEST (${_systemUnit == 'metric' ? 'CM' : 'IN'})',
+                                            '${AppLocalizations.of(context)!.lblChest} (${_systemUnit == 'metric' ? 'CM' : 'IN'})',
                                             chestController,
                                             chestShake,
                                             _systemUnit == 'metric' ? '95' : '38')),
                                     const SizedBox(width: 16),
                                     Expanded(
                                         child: buildMeasurementField(
-                                            'BODY FAT (%)',
+                                            '${AppLocalizations.of(context)!.lblBodyFat} (%)',
                                             bodyFatController,
                                             bodyFatShake,
                                             '15')),
@@ -790,7 +791,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('CONTEXT & LIFESTYLE',
+                                  Text(AppLocalizations.of(context)!.lblContextLifestyle,
                                       style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -806,8 +807,8 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           borderRadius: BorderRadius.circular(6)),
                                       child: Text(
                                           isEditingTags
-                                              ? 'Done Editing'
-                                              : 'Edit Tags',
+                                              ? AppLocalizations.of(context)!.btnEditTag
+                                              : AppLocalizations.of(context)!.btnEditTag,
                                           style: const TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
@@ -1000,9 +1001,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                               elevation: 0,
                             ),
                             child: Text(
-                                existingLog != null
-                                    ? 'Update Health Data'
-                                    : 'Save Health Data',
+                                AppLocalizations.of(context)!.btnSave,
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold)),
                           ).animate().scale(
