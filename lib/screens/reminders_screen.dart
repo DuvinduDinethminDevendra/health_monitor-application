@@ -158,7 +158,7 @@ class RemindersScreen extends StatelessWidget {
                     left: 16,
                     right: 16,
                     top: 16,
-                    bottom: isSelecting ? 16 : 100,
+                    bottom: isSelecting ? 16 : 100 + MediaQuery.of(context).padding.bottom,
                   ),
                   children: [
                     if (!isSelecting) ...[

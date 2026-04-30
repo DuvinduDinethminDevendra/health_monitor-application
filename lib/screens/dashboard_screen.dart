@@ -199,20 +199,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         index: _currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.only(bottom: 24, left: 20, right: 20),
-        child: MatteCard(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          borderRadius: 40,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.grid_view_rounded, AppLocalizations.of(context)!.home),
-              _buildNavItem(1, Icons.directions_run_rounded, AppLocalizations.of(context)!.activity),
-              _buildAddButton(),
-              _buildNavItem(2, Icons.bar_chart_rounded, AppLocalizations.of(context)!.progress),
-              _buildNavItem(3, Icons.flag_rounded, AppLocalizations.of(context)!.goals),
-            ],
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
+          child: MatteCard(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            borderRadius: 40,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(0, Icons.grid_view_rounded, AppLocalizations.of(context)!.home),
+                _buildNavItem(1, Icons.directions_run_rounded, AppLocalizations.of(context)!.activity),
+                _buildAddButton(),
+                _buildNavItem(2, Icons.bar_chart_rounded, AppLocalizations.of(context)!.progress),
+                _buildNavItem(3, Icons.flag_rounded, AppLocalizations.of(context)!.goals),
+              ],
+            ),
           ),
         ),
       ),
@@ -313,7 +315,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: SingleChildScrollView(
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
+            padding: EdgeInsets.only(
+              left: 16, 
+              right: 16, 
+              top: 16, 
+              bottom: 100 + MediaQuery.of(context).padding.bottom
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

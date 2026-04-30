@@ -277,7 +277,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 100 + MediaQuery.of(context).padding.bottom),
               itemCount: _goals.length,
               itemBuilder: (context, index) {
                 return _buildGoalCard(
@@ -442,7 +442,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
         ),
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 32 + MediaQuery.of(ctx).padding.bottom,
           left: 24,
           right: 24,
           top: 32,
@@ -642,7 +642,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
 
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32 + MediaQuery.of(context).padding.bottom,
         left: 24,
         right: 24,
         top: 32,

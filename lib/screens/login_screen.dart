@@ -79,8 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Container(
         color: isDark ? AppTheme.backgroundDark : AppTheme.alabaster,
-        child: Center(
-          child: SingleChildScrollView(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: MatteCard(
               padding: const EdgeInsets.all(32),
@@ -188,7 +189,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

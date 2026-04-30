@@ -583,7 +583,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 ),
               ),
             ],
-            SizedBox(height: 40),
+            SizedBox(height: 40 + MediaQuery.of(context).padding.bottom),
           ],
         ),
       ),

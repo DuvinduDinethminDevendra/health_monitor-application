@@ -153,7 +153,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                       onRefresh: _onRefresh,
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.only(top: 230, left: 16, right: 16, bottom: 16),
+                        padding: EdgeInsets.only(
+                          top: 230, 
+                          left: 16, 
+                          right: 16, 
+                          bottom: 16 + MediaQuery.of(context).padding.bottom
+                        ),
                         child: Column(
                           children: [
                             StaggeredGrid.count(
@@ -533,7 +538,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                               ],
                             ),
                           ),
-                          SizedBox(height: 40),
+                          SizedBox(height: 100 + MediaQuery.of(context).padding.bottom),
                         ],
                       ),
                     ),
@@ -543,7 +548,10 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
             ),
             SafeArea(
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.only(
+                  top: 8,
+                  bottom: 8 + (MediaQuery.of(context).padding.bottom > 0 ? 0 : 8),
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
                   boxShadow: [

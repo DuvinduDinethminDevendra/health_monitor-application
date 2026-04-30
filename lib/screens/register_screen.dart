@@ -87,13 +87,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       body: Container(
         color: isDark ? AppTheme.backgroundDark : AppTheme.alabaster,
-        child: PageView(
-          controller: _pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            _buildCredentialsPage(isDark),
-            _buildTopicsPage(isDark),
-          ],
+        child: SafeArea(
+          child: PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildCredentialsPage(isDark),
+              _buildTopicsPage(isDark),
+            ],
+          ),
         ),
       ),
     );
