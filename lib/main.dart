@@ -25,12 +25,7 @@ void main() async {
   
   // Enable Edge-to-Edge support
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: Colors.transparent,
-    statusBarColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.dark,
-    statusBarIconBrightness: Brightness.dark,
-  ));
+  // Notification initialization...
 
   await NotificationService().initialize();
   
@@ -68,6 +63,13 @@ class HealthMonitorApp extends StatelessWidget {
       ],
       child: Consumer<AuthService>(
         builder: (context, authService, _) {
+          final isDark = authService.isDarkMode;
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            systemNavigationBarColor: Colors.transparent,
+            statusBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          ));
           return MaterialApp(
             title: 'Health Monitor',
             debugShowCheckedModeBanner: false,
