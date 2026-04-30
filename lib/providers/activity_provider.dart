@@ -10,6 +10,7 @@ import '../repositories/step_record_repository.dart';
 import '../repositories/workout_record_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/goal_repository.dart';
+import '../services/pedometer_service.dart';
 
 const _kStepCacheDate  = 'activity_step_cache_date';
 const _kStepCacheCount = 'activity_step_cache_count';
@@ -18,6 +19,7 @@ class ActivityProvider extends ChangeNotifier {
   final StepRecordRepository _stepRepo = StepRecordRepository();
   final WorkoutRecordRepository _workoutRepo = WorkoutRecordRepository();
   final ActivityRepository _activityRepo = ActivityRepository();
+  final PedometerService _pedometerService = PedometerService();
 
   int liveStepCount = 0;
   int dailyStepGoal = 10000;
@@ -81,6 +83,9 @@ class ActivityProvider extends ChangeNotifier {
       
       // Load general activities for history
       recentActivities = await _activityRepo.getActivitiesByUser(userId);
+      
+      // Start pedometer service after successful load
+      await _pedometerService.startListening(this, userId);
       
     } catch (e) {
       errorMessage = 'Failed to load activity data: ${e.toString()}';
@@ -314,6 +319,7 @@ class ActivityProvider extends ChangeNotifier {
   
   @override
   void dispose() {
+    _pedometerService.stop();
     _workoutTimer?.cancel();
     super.dispose();
   }
