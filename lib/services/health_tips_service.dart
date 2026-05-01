@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:dio_cache_interceptor_hive_store/dio_cache_interceptor_hive_store.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
@@ -14,11 +15,17 @@ class HealthTipsService {
   Future<Dio> get _client async {
     if (_dio != null) return _dio!;
     
-    final dir = await getApplicationDocumentsDirectory();
-    final cacheStore = HiveCacheStore(
-      dir.path,
-      hiveBoxName: "health_tips_cache",
-    );
+    CacheStore cacheStore;
+    
+    if (kIsWeb) {
+      cacheStore = MemCacheStore();
+    } else {
+      final dir = await getApplicationDocumentsDirectory();
+      cacheStore = HiveCacheStore(
+        dir.path,
+        hiveBoxName: "health_tips_cache",
+      );
+    }
     
     final cacheOptions = CacheOptions(
       store: cacheStore,
@@ -38,51 +45,55 @@ class HealthTipsService {
   }
 
   Future<List<HealthTip>> fetchHealthTips({String? keyword, bool forceRefresh = false}) async {
-    final isSearch = keyword != null && keyword.isNotEmpty;
-    final url = isSearch ? '$_baseUrl?keyword=$keyword' : _baseUrl;
+    try {
+      final isSearch = keyword != null && keyword.isNotEmpty;
+      final url = isSearch ? '$_baseUrl?keyword=$keyword' : _baseUrl;
 
-    final client = await _client;
-    
-    // If forceRefresh is true, we bypass the cache and hit the network
-    final options = forceRefresh 
-        ? Options(extra: { 'cache_policy': CachePolicy.refreshForceCache }) 
-        : null;
+      final client = await _client;
+      
+      final options = forceRefresh 
+          ? Options(extra: { 'cache_policy': CachePolicy.refreshForceCache }) 
+          : null;
 
-    final response = await client.get(url, options: options);
+      final response = await client.get(url, options: options);
 
-    if (response.statusCode == 200 || response.statusCode == 304) {
-      final data = response.data;
-      final resources = data['Result']?['Resources']?['Resource'] as List?;
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final data = response.data;
+        final resources = data['Result']?['Resources']?['Resource'] as List?;
 
-      if (resources == null) {
-        throw Exception('No health tips found.');
-      }
-
-      final List<dynamic> modifiableResources = List.from(resources);
-
-      if (!isSearch) {
-        modifiableResources.shuffle();
-      }
-
-      final tipsToReturn = isSearch ? modifiableResources : modifiableResources.take(20);
-
-      return tipsToReturn.map((item) {
-        String? imageUrl = item['ImageUrl'];
-        if (imageUrl == null && item['Image'] != null) {
-          imageUrl = item['Image']?['Url'];
+        if (resources == null) {
+          return getFallbackTips();
         }
 
-        return HealthTip(
-          id: item['Id']?.toString() ?? '',
-          title: item['Title'] ?? 'Health Tip',
-          description: _stripHtml(item['Categories'] ?? ''),
-          content: item['Sections']?['section']?[0]?['Content'] ?? '',
-          url: item['AccessibleVersion'] ?? '',
-          imageUrl: imageUrl,
-        );
-      }).toList();
-    } else {
-      throw Exception('Failed to load health tips');
+        final List<dynamic> modifiableResources = List.from(resources);
+
+        if (!isSearch) {
+          modifiableResources.shuffle();
+        }
+
+        final tipsToReturn = isSearch ? modifiableResources : modifiableResources.take(20);
+
+        return tipsToReturn.map((item) {
+          String? imageUrl = item['ImageUrl'];
+          if (imageUrl == null && item['Image'] != null) {
+            imageUrl = item['Image']?['Url'];
+          }
+
+          return HealthTip(
+            id: item['Id']?.toString() ?? '',
+            title: item['Title'] ?? 'Health Tip',
+            description: _stripHtml(item['Categories'] ?? ''),
+            content: item['Sections']?['section']?[0]?['Content'] ?? '',
+            url: item['AccessibleVersion'] ?? '',
+            imageUrl: imageUrl,
+          );
+        }).toList();
+      } else {
+        return getFallbackTips();
+      }
+    } catch (e) {
+      // On Web, CORS often blocks this request. Return fallback data to keep UI populated.
+      return getFallbackTips();
     }
   }
 

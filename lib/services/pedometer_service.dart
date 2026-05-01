@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../providers/activity_provider.dart';
@@ -12,17 +13,35 @@ class PedometerService {
   Future<void> startListening(ActivityProvider provider, String userId) async {
     if (_isListening) return;
 
+    if (kIsWeb) {
+      _isListening = true;
+      _initialStepOffset = 0;
+
+      // MOCK MODE: Use a Timer to generate fake steps every 2 seconds
+      int mockSteps = 0;
+      Timer.periodic(const Duration(seconds: 5), (timer) {
+        if (!_isListening) {
+          timer.cancel();
+          return;
+        }
+        mockSteps += 1;
+        provider.updateLiveSteps(mockSteps, userId);
+      });
+      return;
+    }
+
     var permission = await Permission.activityRecognition.status;
     if (permission.isDenied) {
       permission = await Permission.activityRecognition.request();
     }
-    
+
     if (permission.isPermanentlyDenied) {
-      provider.setError('Physical activity permission restricted. Open settings to enable.');
+      provider.setError(
+          'Physical activity permission restricted. Open settings to enable.');
       await openAppSettings();
       return;
     }
-    
+
     if (!permission.isGranted) {
       provider.setError('Physical activity permission denied.');
       return;
@@ -38,7 +57,7 @@ class PedometerService {
             _initialStepOffset = event.steps - provider.liveStepCount;
           }
           final int adjustedSteps = event.steps - _initialStepOffset!;
-          
+
           if (adjustedSteps >= 0) {
             provider.updateLiveSteps(adjustedSteps, userId);
           } else {
