@@ -29,7 +29,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
-  int _totalActivities = 0;
   int _totalSteps = 0;
   int _activeGoals = 0;
   double _latestBmi = 0;
@@ -77,7 +76,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     setState(() {
-      _totalActivities = activities.length;
       _totalSteps = steps; // New state variable
       _activeGoals = goals.length;
       if (latestLog != null) {
@@ -101,7 +99,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         decoration: BoxDecoration(
           color: isDark ? AppTheme.sapphire.withOpacity(0.9) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+          border:
+              isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -110,7 +109,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.2) : Colors.grey[300],
+                color:
+                    isDark ? Colors.white.withOpacity(0.2) : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -124,7 +124,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   AppTheme.scooter,
                   () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ActivityScreen()));
                   },
                 ),
                 _buildAddOption(
@@ -133,7 +136,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   AppTheme.warmOrange,
                   () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const GoalsScreen()));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const GoalsScreen()));
                   },
                 ),
                 _buildAddOption(
@@ -142,7 +146,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   AppTheme.skyBlue,
                   () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const HealthLogScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const HealthLogScreen()));
                   },
                 ),
               ],
@@ -187,13 +194,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final screens = [
-      _buildDashboardHome(authService.currentUser?.name ?? AppLocalizations.of(context)!.user),
+      _buildDashboardHome(
+          authService.currentUser?.name ?? AppLocalizations.of(context)!.user),
       const ActivityScreen(),
       const ChartsScreen(initialIndex: 0),
       const GoalsScreen(),
     ];
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(
@@ -209,11 +216,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(child: _buildNavItem(0, Icons.grid_view_rounded, AppLocalizations.of(context)!.home)),
-                Expanded(child: _buildNavItem(1, Icons.directions_run_rounded, AppLocalizations.of(context)!.activity)),
+                Expanded(
+                    child: _buildNavItem(0, Icons.grid_view_rounded,
+                        AppLocalizations.of(context)!.home)),
+                Expanded(
+                    child: _buildNavItem(1, Icons.directions_run_rounded,
+                        AppLocalizations.of(context)!.activity)),
                 Expanded(child: _buildAddButton()),
-                Expanded(child: _buildNavItem(2, Icons.bar_chart_rounded, AppLocalizations.of(context)!.progress)),
-                Expanded(child: _buildNavItem(3, Icons.flag_rounded, AppLocalizations.of(context)!.goals)),
+                Expanded(
+                    child: _buildNavItem(2, Icons.bar_chart_rounded,
+                        AppLocalizations.of(context)!.progress)),
+                Expanded(
+                    child: _buildNavItem(3, Icons.flag_rounded,
+                        AppLocalizations.of(context)!.goals)),
               ],
             ),
           ),
@@ -250,7 +265,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (index == _currentIndex) {
       // If home is already selected and tapped again, reset the view
       if (index == 0 && _scrollController.hasClients) {
-        _scrollController.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeOutBack);
+        _scrollController.animateTo(0,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOutBack);
       }
     }
     setState(() {
@@ -275,15 +292,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             size: 24,
           ),
           const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: AppTheme.siSize(context, 10),
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
-              ),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: AppTheme.siSize(context, 10),
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
             ),
-            const SizedBox(height: 4),
+          ),
+          const SizedBox(height: 4),
         ],
       ),
     );
@@ -318,11 +335,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.only(
-              left: 16, 
-              right: 16, 
-              top: 16, 
-              bottom: 100 + MediaQuery.of(context).padding.bottom
-            ),
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 100 + MediaQuery.of(context).padding.bottom),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -342,7 +358,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: -1,
-                                  color: isDark ? Colors.white : AppTheme.sapphire,
+                                  color:
+                                      isDark ? Colors.white : AppTheme.sapphire,
                                 ),
                               ),
                               SizedBox(height: 4),
@@ -351,265 +368,312 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white70 : AppTheme.heather,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppTheme.heather,
                                 ),
                               ),
                             ],
                           ),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: AppTheme.emeraldGreen.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Icon(Icons.bolt_rounded, color: AppTheme.emeraldGreen, size: 22),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.emeraldGreen.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          height: 200,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              PieChart(
-                                PieChartData(
-                                  pieTouchData: PieTouchData(
-                                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                                      setState(() {
-                                        if (!event.isInterestedForInteractions ||
-                                            pieTouchResponse == null ||
-                                            pieTouchResponse.touchedSection == null) {
-                                          _touchedIndex = -1;
-                                          return;
-                                        }
-                                        _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                                      });
-                                    },
-                                  ),
-                                  sectionsSpace: 0,
-                                  centerSpaceRadius: 70,
-                                  startDegreeOffset: -90,
-                                  sections: [
-                                    // Steps section (Max 60% of total visual weight to keep others visible)
-                                    PieChartSectionData(
-                                      value: _totalSteps > 0 ? (_totalSteps > 10000 ? 60 : (10 + (_totalSteps / 10000 * 50))) : 10,
-                                      color: AppTheme.caribbeanGreen,
-                                      radius: _touchedIndex == 0 ? 30 : 20,
-                                      showTitle: false,
-                                      badgeWidget: _buildPieBadge(Icons.directions_run_rounded, AppTheme.caribbeanGreen),
-                                      badgePositionPercentageOffset: 1,
-                                    ),
-                                    // Goals section (Minimum 20% weight)
-                                    PieChartSectionData(
-                                      value: 20 + (_activeGoals > 0 ? 10 : 0),
-                                      color: AppTheme.warmOrange,
-                                      radius: _touchedIndex == 1 ? 25 : 16,
-                                      showTitle: false,
-                                    ),
-                                    // Health section (Minimum 20% weight)
-                                    PieChartSectionData(
-                                      value: 20 + (_latestBmi > 0 ? 10 : 0),
-                                      color: AppTheme.skyBlue,
-                                      radius: _touchedIndex == 2 ? 22 : 12,
-                                      showTitle: false,
-                                    ),
-                                  ],
+                            child: const Icon(Icons.bolt_rounded,
+                                color: AppTheme.emeraldGreen, size: 22),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        height: 200,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            PieChart(
+                              PieChartData(
+                                pieTouchData: PieTouchData(
+                                  touchCallback:
+                                      (FlTouchEvent event, pieTouchResponse) {
+                                    setState(() {
+                                      if (!event.isInterestedForInteractions ||
+                                          pieTouchResponse == null ||
+                                          pieTouchResponse.touchedSection ==
+                                              null) {
+                                        _touchedIndex = -1;
+                                        return;
+                                      }
+                                      _touchedIndex = pieTouchResponse
+                                          .touchedSection!.touchedSectionIndex;
+                                    });
+                                  },
                                 ),
-                              ),
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _touchedIndex == 1 ? '${_activeGoals}' : (_touchedIndex == 2 ? AppLocalizations.of(context)!.optimal : '${_totalSteps}'),
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w900,
-                                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal,
-                                      letterSpacing: -1,
-                                    ),
+                                sectionsSpace: 0,
+                                centerSpaceRadius: 70,
+                                startDegreeOffset: -90,
+                                sections: [
+                                  // Steps section (Max 60% of total visual weight to keep others visible)
+                                  PieChartSectionData(
+                                    value: _totalSteps > 0
+                                        ? (_totalSteps > 10000
+                                            ? 60
+                                            : (10 + (_totalSteps / 10000 * 50)))
+                                        : 10,
+                                    color: AppTheme.caribbeanGreen,
+                                    radius: _touchedIndex == 0 ? 30 : 20,
+                                    showTitle: false,
+                                    badgeWidget: _buildPieBadge(
+                                        Icons.directions_run_rounded,
+                                        AppTheme.caribbeanGreen),
+                                    badgePositionPercentageOffset: 1,
                                   ),
-                                  Text(
-                                    _touchedIndex == 1 ? AppLocalizations.of(context)!.activeGoalsUpper : (_touchedIndex == 2 ? AppLocalizations.of(context)!.healthStateUpper : AppLocalizations.of(context)!.stepsTodayUpper),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.darkCharcoal).withOpacity(0.7),
-                                      letterSpacing: 1.5,
-                                    ),
+                                  // Goals section (Minimum 20% weight)
+                                  PieChartSectionData(
+                                    value: 20 + (_activeGoals > 0 ? 10 : 0),
+                                    color: AppTheme.warmOrange,
+                                    radius: _touchedIndex == 1 ? 25 : 16,
+                                    showTitle: false,
+                                  ),
+                                  // Health section (Minimum 20% weight)
+                                  PieChartSectionData(
+                                    value: 20 + (_latestBmi > 0 ? 10 : 0),
+                                    color: AppTheme.skyBlue,
+                                    radius: _touchedIndex == 2 ? 22 : 12,
+                                    showTitle: false,
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildMiniLegend(AppLocalizations.of(context)!.activity, AppTheme.emeraldGreen),
-                            _buildMiniLegend(AppLocalizations.of(context)!.goals, AppTheme.warmOrange),
-                            _buildMiniLegend(AppLocalizations.of(context)!.health, AppTheme.skyBlue),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _touchedIndex == 1
+                                      ? '${_activeGoals}'
+                                      : (_touchedIndex == 2
+                                          ? AppLocalizations.of(context)!
+                                              .optimal
+                                          : '${_totalSteps}'),
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : AppTheme.darkCharcoal,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                Text(
+                                  _touchedIndex == 1
+                                      ? AppLocalizations.of(context)!
+                                          .activeGoalsUpper
+                                      : (_touchedIndex == 2
+                                          ? AppLocalizations.of(context)!
+                                              .healthStateUpper
+                                          : AppLocalizations.of(context)!
+                                              .stepsTodayUpper),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: (Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white
+                                            : AppTheme.darkCharcoal)
+                                        .withOpacity(0.7),
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 2x2 Grid Stats (Premium Style)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          AppLocalizations.of(context)!.activeGoals,
-                          _activeGoals.toString(),
-                          Icons.insights_rounded,
-                          AppTheme.emeraldGreen,
-                          onTap: () {
-                            _onItemTapped(3); // Navigate to Goals tab
-                          },
-                        ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          AppLocalizations.of(context)!.currentBmi,
-                          _latestBmi > 0 ? _latestBmi.toString() : '22.4',
-                          Icons.speed_rounded,
-                          AppTheme.skyBlue,
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const HealthLogScreen()));
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          AppLocalizations.of(context)!.healthState,
-                          _bmiCategory != 'N/A' ? _bmiCategory : AppLocalizations.of(context)!.optimal,
-                          Icons.favorite_rounded,
-                          AppTheme.warmOrange,
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const HealthLogScreen()));
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          AppLocalizations.of(context)!.healthTips,
-                          AppLocalizations.of(context)!.explore,
-                          Icons.auto_awesome_rounded,
-                          AppTheme.darkCharcoal,
-                          onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const HealthTipsScreen())),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 24),
-                  Text(
-                    AppLocalizations.of(context)!.quickActions,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.darkCharcoal),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickActionBtn(
-                          AppLocalizations.of(context)!.healthLogs,
-                          Icons.assignment_rounded,
-                          AppTheme.skyBlue,
-                          () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const HealthLogScreen())),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickActionBtn(
-                          AppLocalizations.of(context)!.reminders,
-                          Icons.notifications_active_rounded,
-                          AppTheme.emeraldGreen,
-                          () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const RemindersScreen())),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32),
-                  // "Name on Bottom" card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).brightness == Brightness.dark 
-                              ? AppTheme.blueLagoon 
-                              : AppTheme.sapphire,
-                          Theme.of(context).brightness == Brightness.dark 
-                              ? AppTheme.sapphire 
-                              : const Color(0xFF374151)
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildMiniLegend(
+                              AppLocalizations.of(context)!.activity,
+                              AppTheme.emeraldGreen),
+                          _buildMiniLegend(AppLocalizations.of(context)!.goals,
+                              AppTheme.warmOrange),
+                          _buildMiniLegend(AppLocalizations.of(context)!.health,
+                              AppTheme.skyBlue),
                         ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.stars_rounded, color: AppTheme.scooter, size: 32),
-                        const SizedBox(height: 12),
-                        Text(
-                          '${AppLocalizations.of(context)!.keepPushing}$userName!',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          AppLocalizations.of(context)!.healthJourneyGreat,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withOpacity(0.6),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 32),
-                  const Center(child: DescendersFooter()),
-                  const SizedBox(height: 16),
-                ],
-              ),
+                ),
+                const SizedBox(height: 24),
+
+                // 2x2 Grid Stats (Premium Style)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        AppLocalizations.of(context)!.activeGoals,
+                        _activeGoals.toString(),
+                        Icons.insights_rounded,
+                        AppTheme.emeraldGreen,
+                        onTap: () {
+                          _onItemTapped(3); // Navigate to Goals tab
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        AppLocalizations.of(context)!.currentBmi,
+                        _latestBmi > 0 ? _latestBmi.toString() : '22.4',
+                        Icons.speed_rounded,
+                        AppTheme.skyBlue,
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HealthLogScreen()));
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        AppLocalizations.of(context)!.healthState,
+                        _bmiCategory != 'N/A'
+                            ? _bmiCategory
+                            : AppLocalizations.of(context)!.optimal,
+                        Icons.favorite_rounded,
+                        AppTheme.warmOrange,
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HealthLogScreen()));
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        AppLocalizations.of(context)!.healthTips,
+                        AppLocalizations.of(context)!.explore,
+                        Icons.auto_awesome_rounded,
+                        AppTheme.darkCharcoal,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const HealthTipsScreen())),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 24),
+                Text(
+                  AppLocalizations.of(context)!.quickActions,
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : AppTheme.darkCharcoal),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickActionBtn(
+                        AppLocalizations.of(context)!.healthLogs,
+                        Icons.assignment_rounded,
+                        AppTheme.skyBlue,
+                        () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const HealthLogScreen())),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildQuickActionBtn(
+                        AppLocalizations.of(context)!.reminders,
+                        Icons.notifications_active_rounded,
+                        AppTheme.emeraldGreen,
+                        () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const RemindersScreen())),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 32),
+                // "Name on Bottom" card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.blueLagoon
+                            : AppTheme.sapphire,
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.sapphire
+                            : const Color(0xFF374151)
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.stars_rounded,
+                          color: AppTheme.scooter, size: 32),
+                      const SizedBox(height: 12),
+                      Text(
+                        '${AppLocalizations.of(context)!.keepPushing}$userName!',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        AppLocalizations.of(context)!.healthJourneyGreat,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.6),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Center(child: DescendersFooter()),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color,
@@ -640,7 +704,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: Icon(icon, color: Colors.white, size: 20),
                     ),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 14),
+                    const Icon(Icons.arrow_forward_ios_rounded,
+                        color: Colors.white, size: 14),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -662,10 +727,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.1,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1.1,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -715,7 +780,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? AppTheme.blueLagoon : Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppTheme.blueLagoon
+            : Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -747,7 +814,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white70 : AppTheme.darkCharcoal.withOpacity(0.6),
+            color: isDark
+                ? Colors.white70
+                : AppTheme.darkCharcoal.withOpacity(0.6),
           ),
         ),
       ],

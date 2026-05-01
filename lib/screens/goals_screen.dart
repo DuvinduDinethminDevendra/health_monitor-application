@@ -130,7 +130,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
         if (timeParts.length > 1 && timeParts[1].toUpperCase() == 'AM' && hour == 12) hour = 0;
         final newTime = {'hour': hour, 'minute': minute};
 
-        final isDaily = goal.category.toLowerCase().contains('(daily)');
 
         if (existingReminders.isNotEmpty) {
           // Update the first one found

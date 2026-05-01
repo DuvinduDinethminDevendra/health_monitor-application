@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/activity_theme.dart';
+
 
 class ActivityLoadingSkeleton extends StatefulWidget {
   const ActivityLoadingSkeleton({super.key});

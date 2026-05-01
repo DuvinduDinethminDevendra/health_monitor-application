@@ -1142,15 +1142,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
     );
   }
 
-  Widget _statColumn(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-        const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
-      ],
-    );
-  }
+
 
   Color _getBmiColor(double bmi) {
     if (bmi < 18.5) return Colors.orange;
@@ -1377,7 +1369,6 @@ class _HealthLogScreenState extends State<HealthLogScreen>
     for (var log in _logs) {
       allUsedTags.addAll(log.tags);
     }
-    final filterOptions = ['All', ...allUsedTags.toList()..sort()];
 
     return Scaffold(
       body: Stack(
@@ -1688,7 +1679,6 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             final log = filteredLogs[index];
-                            final bmiColor = _getBmiColor(log.bmi);
                             return Container(
                               margin: const EdgeInsets.only(bottom: 16),
                               padding: const EdgeInsets.all(16),

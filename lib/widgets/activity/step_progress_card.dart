@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import '../../theme/activity_theme.dart';
+
 import '../../theme/app_theme.dart';
 
 class StepProgressCard extends StatelessWidget {

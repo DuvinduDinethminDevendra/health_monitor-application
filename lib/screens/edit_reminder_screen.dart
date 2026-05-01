@@ -25,7 +25,6 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool get _isCreateMode => widget.reminder == null;
-  bool get _isCustom => widget.reminder == null || widget.reminder!.id > 6;
 
   static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   static const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
