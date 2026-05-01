@@ -18,6 +18,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:ui';
 import 'package:health_monitor/l10n/app_localizations.dart';
+import '../widgets/descenders_footer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -208,11 +209,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.grid_view_rounded, AppLocalizations.of(context)!.home),
-                _buildNavItem(1, Icons.directions_run_rounded, AppLocalizations.of(context)!.activity),
-                _buildAddButton(),
-                _buildNavItem(2, Icons.bar_chart_rounded, AppLocalizations.of(context)!.progress),
-                _buildNavItem(3, Icons.flag_rounded, AppLocalizations.of(context)!.goals),
+                Expanded(child: _buildNavItem(0, Icons.grid_view_rounded, AppLocalizations.of(context)!.home)),
+                Expanded(child: _buildNavItem(1, Icons.directions_run_rounded, AppLocalizations.of(context)!.activity)),
+                Expanded(child: _buildAddButton()),
+                Expanded(child: _buildNavItem(2, Icons.bar_chart_rounded, AppLocalizations.of(context)!.progress)),
+                Expanded(child: _buildNavItem(3, Icons.flag_rounded, AppLocalizations.of(context)!.goals)),
               ],
             ),
           ),
@@ -274,14 +275,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             size: 24,
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: AppTheme.siSize(context, 10),
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
+              ),
             ),
-          ),
+            const SizedBox(height: 4),
         ],
       ),
     );
@@ -464,6 +466,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           _activeGoals.toString(),
                           Icons.insights_rounded,
                           AppTheme.emeraldGreen,
+                          onTap: () {
+                            _onItemTapped(3); // Navigate to Goals tab
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -473,6 +478,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           _latestBmi > 0 ? _latestBmi.toString() : '22.4',
                           Icons.speed_rounded,
                           AppTheme.skyBlue,
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const HealthLogScreen()));
+                          },
                         ),
                       ),
                     ],
@@ -486,6 +494,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           _bmiCategory != 'N/A' ? _bmiCategory : AppLocalizations.of(context)!.optimal,
                           Icons.favorite_rounded,
                           AppTheme.warmOrange,
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const HealthLogScreen()));
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -590,6 +601,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 32),
+                  const Center(child: DescendersFooter()),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -601,57 +615,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildStatCard(String title, String value, IconData icon, Color color,
       {VoidCallback? onTap}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      child: MatteCard(
-        padding: const EdgeInsets.all(16),
-        borderRadius: 24,
-        color: isDark ? color.withOpacity(0.9) : color, // Use high-opacity matte
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return MatteCard(
+      borderRadius: 24,
+      color: isDark ? color.withOpacity(0.9) : color,
+      padding: EdgeInsets.zero,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 20),
+                    ),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 14),
+                  ],
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 14),
+                const SizedBox(height: 16),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
-            const SizedBox(height: 16),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
-                  height: 1.1,
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                  fontSize: 12, // Reduced from 13
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  height: 1.1,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+          ),
         ),
       ),
     );

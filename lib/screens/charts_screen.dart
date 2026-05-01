@@ -711,19 +711,25 @@ class _ChartsScreenState extends State<ChartsScreen>
               padding: const EdgeInsets.only(top: 24, right: 20, bottom: 10),
               child: LineChart(
                 LineChartData(
+                  minX: -0.5,
+                  maxX: _healthLogs.length > 1 ? (_healthLogs.length - 0.5) : 1.0,
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
                       fitInsideHorizontally: true,
                       fitInsideVertically: true,
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((spot) {
-                          final log = _healthLogs[spot.x.toInt()];
-                          return LineTooltipItem(
-                            'BMI: ${log.bmi}\n${log.date}',
-                            const TextStyle(
-                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                          );
-                        }).toList();
+                          final int idx = spot.x.round();
+                          if (idx >= 0 && idx < _healthLogs.length) {
+                            final log = _healthLogs[idx];
+                            return LineTooltipItem(
+                              'BMI: ${log.bmi}\n${log.date}',
+                              const TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                            );
+                          }
+                          return null;
+                        }).whereType<LineTooltipItem>().toList();
                       },
                     ),
                   ),
@@ -778,17 +784,17 @@ class _ChartsScreenState extends State<ChartsScreen>
                       spots: _healthLogs.asMap().entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value.bmi)).toList(),
                       isCurved: true,
                       gradient: const LinearGradient(
-                        colors: [AppTheme.skyBlue, AppTheme.emeraldGreen],
+                        colors: [AppTheme.scooter, AppTheme.blueLagoon],
                       ),
                       barWidth: 4,
                       isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
+                      dotData: FlDotData(show: true),
                       belowBarData: BarAreaData(
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.skyBlue.withOpacity(0.2),
-                            AppTheme.skyBlue.withOpacity(0.0),
+                            AppTheme.scooter.withOpacity(0.2),
+                            AppTheme.scooter.withOpacity(0.0),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,

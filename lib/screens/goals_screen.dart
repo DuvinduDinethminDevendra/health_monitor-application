@@ -319,56 +319,71 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
     return MatteCard(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
+      color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: accentColor,
+                  color: accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  goal.category.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
-                  ),
+                child: Icon(Icons.track_changes_rounded, color: accentColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      goal.category.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: accentColor,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      goal.title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : AppTheme.sapphire,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.edit_rounded, size: 20),
+                    icon: Icon(Icons.edit_rounded, size: 18),
                     onPressed: onEdit,
                     color: isDark ? Colors.white60 : AppTheme.heather,
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
                   ),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Icons.delete_outline_rounded, size: 20),
+                    icon: Icon(Icons.delete_outline_rounded, size: 18),
                     onPressed: onDelete,
                     color: Colors.redAccent,
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
                   ),
                 ],
               ),
             ],
           ),
-          SizedBox(height: 12),
-          Text(
-            goal.title,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : AppTheme.sapphire,
-              letterSpacing: -0.5,
-            ),
-          ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -390,38 +405,40 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: isDark ? Colors.white12 : Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-              minHeight: 12,
+              minHeight: 8,
             ),
           ),
-          const SizedBox(height: 20),
-          if (!isCompleted)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
+          if (!isCompleted) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton.icon(
                 onPressed: () => _showProgressDialog(goal),
-                icon: Icon(Icons.add_circle_outline, size: 18, color: accentColor),
+                icon: Icon(Icons.add_circle_outline, size: 18, color: Colors.white),
                 label: Text(
                   AppLocalizations.of(context)!.btnLogProgress,
                   style: TextStyle(
-                    color: accentColor,
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
                   ),
                 ),
-                style: TextButton.styleFrom(
-                  backgroundColor: accentColor.withOpacity(0.08),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 0,
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

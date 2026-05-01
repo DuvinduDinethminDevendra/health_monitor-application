@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 import 'package:health_monitor/l10n/app_localizations.dart';
+import '../widgets/descenders_footer.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -220,6 +221,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 20),
+                const Center(child: DescendersFooter(showCreatedBy: true)),
+                const SizedBox(height: 8),
               ],
             ),
           );
@@ -557,6 +560,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    const DescendersFooter(showCreatedBy: true),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),

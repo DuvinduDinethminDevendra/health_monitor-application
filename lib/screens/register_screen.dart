@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/descenders_footer.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -145,51 +146,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: MatteCard(
-          padding: EdgeInsets.all(_siSize(32)),
-          color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.person_add_rounded, size: 64, color: AppTheme.scooter),
-                SizedBox(height: 16),
-                Text(
-                  AppLocalizations.of(context)!.titleCreateAccount, 
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: _siSize(28), 
-                    fontWeight: FontWeight.w900, 
-                    color: isDark ? Colors.white : AppTheme.sapphire, 
-                    letterSpacing: -1
-                  )
-                ),
-                SizedBox(height: 32),
-                _buildField(_nameController, AppLocalizations.of(context)!.lblFullName, Icons.person_outline, isDark),
-                SizedBox(height: 16),
-                _buildField(_emailController, AppLocalizations.of(context)!.lblEmailAddress, Icons.email_outlined, isDark),
-                SizedBox(height: 16),
-                _buildField(_passwordController, AppLocalizations.of(context)!.lblPassword, Icons.lock_outline, isDark, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
-                SizedBox(height: 16),
-                _buildField(_confirmPasswordController, AppLocalizations.of(context)!.lblConfirmPassword, Icons.lock_outline, isDark, obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
-                const SizedBox(height: 32),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 55, minWidth: double.infinity),
-                  child: ElevatedButton(
-                    onPressed: _nextPage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.blueLagoon,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MatteCard(
+              padding: EdgeInsets.all(_siSize(32)),
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.person_add_rounded, size: 64, color: AppTheme.scooter),
+                    SizedBox(height: 16),
+                    Text(
+                      AppLocalizations.of(context)!.titleCreateAccount, 
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: _siSize(28), 
+                        fontWeight: FontWeight.w900, 
+                        color: isDark ? Colors.white : AppTheme.sapphire, 
+                        letterSpacing: -1
+                      )
                     ),
-                    child: Text(AppLocalizations.of(context)!.btnContinue, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
-                  ),
+                    SizedBox(height: 32),
+                    _buildField(_nameController, AppLocalizations.of(context)!.lblFullName, Icons.person_outline, isDark),
+                    SizedBox(height: 16),
+                    _buildField(_emailController, AppLocalizations.of(context)!.lblEmailAddress, Icons.email_outlined, isDark),
+                    SizedBox(height: 16),
+                    _buildField(_passwordController, AppLocalizations.of(context)!.lblPassword, Icons.lock_outline, isDark, obscure: _obscurePassword, onToggle: () => setState(() => _obscurePassword = !_obscurePassword)),
+                    SizedBox(height: 16),
+                    _buildField(_confirmPasswordController, AppLocalizations.of(context)!.lblConfirmPassword, Icons.lock_outline, isDark, obscure: _obscureConfirm, onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm)),
+                    const SizedBox(height: 32),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 55, minWidth: double.infinity),
+                      child: ElevatedButton(
+                        onPressed: _nextPage,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.blueLagoon,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        child: Text(AppLocalizations.of(context)!.btnContinue, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                      ),
+                    ),
+                    TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.btnAlreadyAccount, style: const TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.bold))),
+                  ],
                 ),
-                TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocalizations.of(context)!.btnAlreadyAccount, style: const TextStyle(color: AppTheme.scooter, fontWeight: FontWeight.bold))),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 24),
+            const DescendersFooter(showCreatedBy: true),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
@@ -217,65 +226,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: MatteCard(
-          padding: EdgeInsets.all(_siSize(32)),
-          color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                AppLocalizations.of(context)!.titleYourInterests, 
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: _siSize(28), 
-                  fontWeight: FontWeight.w900, 
-                  color: isDark ? Colors.white : AppTheme.sapphire, 
-                  letterSpacing: -1
-                )
-              ),
-              SizedBox(height: 8),
-              Text(AppLocalizations.of(context)!.descYourInterests, style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600])),
-              SizedBox(height: 32),
-              Wrap(
-                spacing: 8, runSpacing: 8,
-                children: _availableTopics.map((t) {
-                  final sel = _selectedTopics.contains(t);
-                  return FilterChip(
-                    label: Text(t),
-                    selected: sel,
-                    onSelected: (s) => setState(() => s ? _selectedTopics.add(t) : _selectedTopics.remove(t)),
-                    selectedColor: AppTheme.scooter,
-                    checkmarkColor: Colors.white,
-                    labelStyle: TextStyle(color: sel ? Colors.white : (isDark ? Colors.white70 : AppTheme.sapphire), fontWeight: sel ? FontWeight.bold : FontWeight.normal),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 40),
-              Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MatteCard(
+              padding: EdgeInsets.all(_siSize(32)),
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton(onPressed: _isLoading ? null : _previousPage, child: Text(AppLocalizations.of(context)!.btnBack, style: const TextStyle(color: AppTheme.heather, fontWeight: FontWeight.bold))),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 55),
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.blueLagoon,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: 0,
+                  Text(
+                    AppLocalizations.of(context)!.titleYourInterests, 
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: _siSize(28), 
+                      fontWeight: FontWeight.w900, 
+                      color: isDark ? Colors.white : AppTheme.sapphire, 
+                      letterSpacing: -1
+                    )
+                  ),
+                  SizedBox(height: 8),
+                  Text(AppLocalizations.of(context)!.descYourInterests, style: TextStyle(color: isDark ? Colors.white60 : Colors.grey[600])),
+                  SizedBox(height: 32),
+                  Wrap(
+                    spacing: 8, runSpacing: 8,
+                    children: _availableTopics.map((t) {
+                      final sel = _selectedTopics.contains(t);
+                      return FilterChip(
+                        label: Text(t),
+                        selected: sel,
+                        onSelected: (s) => setState(() => s ? _selectedTopics.add(t) : _selectedTopics.remove(t)),
+                        selectedColor: AppTheme.scooter,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(color: sel ? Colors.white : (isDark ? Colors.white70 : AppTheme.sapphire), fontWeight: sel ? FontWeight.bold : FontWeight.normal),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 40),
+                  Row(
+                    children: [
+                      TextButton(onPressed: _isLoading ? null : _previousPage, child: Text(AppLocalizations.of(context)!.btnBack, style: const TextStyle(color: AppTheme.heather, fontWeight: FontWeight.bold))),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 55),
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _register,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.blueLagoon,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              elevation: 0,
+                            ),
+                            child: _isLoading 
+                              ? const CircularProgressIndicator(color: Colors.white) 
+                              : Text(AppLocalizations.of(context)!.btnGetStarted, 
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+                          ),
                         ),
-                        child: _isLoading 
-                          ? const CircularProgressIndicator(color: Colors.white) 
-                          : Text(AppLocalizations.of(context)!.btnGetStarted, 
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            const DescendersFooter(showCreatedBy: true),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );

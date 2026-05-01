@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/activity_theme.dart';
+import '../../theme/app_theme.dart';
 
 class SmartInsightCard extends StatelessWidget {
   final String message;
@@ -11,50 +12,43 @@ class SmartInsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return MatteCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            ActivityTheme.primaryBlue.withAlpha(20),
-            ActivityTheme.tealAccent.withAlpha(20),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        border: Border.all(
-          color: ActivityTheme.primaryBlue.withAlpha(40),
-        ),
-      ),
+      borderRadius: 24,
+      color: isDark ? AppTheme.darkCharcoal.withOpacity(0.9) : AppTheme.darkCharcoal,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.auto_awesome,
-            color: ActivityTheme.primaryBlue,
-            size: 24,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Smart Insight',
+                const Text(
+                  'SMART INSIGHT',
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: ActivityTheme.primaryBlue,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white70,
+                    letterSpacing: 1.5,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   message,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                     height: 1.4,
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/activity_theme.dart';
+import '../../theme/app_theme.dart';
 
 class RecentActivityTile extends StatelessWidget {
   final String date;
@@ -64,20 +65,13 @@ class RecentActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getColor();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(5),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: MatteCard(
+        padding: EdgeInsets.zero,
+        color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: color.withAlpha(30),
@@ -86,21 +80,27 @@ class RecentActivityTile extends StatelessWidget {
         title: Text(
           type[0].toUpperCase() + type.substring(1),
           style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white : AppTheme.sapphire,
           ),
         ),
         subtitle: Row(
           children: [
             Text(
               '$value • $duration min',
-              style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white70 : AppTheme.heather,
+              ),
             ),
             if (calories != null) ...[
               SizedBox(width: 4),
               Text(
                 '• $calories kcal',
-                style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white70 : AppTheme.heather,
+                ),
               ),
             ]
           ],
@@ -113,7 +113,8 @@ class RecentActivityTile extends StatelessWidget {
               date,
               style: TextStyle(
                 fontSize: 12,
-                color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white70 : AppTheme.heather,
               ),
             ),
             const SizedBox(height: 4),
@@ -136,6 +137,7 @@ class RecentActivityTile extends StatelessWidget {
             )
           ],
         ),
+      ),
       ),
     );
   }

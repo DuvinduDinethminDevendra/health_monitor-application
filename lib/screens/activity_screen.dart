@@ -13,6 +13,7 @@ import '../providers/activity_provider.dart';
 import '../repositories/goal_repository.dart';
 import '../services/auth_service.dart';
 import '../theme/activity_theme.dart';
+import '../theme/app_theme.dart';
 import '../widgets/activity/activity_error_state.dart';
 import '../widgets/activity/activity_loading_skeleton.dart';
 import '../widgets/activity/activity_stat_card.dart';
@@ -27,7 +28,6 @@ import '../widgets/activity/weekly_activity_chart.dart';
 import '../l10n/app_localizations.dart';
 
 import 'activity/activity_history_screen.dart';
-import 'manual_activity_entry_screen.dart';
 import 'activity/workout_session_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,11 +176,18 @@ class _ActivityScreenState extends State<ActivityScreen> {
   // ── Log Activity bottom-sheet ──────────────────────────────────────────────
 
   Future<void> _openLogActivity() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ManualActivityEntryScreen()),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _LogActivitySheet(
+        isDark: isDark,
+        onSaved: () async {
+          if (mounted) await _loadAll();
+        },
+      ),
     );
-    if (mounted) await _loadAll();
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -282,25 +289,30 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '${_greeting(context)}, $name 👋',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Text(
+                          '${_greeting(context)}, $name ',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.sapphire),
+                          ),
+                        ),
+                        Icon(
+                          (DateTime.now().hour >= 6 && DateTime.now().hour < 18) ? Icons.wb_sunny_rounded : Icons.nights_stay_rounded, 
+                          color: (DateTime.now().hour >= 6 && DateTime.now().hour < 18) ? AppTheme.warmOrange : AppTheme.skyBlue, 
+                          size: 20
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    // Green "Synced HH:MM" pill badge
-                    _SyncPill(label: syncLabel),
+                    const SizedBox(height: 8),
+                    SyncStatusBadge(
+                      isSynced: provider.syncStatusText == 'Up to date',
+                      lastSyncTime: syncLabel,
+                    ),
                   ],
                 ),
-              ),
-              // Existing SyncStatusBadge from widget library
-              SyncStatusBadge(
-                isSynced: provider.syncStatusText == 'Up to date',
-                lastSyncTime: syncLabel,
               ),
             ],
           ),
@@ -320,9 +332,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
   /// Three stat cards: Distance · Calories · Active Minutes
   Widget _buildQuickStatsRow(ActivityProvider provider) {
     final loc = AppLocalizations.of(context)!;
-    return Row(
-      children: [
-        Expanded(
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
           child: ActivityStatCard(
             title: loc.statDistance,
             // steps × 0.000762 km (average stride length)
@@ -355,44 +369,48 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
         ),
       ],
+      ),
     );
   }
 
   /// Three action buttons: Start Workout · Log Activity · History
   Widget _buildActionButtonsRow() {
     final loc = AppLocalizations.of(context)!;
-    return Row(
-      children: [
-        Expanded(
-          child: QuickActionButton(
-            label: loc.btnStartWorkout,
-            icon: Icons.play_circle_outline,
-            color: ActivityTheme.success,
-            onTap: _showWorkoutPicker,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: QuickActionButton(
-            label: loc.btnLogActivity,
-            icon: Icons.add_circle_outline,
-            color: ActivityTheme.primaryBlue,
-            onTap: _openLogActivity,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: QuickActionButton(
-            label: loc.btnHistory,
-            icon: Icons.history,
-            color: const Color(0xFFAB47BC),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ActivityHistoryScreen()),
+    return SizedBox(
+      height: 130, // Increased height to safely accommodate wrapped Sinhala text
+      child: Row(
+        children: [
+          Expanded(
+            child: QuickActionButton(
+              label: loc.btnStartWorkout,
+              icon: Icons.play_circle_outline,
+              color: ActivityTheme.success,
+              onTap: _showWorkoutPicker,
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: QuickActionButton(
+              label: loc.btnLogActivity,
+              icon: Icons.add_circle_outline,
+              color: ActivityTheme.primaryBlue,
+              onTap: _openLogActivity,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: QuickActionButton(
+              label: loc.btnHistory,
+              icon: Icons.history,
+              color: const Color(0xFFAB47BC),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ActivityHistoryScreen()),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -513,49 +531,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
             ),
           ),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Private: green "Synced HH:MM" pill shown beneath the greeting
-// ─────────────────────────────────────────────────────────────────────────────
-class _SyncPill extends StatelessWidget {
-  final String label;
-
-  const _SyncPill({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: ActivityTheme.success.withAlpha(28),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ActivityTheme.success.withAlpha(60)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: const BoxDecoration(
-              color: ActivityTheme.success,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: ActivityTheme.success,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -704,6 +679,327 @@ class _WorkoutTypeTile extends StatelessWidget {
                   color: ActivityTheme.primaryBlue,
                 ),
                 textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Log Activity Bottom Sheet — same premium style as Goal screen
+// ─────────────────────────────────────────────────────────────────────────────
+class _LogActivitySheet extends StatefulWidget {
+  final bool isDark;
+  final VoidCallback onSaved;
+
+  const _LogActivitySheet({required this.isDark, required this.onSaved});
+
+  @override
+  State<_LogActivitySheet> createState() => _LogActivitySheetState();
+}
+
+class _LogActivitySheetState extends State<_LogActivitySheet> {
+  final _formKey = GlobalKey<FormState>();
+  String _type = 'steps';
+  final _valueController = TextEditingController();
+  final _durationController = TextEditingController();
+  final _customTypeController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false;
+
+  final List<String> _types = ['steps', 'workout', 'running', 'cycling', 'swimming', 'yoga', 'custom'];
+
+  @override
+  void dispose() {
+    _valueController.dispose();
+    _durationController.dispose();
+    _customTypeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final provider = Provider.of<ActivityProvider>(context, listen: false);
+    final userId = authService.currentUser?.id;
+
+    if (userId == null) { setState(() => _isLoading = false); return; }
+
+    final finalType = _type == 'custom' ? _customTypeController.text.trim().toLowerCase() : _type;
+    final value = double.parse(_valueController.text);
+    final duration = _durationController.text.isEmpty ? 0 : int.parse(_durationController.text);
+
+    await provider.logManualActivity(userId, finalType, value, duration, _selectedDate);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (provider.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(provider.errorMessage!), backgroundColor: Colors.redAccent),
+        );
+        provider.clearError();
+      } else {
+        widget.onSaved();
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  String _typeLabel(String t, AppLocalizations loc) {
+    final labels = {
+      'steps': loc.activityTypeWalking.replaceAll(RegExp(r'\s.*'), '') == 'Walking'
+          ? 'Steps' : loc.lblNumSteps.split(' ').first,
+      'workout': 'Workout',
+      'running': loc.activityTypeRunning,
+      'cycling': loc.activityTypeCycling,
+      'swimming': loc.activityTypeSwimming,
+      'yoga': loc.activityTypeYoga,
+      'custom': loc.activityTypeCustom,
+    };
+    return labels[t] ?? t;
+  }
+
+  IconData _typeIcon(String t) {
+    const icons = {
+      'steps': Icons.directions_walk_rounded, 'workout': Icons.fitness_center_rounded,
+      'running': Icons.directions_run_rounded, 'cycling': Icons.directions_bike_rounded,
+      'swimming': Icons.pool_rounded, 'yoga': Icons.self_improvement_rounded,
+      'custom': Icons.add_circle_outline_rounded,
+    };
+    return icons[t] ?? Icons.sports_rounded;
+  }
+
+  InputDecoration _fieldDecor(String label, IconData icon) {
+    final isDark = widget.isDark;
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(
+        color: AppTheme.heather, 
+        fontSize: AppTheme.siSize(context, 14),
+      ),
+      prefixIcon: Icon(icon, color: AppTheme.scooter),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppTheme.scooter, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final loc = AppLocalizations.of(context)!;
+
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32 + MediaQuery.of(context).padding.bottom,
+        left: 24, right: 24, top: 32,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.sapphire.withOpacity(0.97) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+      ),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag handle
+              Center(child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              )),
+              const SizedBox(height: 24),
+              Text(loc.titleLogActivity,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : AppTheme.sapphire)),
+              const SizedBox(height: 24),
+
+              // Activity type selector
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: isDark ? AppTheme.sapphire : Colors.white,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+                    builder: (ctx) => Container(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(loc.lblActivityType,
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : AppTheme.sapphire)),
+                          const SizedBox(height: 20),
+                          ..._types.map((t) {
+                            final isSelected = _type == t;
+                            return ListTile(
+                              onTap: () {
+                                setState(() => _type = t);
+                                Navigator.pop(ctx);
+                              },
+                              leading: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppTheme.scooter : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(_typeIcon(t),
+                                  color: isSelected ? Colors.white : (isDark ? Colors.white38 : Colors.grey[600]),
+                                  size: 20),
+                              ),
+                              title: Text(_typeLabel(t, loc),
+                                style: TextStyle(
+                                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                                  color: isSelected ? AppTheme.scooter : (isDark ? Colors.white70 : AppTheme.sapphire))),
+                              trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppTheme.scooter) : null,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: MatteCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  borderRadius: 16,
+                  child: Row(
+                    children: [
+                      Icon(_typeIcon(_type), color: AppTheme.scooter),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(loc.lblActivityType, style: const TextStyle(fontSize: 12, color: AppTheme.heather)),
+                            Text(_typeLabel(_type, loc), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : AppTheme.sapphire)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.heather),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Custom type field
+              if (_type == 'custom') ...[
+                TextFormField(
+                  controller: _customTypeController,
+                  style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                  decoration: _fieldDecor('Custom Activity Name', Icons.edit_outlined),
+                  validator: (v) => (v == null || v.isEmpty) ? loc.reqField : null,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Value + Duration row — equal flex so Duration is always visible
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _valueController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                      decoration: _fieldDecor(
+                        _type == 'steps' 
+                            ? loc.lblNumSteps.split(' ').first // "Number" -> "Steps" based on translation logic
+                            : loc.statDistance,
+                        Icons.speed_rounded,
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return loc.reqField;
+                        if (double.tryParse(v) == null) return loc.errValidNumber;
+                        if (double.parse(v) < 0) return loc.errPositive;
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _durationController,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                      decoration: _fieldDecor(loc.unitMin.toUpperCase(), Icons.timer_outlined),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return loc.reqField;
+                        if (int.tryParse(v) == null) return loc.errValidInt;
+                        if (int.parse(v) < 0) return loc.errPositive;
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Date picker
+              OutlinedButton.icon(
+                onPressed: _selectDate,
+                icon: const Icon(Icons.calendar_today_rounded, size: 18),
+                label: Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: isDark ? Colors.white : AppTheme.sapphire,
+                  side: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Save button
+              ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.scooter,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text(loc.btnSaveActivity, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

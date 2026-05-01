@@ -1180,7 +1180,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(
-                color: (isDark ? Colors.white : const Color(0xFF1E293B)),
+                color: (isDark ? const Color(0xFF1E293B) : Colors.white),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -1201,18 +1201,18 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                     child: const Icon(Icons.check, color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Entry Saved',
                             style: TextStyle(
-                                color: Colors.white,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16)),
                         Text('Your health journey is being tracked!',
                             style: TextStyle(
-                                color: Color(0xFF2DD4BF),
+                                color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13)),
                       ],
@@ -1582,6 +1582,20 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                         comparisonLog = _logs[displayIndex + 1];
                       }
 
+                      double? latestWaist = displayLog?.waist;
+                      double? latestHip = displayLog?.hip;
+                      double? latestChest = displayLog?.chest;
+                      double? latestBodyFat = displayLog?.bodyFat;
+                      
+                      if (_selectedViewDate == null) {
+                        for (var log in _logs) {
+                          latestWaist ??= log.waist;
+                          latestHip ??= log.hip;
+                          latestChest ??= log.chest;
+                          latestBodyFat ??= log.bodyFat;
+                        }
+                      }
+
                       if (displayLog == null && _selectedViewDate != null) {
                         return SliverToBoxAdapter(
                           child: Padding(
@@ -1627,37 +1641,37 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       left: 24,
                                       top: 75,
                                       child: _buildFloatingMetric('WAIST', 
-                                        displayLog.waist != null ? '${displayLog.waist}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
+                                        latestWaist != null ? '${latestWaist}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
                                         Icons.straighten,
-                                        delta: (displayLog.waist != null && comparisonLog?.waist != null) 
-                                            ? displayLog.waist! - comparisonLog!.waist! : null),
+                                        delta: (latestWaist != null && comparisonLog?.waist != null) 
+                                            ? latestWaist - comparisonLog!.waist! : null),
                                     ),
                                     Positioned(
                                       right: 24,
                                       top: 75,
                                       child: _buildFloatingMetric('HIPS', 
-                                        displayLog.hip != null ? '${displayLog.hip}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
+                                        latestHip != null ? '${latestHip}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
                                         Icons.accessibility_new,
-                                        delta: (displayLog.hip != null && comparisonLog?.hip != null) 
-                                            ? displayLog.hip! - comparisonLog!.hip! : null),
+                                        delta: (latestHip != null && comparisonLog?.hip != null) 
+                                            ? latestHip - comparisonLog!.hip! : null),
                                     ),
                                     Positioned(
                                       left: 24,
                                       bottom: 55,
                                       child: _buildFloatingMetric('CHEST', 
-                                        displayLog.chest != null ? '${displayLog.chest}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
+                                        latestChest != null ? '${latestChest}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
                                         Icons.fitbit,
-                                        delta: (displayLog.chest != null && comparisonLog?.chest != null) 
-                                            ? displayLog.chest! - comparisonLog!.chest! : null),
+                                        delta: (latestChest != null && comparisonLog?.chest != null) 
+                                            ? latestChest - comparisonLog!.chest! : null),
                                     ),
                                     Positioned(
                                       right: 24,
                                       bottom: 55,
                                       child: _buildFloatingMetric('BODY FAT', 
-                                        displayLog.bodyFat != null ? '${displayLog.bodyFat}%' : '--', 
+                                        latestBodyFat != null ? '${latestBodyFat}%' : '--', 
                                         Icons.percent,
-                                        delta: (displayLog.bodyFat != null && comparisonLog?.bodyFat != null) 
-                                            ? displayLog.bodyFat! - comparisonLog!.bodyFat! : null),
+                                        delta: (latestBodyFat != null && comparisonLog?.bodyFat != null) 
+                                            ? latestBodyFat - comparisonLog!.bodyFat! : null),
                                     ),
                                   ]
                                 ],

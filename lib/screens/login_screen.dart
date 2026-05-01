@@ -6,6 +6,7 @@ import 'register_screen.dart';
 import 'dashboard_screen.dart';
 import 'profile_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/descenders_footer.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -119,7 +120,10 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Center(
             child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: MatteCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MatteCard(
               padding: EdgeInsets.all(_siSize(32)),
               color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
               child: Form(
@@ -228,11 +232,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-              ),
+                ),
+                const SizedBox(height: 24),
+                const DescendersFooter(showCreatedBy: true),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
         ),
       ),
-    );
+    ));
   }
 }

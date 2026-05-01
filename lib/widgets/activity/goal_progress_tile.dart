@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/activity_theme.dart';
+import '../../theme/app_theme.dart';
 
 class GoalProgressTile extends StatelessWidget {
   final String title;
@@ -21,20 +22,12 @@ class GoalProgressTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(5),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: MatteCard(
+        padding: const EdgeInsets.all(16),
+        color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -46,16 +39,16 @@ class GoalProgressTile extends StatelessWidget {
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : AppTheme.sapphire,
                   ),
                 ),
               ),
               Text(
                 percentageText,
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: color,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.scooter,
                 ),
               ),
             ],
@@ -65,8 +58,8 @@ class GoalProgressTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: color.withAlpha(30),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+              backgroundColor: AppTheme.scooter.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.scooter),
               minHeight: 8,
             ),
           ),
@@ -75,10 +68,12 @@ class GoalProgressTile extends StatelessWidget {
             remainingText,
             style: TextStyle(
               fontSize: 12,
-              color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white70 : AppTheme.heather,
             ),
           ),
         ],
+      ),
       ),
     );
   }

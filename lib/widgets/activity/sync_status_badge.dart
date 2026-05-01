@@ -29,7 +29,7 @@ class SyncStatusBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isSynced ? 'Synced' : 'Pending Sync',
+            isSynced ? (lastSyncTime ?? 'Synced') : 'Pending Sync',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../../theme/activity_theme.dart';
+import '../../theme/app_theme.dart';
 
 class StepProgressCard extends StatelessWidget {
   final int currentSteps;
@@ -14,24 +15,15 @@ class StepProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double percentage = goalSteps > 0 ? (currentSteps / goalSteps) : 0.0;
-    final double clampedPercentage = percentage.clamp(0.0, 1.0);
-    final int remaining = max(0, goalSteps - currentSteps);
+    final percentage = goalSteps > 0 ? (currentSteps / goalSteps) : 0.0;
+    final clampedPercentage = percentage.clamp(0.0, 1.0);
+    final remaining = max(0, goalSteps - currentSteps);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
+    return MatteCard(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
       child: Column(
         children: [
           SizedBox(
@@ -45,21 +37,21 @@ class StepProgressCard extends StatelessWidget {
                   painter: _SemiCircleProgressPainter(
                     progress: clampedPercentage,
                     backgroundColor: Colors.grey.withAlpha(30),
-                    progressColor: ActivityTheme.primaryBlue,
+                    progressColor: AppTheme.scooter,
                     strokeWidth: 16,
                   ),
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.directions_walk, color: ActivityTheme.primaryBlue, size: 32),
+                    Icon(Icons.directions_walk, color: AppTheme.scooter, size: 32),
                     SizedBox(height: 8),
                     Text(
                       currentSteps.toString(),
                       style: TextStyle(
                         fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : AppTheme.sapphire,
                         height: 1.0,
                       ),
                     ),
@@ -67,8 +59,8 @@ class StepProgressCard extends StatelessWidget {
                       'Goal: $goalSteps',
                       style: TextStyle(
                         fontSize: 14,
-                        color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
-                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white70 : AppTheme.heather,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -92,21 +84,23 @@ class StepProgressCard extends StatelessWidget {
   }
 
   Widget _buildProgressDetail(BuildContext context, String value, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Text(
           value,
           style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white : AppTheme.sapphire,
           ),
         ),
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)),
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white70 : AppTheme.heather,
           ),
         ),
       ],

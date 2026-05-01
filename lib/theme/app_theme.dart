@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 
 class AppTheme {
+  // Global helper for Sinhala text scaling to maintain premium aesthetics
+  static double siSize(BuildContext context, double base) {
+    try {
+      final isSi = Localizations.localeOf(context).languageCode == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   // Pallet 2 - Exact Hex Codes from User Image
   static const Color scooter = Color(0xFF2F9D94);
   static const Color alabaster = Color(0xFFF7F6F2); 
