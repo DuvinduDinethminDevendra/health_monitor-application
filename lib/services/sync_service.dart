@@ -9,6 +9,8 @@ import '../models/goal.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
 import '../models/step_record.dart';
+import '../repositories/workout_record_repository.dart';
+import '../models/workout_record.dart';
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
@@ -22,6 +24,7 @@ class SyncService {
   ActivityRepository get _activityRepo => ActivityRepository();
   HealthLogRepository get _healthLogRepo => HealthLogRepository();
   StepRecordRepository get _stepRecordRepo => StepRecordRepository();
+  WorkoutRecordRepository get _workoutRecordRepo => WorkoutRecordRepository();
 
   /// Syncs all unsynced local data to Firestore
   Future<void> syncData(String userId) async {
@@ -75,7 +78,19 @@ class SyncService {
         await _stepRecordRepo.updateSyncStatus(step.id!, 1);
       }
 
-      debugPrint("Sync completed successfully for user: $userId");
+      // 5. Sync Workout Records
+      final unsyncedWorkouts = await _workoutRecordRepo.getUnsyncedWorkouts(userId);
+      for (var workout in unsyncedWorkouts) {
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('workout_records')
+            .doc(workout.id.toString())
+            .set(workout.toMap());
+        await _workoutRecordRepo.updateSyncStatus(workout.id!, 1);
+      }
+
+      debugPrint("Background sync completed for user: $userId");
     } catch (e) {
       debugPrint("Error during sync: $e");
     }
@@ -134,6 +149,19 @@ class SyncService {
         data['sync_status'] = 1;
         final step = StepRecord.fromMap(data);
         await _stepRecordRepo.upsertStepRecord(step);
+      }
+
+      // 5. Rehydrate Workout Records
+      final workoutsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('workout_records')
+          .get();
+      for (var doc in workoutsSnapshot.docs) {
+        final data = doc.data();
+        data['sync_status'] = 1;
+        final workout = WorkoutRecord.fromMap(data);
+        await _workoutRecordRepo.upsertWorkout(workout);
       }
 
       debugPrint("Rehydration completed for user: $userId");

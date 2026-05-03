@@ -37,7 +37,7 @@ const Map<String, IconData> _kTypeIcons = {
   'Other':    Icons.sports,
 };
 
-enum _Period { day, week, month }
+enum _Period { day, week }
 
 // ─────────────────────────────────────────────────────────────────────────────
 class ActivityHistoryScreen extends StatefulWidget {
@@ -91,10 +91,6 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           steps = await _stepRepo.getLast7DaysSteps(userId);
           cutoff = DateTime.now().subtract(const Duration(days: 6));
           break;
-        case _Period.month:
-          steps = await _stepRepo.getLast30DaysSteps(userId);
-          cutoff = DateTime.now().subtract(const Duration(days: 29));
-          break;
       }
 
       final workouts = await _workoutRepo.getWorkoutsByUser(userId);
@@ -123,7 +119,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   
   // Active minutes: sum workout durations for the selected period + step-based active minutes
   int get _totalActiveMin {
-    int days = _selectedPeriod == _Period.day ? 0 : (_selectedPeriod == _Period.week ? 6 : 29);
+    int days = _selectedPeriod == _Period.day ? 0 : 6;
     final cutoff = DateTime.now().subtract(Duration(days: days));
     final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
     
@@ -135,7 +131,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   }
 
   int get _totalCalories {
-    int days = _selectedPeriod == _Period.day ? 0 : (_selectedPeriod == _Period.week ? 6 : 29);
+    int days = _selectedPeriod == _Period.day ? 0 : 6;
     final cutoff = DateTime.now().subtract(Duration(days: days));
     final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
     
@@ -303,7 +299,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
   Widget _buildChartSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final title = _selectedPeriod == _Period.day ? 'Daily Steps' : _selectedPeriod == _Period.week ? 'Weekly Steps' : 'Monthly Steps';
+    final title = _selectedPeriod == _Period.day ? 'Daily Steps' : 'Weekly Steps';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -715,7 +711,7 @@ class _FilterSheet extends StatelessWidget {
           SizedBox(height: 16),
           Text('Filter Period', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)))),
           SizedBox(height: 16),
-          ...[ _Period.day, _Period.week, _Period.month ].map((p) {
+          ...[ _Period.day, _Period.week ].map((p) {
             final label = p.name[0].toUpperCase() + p.name.substring(1);
             final isSelected = p == selected;
             return ListTile(

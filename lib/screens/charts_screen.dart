@@ -82,7 +82,9 @@ class _ChartsScreenState extends State<ChartsScreen>
     }
 
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    if (_activities.isEmpty && _goals.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     
     debugPrint('[ChartsScreen] Loading data for userId: $userId');
 

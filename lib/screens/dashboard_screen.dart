@@ -57,8 +57,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    // Optional: Trigger Firebase Sync on every manual refresh
-    await SyncService().syncData(userId);
+    // Trigger Firebase Sync on every manual refresh in the background
+    SyncService().syncData(userId);
 
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
     
