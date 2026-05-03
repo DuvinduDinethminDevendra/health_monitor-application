@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/descenders_footer.dart';
+import '../utils/ui_utils.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -62,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     if (_selectedTopics.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.errSelectTopic), backgroundColor: Colors.orange));
+      UIUtils.showNotification(context, AppLocalizations.of(context)!.errSelectTopic, isError: true);
       return;
     }
     setState(() => _isLoading = true);
@@ -75,7 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (error != null) {
       setState(() => _isLoading = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
+      UIUtils.showNotification(context, error, isError: true);
       _previousPage();
       return;
     }

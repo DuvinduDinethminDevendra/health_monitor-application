@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/ui_utils.dart';
 import '../providers/health_tips_provider.dart';
 import '../services/health_tips_service.dart';
 import '../services/auth_service.dart';
@@ -582,9 +583,10 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                             iconSize: 28,
                             onPressed: () {
                               provider.toggleFavorite(tip);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(isFav ? AppLocalizations.of(context)!.removedFav : AppLocalizations.of(context)!.savedFav)),
-                              );
+                                UIUtils.showNotification(
+                                  context, 
+                                  isFav ? AppLocalizations.of(context)!.removedFav : AppLocalizations.of(context)!.savedFav
+                                );
                             },
                           ),
                         );

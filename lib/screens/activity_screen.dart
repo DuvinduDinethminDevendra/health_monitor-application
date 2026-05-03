@@ -21,6 +21,7 @@ import '../widgets/activity/goal_progress_tile.dart';
 import '../widgets/activity/quick_action_button.dart';
 import '../widgets/activity/recent_activity_tile.dart';
 import '../widgets/activity/section_header.dart';
+import '../utils/ui_utils.dart';
 import '../widgets/activity/smart_insight_card.dart';
 import '../widgets/activity/step_progress_card.dart';
 import '../widgets/activity/sync_status_badge.dart';
@@ -751,9 +752,7 @@ class _LogActivitySheetState extends State<_LogActivitySheet> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (provider.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(provider.errorMessage!), backgroundColor: Colors.redAccent),
-        );
+        UIUtils.showNotification(context, provider.errorMessage!, isError: true);
         provider.clearError();
       } else {
         widget.onSaved();

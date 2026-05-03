@@ -7,6 +7,7 @@ import 'dashboard_screen.dart';
 import 'profile_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/descenders_footer.dart';
+import '../utils/ui_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,9 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
+      UIUtils.showNotification(context, error, isError: true);
     } else {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
     }
@@ -76,9 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${AppLocalizations.of(context)!.errGoogleSignInFailed}: $e'), backgroundColor: Colors.red),
-      );
+      UIUtils.showNotification(context, '${AppLocalizations.of(context)!.errGoogleSignInFailed}: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

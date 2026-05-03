@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/reminder.dart';
 import '../providers/reminders_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/ui_utils.dart';
 
 class EditReminderScreen extends StatefulWidget {
   /// Pass an existing reminder to edit, or null to create a new one.
@@ -140,9 +141,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     if (_selectedTimes.length > 1) {
       setState(() => _selectedTimes.removeAt(index));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must have at least one time scheduled.')),
-      );
+      UIUtils.showNotification(context, 'You must have at least one time scheduled.', isError: true);
     }
   }
 
@@ -180,15 +179,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isCreateMode
-              ? '"$title" scheduled'
-              : '"$title" updated'),
-          backgroundColor: const Color(0xFFAB47BC),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      UIUtils.showNotification(
+        context, 
+        _isCreateMode ? '"$title" scheduled' : '"$title" updated'
       );
       Navigator.pop(context);
     }
@@ -218,13 +211,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     if (confirmed == true && mounted) {
       await context.read<RemindersProvider>().deleteReminder(widget.reminder!);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('"${widget.reminder!.title}" deleted'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+        UIUtils.showNotification(context, '"${widget.reminder!.title}" deleted', isError: true);
         Navigator.pop(context);
       }
     }

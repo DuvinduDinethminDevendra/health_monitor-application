@@ -4,6 +4,7 @@ import '../providers/reminders_provider.dart';
 import '../models/reminder.dart';
 import 'edit_reminder_screen.dart';
 import 'package:health_monitor/l10n/app_localizations.dart';
+import '../utils/ui_utils.dart';
 
 class RemindersScreen extends StatelessWidget {
   const RemindersScreen({super.key});
@@ -74,12 +75,10 @@ class RemindersScreen extends StatelessWidget {
     if (confirmed == true) {
       final deleted = await provider.deleteSelected();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$deleted reminder${deleted > 1 ? 's' : ''} deleted'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
+        UIUtils.showNotification(
+          context, 
+          '$deleted reminder${deleted > 1 ? 's' : ''} deleted',
+          isError: true,
         );
       }
     }
@@ -241,13 +240,7 @@ class RemindersScreen extends StatelessWidget {
       onDismissed: (_) async {
         await provider.deleteReminder(reminder);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('"${reminder.title}" deleted'),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+          UIUtils.showNotification(context, '"${reminder.title}" deleted', isError: true);
         }
       },
       child: Container(
@@ -388,14 +381,7 @@ class RemindersScreen extends StatelessWidget {
                     onChanged: (value) async {
                       await provider.toggleReminder(reminder, value);
                       if (value && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${reminder.title} reminder enabled'),
-                            backgroundColor: primaryColor,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
+                        UIUtils.showNotification(context, '${reminder.title} reminder enabled');
                       }
                     },
                   ),
