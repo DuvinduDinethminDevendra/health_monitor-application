@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
+import '../repositories/step_record_repository.dart';
 import '../models/user.dart';
 import '../models/goal.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
+import '../models/step_record.dart';
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
@@ -19,6 +21,7 @@ class SyncService {
   GoalRepository get _goalRepo => GoalRepository();
   ActivityRepository get _activityRepo => ActivityRepository();
   HealthLogRepository get _healthLogRepo => HealthLogRepository();
+  StepRecordRepository get _stepRecordRepo => StepRecordRepository();
 
   /// Syncs all unsynced local data to Firestore
   Future<void> syncData(String userId) async {
@@ -58,6 +61,18 @@ class SyncService {
             .doc(log.id.toString())
             .set(log.toMap());
         await _healthLogRepo.updateSyncStatus(log.id!, 1);
+      }
+
+      // 4. Sync Step Records
+      final unsyncedSteps = await _stepRecordRepo.getUnsyncedRecords(userId);
+      for (var step in unsyncedSteps) {
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('step_records')
+            .doc(step.id.toString())
+            .set(step.toMap());
+        await _stepRecordRepo.updateSyncStatus(step.id!, 1);
       }
 
       debugPrint("Sync completed successfully for user: $userId");
@@ -106,6 +121,19 @@ class SyncService {
         data['sync_status'] = 1;
         final log = HealthLog.fromMap(data);
         await _healthLogRepo.upsertLog(log);
+      }
+
+      // 4. Rehydrate Step Records
+      final stepsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('step_records')
+          .get();
+      for (var doc in stepsSnapshot.docs) {
+        final data = doc.data();
+        data['sync_status'] = 1;
+        final step = StepRecord.fromMap(data);
+        await _stepRecordRepo.upsertStepRecord(step);
       }
 
       debugPrint("Rehydration completed for user: $userId");

@@ -73,17 +73,37 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
     setState(() => _isLoading = true);
     final userId = context.read<AuthService>().currentUser?.id ?? '';
     try {
-      final steps    = await _stepRepo.getLast7DaysSteps(userId);
-      final workouts = await _workoutRepo.getWorkoutsByUser(userId);
+      List<StepRecord> steps;
+      DateTime cutoff;
+      
+      switch (_selectedPeriod) {
+        case _Period.day:
+          steps = await _stepRepo.getLast7DaysSteps(userId); // Load 7 to allow a small chart, but focus summary on today
+          steps = steps.isNotEmpty ? [steps.last] : []; // Actually, let's just get today if they want "day"
+          if (steps.isEmpty) {
+             final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+             var rec = await _stepRepo.getStepRecordByDate(userId, today);
+             if (rec != null) steps = [rec];
+          }
+          cutoff = DateTime.now().subtract(const Duration(days: 0));
+          break;
+        case _Period.week:
+          steps = await _stepRepo.getLast7DaysSteps(userId);
+          cutoff = DateTime.now().subtract(const Duration(days: 6));
+          break;
+        case _Period.month:
+          steps = await _stepRepo.getLast30DaysSteps(userId);
+          cutoff = DateTime.now().subtract(const Duration(days: 29));
+          break;
+      }
 
-      // Cutoff for "this week" (last 7 days)
-      final cutoff = DateTime.now().subtract(const Duration(days: 6));
+      final workouts = await _workoutRepo.getWorkoutsByUser(userId);
       final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
 
       if (mounted) {
         setState(() {
           _weeklySteps    = steps;
-          // All workouts from the last 7 days — for daily log active minutes
+          // All workouts from the selected period — for daily log active minutes
           _weeklyWorkouts = workouts
               .where((w) => w.loggedAt.compareTo(cutoffStr) >= 0)
               .toList();
@@ -100,20 +120,30 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   // ── Derived summary values ─────────────────────────────────────────────────
 
   int get _totalSteps     => _weeklySteps.fold(0, (s, r) => s + r.stepCount);
-  int get _totalCalories  => (_totalSteps * 0.04).toInt();
-  // Active minutes: sum workout durations for the last 7 days
+  
+  // Active minutes: sum workout durations for the selected period + step-based active minutes
   int get _totalActiveMin {
-    final cutoff = DateTime.now().subtract(const Duration(days: 6));
-    return _weeklyWorkouts
-        .where((w) {
-          try {
-            final d = DateTime.parse(w.loggedAt);
-            return d.isAfter(cutoff);
-          } catch (_) {
-            return false;
-          }
-        })
+    int days = _selectedPeriod == _Period.day ? 0 : (_selectedPeriod == _Period.week ? 6 : 29);
+    final cutoff = DateTime.now().subtract(Duration(days: days));
+    final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
+    
+    final workoutDurations = _weeklyWorkouts
+        .where((w) => w.loggedAt.compareTo(cutoffStr) >= 0)
         .fold(0, (s, w) => s + w.durationMins);
+        
+    return (_totalSteps / 100).floor() + workoutDurations;
+  }
+
+  int get _totalCalories {
+    int days = _selectedPeriod == _Period.day ? 0 : (_selectedPeriod == _Period.week ? 6 : 29);
+    final cutoff = DateTime.now().subtract(Duration(days: days));
+    final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
+    
+    final workoutCals = _weeklyWorkouts
+        .where((w) => w.loggedAt.compareTo(cutoffStr) >= 0)
+        .fold(0, (s, w) => s + (w.caloriesBurned ?? 0));
+        
+    return (_totalSteps * 0.04).toInt() + workoutCals;
   }
 
 
@@ -191,7 +221,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           final label = p.name[0].toUpperCase() + p.name.substring(1);
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _selectedPeriod = p),
+              onTap: () {
+                setState(() => _selectedPeriod = p);
+                _loadData();
+              },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.all(4),
@@ -270,10 +303,11 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
   Widget _buildChartSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final title = _selectedPeriod == _Period.day ? 'Daily Steps' : _selectedPeriod == _Period.week ? 'Weekly Steps' : 'Monthly Steps';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Weekly Steps', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+        Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
         SizedBox(height: 12),
         MatteCard(
           height: 260,
@@ -321,7 +355,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
 
     return BarChart(
       BarChartData(
-        alignment: BarChartAlignment.spaceAround,
+        alignment: _weeklySteps.length <= 1 ? BarChartAlignment.center : BarChartAlignment.spaceAround,
         maxY: maxY * 1.2,
         barTouchData: BarTouchData(enabled: true),
         titlesData: FlTitlesData(

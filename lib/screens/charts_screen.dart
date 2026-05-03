@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
 import '../repositories/goal_repository.dart';
+import '../repositories/step_record_repository.dart';
 import '../services/auth_service.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
@@ -14,7 +15,8 @@ import '../l10n/app_localizations.dart';
 
 class ChartsScreen extends StatefulWidget {
   final int initialIndex;
-  const ChartsScreen({super.key, this.initialIndex = 0});
+  final bool isActive;
+  const ChartsScreen({super.key, this.initialIndex = 0, this.isActive = false});
 
   @override
   State<ChartsScreen> createState() => _ChartsScreenState();
@@ -35,6 +37,14 @@ class _ChartsScreenState extends State<ChartsScreen>
     super.initState();
     _tabController = TabController(
         length: 2, vsync: this, initialIndex: widget.initialIndex > 1 ? 1 : widget.initialIndex);
+  }
+
+  @override
+  void didUpdateWidget(ChartsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _loadData();
+    }
   }
 
   @override
@@ -84,8 +94,20 @@ class _ChartsScreenState extends State<ChartsScreen>
       
       debugPrint('[ChartsScreen] Date Range: $startDate to $endDate');
 
-      final activities = await ActivityRepository()
+      final rawActivities = await ActivityRepository()
           .getActivitiesByDateRange(userId, startDate, endDate);
+      final stepRecords = await StepRecordRepository().getLast30DaysSteps(userId);
+      
+      final activities = rawActivities.where((a) => a.type.toLowerCase() != 'steps').toList();
+      for (var rec in stepRecords) {
+        activities.add(Activity(
+          userId: userId,
+          type: 'steps',
+          value: rec.stepCount.toDouble(),
+          date: rec.date,
+          duration: 0,
+        ));
+      }
       final healthLogs = await HealthLogRepository()
           .getLogsByDateRange(userId, startDate, endDate);
       final goals = await _goalRepo.getGoalsByUser(userId);
@@ -190,7 +212,11 @@ class _ChartsScreenState extends State<ChartsScreen>
       const Color(0xFF00ACC1), // Cyan
     ];
 
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    
     final dailyGoals = _goals.where((g) {
+      if (g.isCompleted || g.deadline.compareTo(todayStr) < 0) return false; // Filter out past goals
       final cat = g.category.toLowerCase();
       return cat == 'sleep' ||
           cat == 'water' ||
@@ -198,8 +224,8 @@ class _ChartsScreenState extends State<ChartsScreen>
           cat.contains('(daily)');
     }).toList();
 
-    final now = DateTime.now();
     final cumulativeGoals = _goals.where((g) {
+      if (g.isCompleted || g.deadline.compareTo(todayStr) < 0) return false; // Filter out past goals
       final cat = g.category.toLowerCase();
       final isCumulative = !(cat == 'sleep' ||
           cat == 'water' ||
@@ -252,15 +278,18 @@ class _ChartsScreenState extends State<ChartsScreen>
               padding: const EdgeInsets.fromLTRB(10, 24, 24, 10),
               child: BarChart(
                 BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
+                  alignment: cumulativeGoals.length <= 1 ? BarChartAlignment.center : BarChartAlignment.spaceAround,
                   maxY: 110, // Extra space for labels
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final goal = cumulativeGoals[groupIndex];
                         final deadlineStr = DateFormat('MMM dd').format(DateTime.parse(goal.deadline));
+                        final displayUnit = goal.category.toLowerCase().contains('step') ? 'steps' : goal.unit;
                         return BarTooltipItem(
-                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}\nDeadline: $deadlineStr\n${rod.toY.toInt()}%',
+                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} $displayUnit\nDeadline: $deadlineStr\n${rod.toY.toInt()}%',
                           const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                         );
                       },
@@ -393,7 +422,7 @@ class _ChartsScreenState extends State<ChartsScreen>
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${goal.title} (${goal.unit})',
+                  Text('${goal.title} (${goal.category.toLowerCase().contains('step') ? 'steps' : goal.unit})',
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   GlassCard(
@@ -416,7 +445,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                 final dateStr =
                                     DateFormat('MMM dd').format(spotDate);
                                 return LineTooltipItem(
-                                  '$dateStr\n${spot.y.toStringAsFixed(1)} ${goal.unit}',
+                                  '$dateStr\n${spot.y.toStringAsFixed(1)} ${goal.category.toLowerCase().contains('step') ? 'steps' : goal.unit}',
                                   TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../repositories/activity_repository.dart';
+import '../providers/activity_provider.dart';
 import '../repositories/goal_repository.dart';
+import '../repositories/step_record_repository.dart';
 import '../repositories/health_log_repository.dart';
 import 'activity_screen.dart';
 import 'health_log_screen.dart';
@@ -56,30 +57,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Provider.of<AuthService>(context, listen: false).currentUser?.id;
     if (userId == null) return;
 
-    // Trigger Firebase Sync on every manual refresh
+    // Optional: Trigger Firebase Sync on every manual refresh
     await SyncService().syncData(userId);
 
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final activities = await ActivityRepository()
-        .getActivitiesByDateRange(userId, dateStr, dateStr);
-    final goals = await GoalRepository().getActiveGoals(userId);
-    final latestLog = await HealthLogRepository().getLatestLog(userId);
+    
+    // 1. Fetch steps for _selectedDate
+    int steps = 0;
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (dateStr == todayStr) {
+      steps = Provider.of<ActivityProvider>(context, listen: false).liveStepCount;
+    } else {
+      final stepRec = await StepRecordRepository().getStepRecordByDate(userId, dateStr);
+      steps = stepRec?.stepCount ?? 0;
+    }
+
+    // 2. Fetch active goals specifically valid for _selectedDate
+    final allGoals = await GoalRepository().getGoalsByUser(userId);
+    final activeGoalsCount = allGoals.where((g) {
+       final deadline = DateTime.tryParse(g.deadline);
+       // It's active if it wasn't completed before the selected date, and deadline is >= selectedDate
+       return deadline != null && deadline.isAfter(_selectedDate.subtract(const Duration(days: 1))) 
+              && (g.isCompleted == false || g.deadline == dateStr); 
+    }).length;
+
+    // 3. Fetch latest health log before or on _selectedDate
+    final allLogs = await HealthLogRepository().getLogsByUser(userId);
+    final validLogs = allLogs.where((l) => l.date.compareTo(dateStr) <= 0).toList();
+    validLogs.sort((a, b) => b.date.compareTo(a.date)); // Descending
+    final latestLog = validLogs.isNotEmpty ? validLogs.first : null;
 
     if (!mounted) return;
 
-    int steps = 0;
-    for (var a in activities) {
-      if (a.type.toLowerCase() == 'steps') {
-        steps += a.value.toInt();
-      }
-    }
-
     setState(() {
-      _totalSteps = steps; // New state variable
-      _activeGoals = goals.length;
+      _totalSteps = steps;
+      _activeGoals = activeGoalsCount;
       if (latestLog != null) {
         _latestBmi = latestLog.bmi;
         _bmiCategory = latestLog.bmiCategory;
+      } else {
+        _latestBmi = 0.0;
+        _bmiCategory = 'N/A';
       }
     });
   }
@@ -126,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const ActivityScreen()));
+                            builder: (_) => const ActivityScreen())).then((_) => _loadDashboardData());
                   },
                 ),
                 _buildAddOption(
@@ -136,7 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   () {
                     Navigator.pop(context);
                     Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const GoalsScreen()));
+                        MaterialPageRoute(builder: (_) => const GoalsScreen())).then((_) => _loadDashboardData());
                   },
                 ),
                 _buildAddOption(
@@ -148,7 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const HealthLogScreen()));
+                            builder: (_) => const HealthLogScreen())).then((_) => _loadDashboardData());
                   },
                 ),
               ],
@@ -196,7 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _buildDashboardHome(
           authService.currentUser?.name ?? AppLocalizations.of(context)!.user),
       const ActivityScreen(),
-      const ChartsScreen(initialIndex: 0),
+      ChartsScreen(initialIndex: 0, isActive: _currentIndex == 2),
       const GoalsScreen(),
     ];
 
@@ -307,7 +325,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDashboardHome(String userName) {
     final authService = Provider.of<AuthService>(context, listen: false);
+    // Watch provider to animate live steps automatically
+    final activityProvider = context.watch<ActivityProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Live steps overriding if we are viewing today's date
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final displaySteps = (dateStr == todayStr) ? activityProvider.liveStepCount : _totalSteps;
     return Column(
       children: [
         // Top Horizontal Calendar with Integrated Profile
@@ -415,10 +440,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 sections: [
                                   // Steps section (Max 60% of total visual weight to keep others visible)
                                   PieChartSectionData(
-                                    value: _totalSteps > 0
-                                        ? (_totalSteps > 10000
+                                    value: displaySteps > 0
+                                        ? (displaySteps > 10000
                                             ? 60
-                                            : (10 + (_totalSteps / 10000 * 50)))
+                                            : (10 + (displaySteps / 10000 * 50)))
                                         : 10,
                                     color: AppTheme.caribbeanGreen,
                                     radius: _touchedIndex == 0 ? 30 : 20,
@@ -454,7 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       : (_touchedIndex == 2
                                           ? AppLocalizations.of(context)!
                                               .optimal
-                                          : '$_totalSteps'),
+                                          : '$displaySteps'),
                                   style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.w900,

@@ -488,16 +488,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
           icon: Icons.directions_walk,
           color: ActivityTheme.primaryBlue,
         ),
-        GoalProgressTile(
-          title: loc.titleWorkoutGoal,
-          progress: workoutProg,
-          remainingText: workoutsLeft > 0
-              ? '$workoutsLeft ${loc.workoutsLeft}'
-              : loc.workoutGoalComplete,
-          percentageText: workoutPct,
-          icon: Icons.fitness_center,
-          color: ActivityTheme.success,
-        ),
+        if (workoutGoal != null)
+          GoalProgressTile(
+            title: loc.titleWorkoutGoal,
+            progress: workoutProg,
+            remainingText: workoutsLeft > 0
+                ? '$workoutsLeft ${loc.workoutsLeft}'
+                : loc.workoutGoalComplete,
+            percentageText: workoutPct,
+            icon: Icons.fitness_center,
+            color: ActivityTheme.success,
+          ),
         const SizedBox(height: 8),
       ],
     );

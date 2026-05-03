@@ -9,6 +9,15 @@ class PedometerService {
   StreamSubscription<PedestrianStatus>? _pedestrianStatusStream;
   bool _isListening = false;
   int? _initialStepOffset;
+  int _mockSteps = 0;
+
+  void addManualSteps(int steps) {
+    if (kIsWeb) {
+      _mockSteps += steps;
+    } else if (_initialStepOffset != null) {
+      _initialStepOffset = _initialStepOffset! - steps;
+    }
+  }
 
   Future<void> startListening(ActivityProvider provider, String userId) async {
     if (_isListening) return;
@@ -16,16 +25,16 @@ class PedometerService {
     if (kIsWeb) {
       _isListening = true;
       _initialStepOffset = 0;
+      _mockSteps = provider.liveStepCount; // Initialize with current live steps
 
-      // MOCK MODE: Use a Timer to generate fake steps every 2 seconds
-      int mockSteps = 0;
+      // MOCK MODE: Use a Timer to generate fake steps every 5 seconds
       Timer.periodic(const Duration(seconds: 5), (timer) {
         if (!_isListening) {
           timer.cancel();
           return;
         }
-        mockSteps += 1;
-        provider.updateLiveSteps(mockSteps, userId);
+        _mockSteps += 1;
+        provider.updateLiveSteps(_mockSteps, userId);
       });
       return;
     }

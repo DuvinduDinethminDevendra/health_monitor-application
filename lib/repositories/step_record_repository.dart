@@ -1,4 +1,3 @@
-import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/step_record.dart';
 
@@ -7,10 +6,45 @@ class StepRecordRepository {
 
   Future<void> upsertStepRecord(StepRecord record) async {
     final db = await _dbHelper.database;
-    await db.insert(
+    final existing = await getStepRecordByDate(record.userId, record.date);
+    
+    // If we're upserting from local activity (not from rehydrate), we reset sync_status to 0
+    final Map<String, dynamic> recordMap = record.toMap();
+    // Assuming record comes from pedometer, syncStatus is naturally 0.
+    // If it comes from rehydrate, syncStatus is 1, so we should respect that.
+
+    if (existing != null) {
+      await db.update(
+        'step_records',
+        recordMap,
+        where: 'id = ?',
+        whereArgs: [existing.id],
+      );
+    } else {
+      await db.insert(
+        'step_records',
+        recordMap,
+      );
+    }
+  }
+
+  Future<List<StepRecord>> getUnsyncedRecords(String userId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
       'step_records',
-      record.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'user_id = ? AND sync_status = 0',
+      whereArgs: [userId],
+    );
+    return maps.map((map) => StepRecord.fromMap(map)).toList();
+  }
+
+  Future<void> updateSyncStatus(int id, int status) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'step_records',
+      {'sync_status': status},
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 
@@ -35,12 +69,13 @@ class StepRecordRepository {
     final sevenDaysAgo = now.subtract(const Duration(days: 6));
     final formattedDate = '${sevenDaysAgo.year}-${sevenDaysAgo.month.toString().padLeft(2, '0')}-${sevenDaysAgo.day.toString().padLeft(2, '0')}';
 
-    final maps = await db.query(
-      'step_records',
-      where: 'user_id = ? AND date >= ?',
-      whereArgs: [userId, formattedDate],
-      orderBy: 'date ASC',
-    );
+    final maps = await db.rawQuery('''
+      SELECT id, user_id, date, MAX(step_count) as step_count, goal 
+      FROM step_records 
+      WHERE user_id = ? AND date >= ? 
+      GROUP BY date 
+      ORDER BY date ASC
+    ''', [userId, formattedDate]);
 
     final List<StepRecord> records = maps.map((map) => StepRecord.fromMap(map)).toList();
     
@@ -70,12 +105,13 @@ class StepRecordRepository {
     final thirtyDaysAgo = now.subtract(const Duration(days: 29));
     final formattedDate = '${thirtyDaysAgo.year}-${thirtyDaysAgo.month.toString().padLeft(2, '0')}-${thirtyDaysAgo.day.toString().padLeft(2, '0')}';
 
-    final maps = await db.query(
-      'step_records',
-      where: 'user_id = ? AND date >= ?',
-      whereArgs: [userId, formattedDate],
-      orderBy: 'date ASC',
-    );
+    final maps = await db.rawQuery('''
+      SELECT id, user_id, date, MAX(step_count) as step_count, goal 
+      FROM step_records 
+      WHERE user_id = ? AND date >= ? 
+      GROUP BY date 
+      ORDER BY date ASC
+    ''', [userId, formattedDate]);
 
     return maps.map((map) => StepRecord.fromMap(map)).toList();
   }
