@@ -34,7 +34,7 @@ class DescendersFooter extends StatelessWidget {
       width: 11,
       height: 11,
       colorFilter:
-          ColorFilter.mode(primaryColor.withOpacity(0.8), BlendMode.srcIn),
+          ColorFilter.mode(primaryColor.withValues(alpha: 0.8), BlendMode.srcIn),
     );
 
     final pill = MouseRegion(
@@ -44,15 +44,15 @@ class DescendersFooter extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(100),
             border: Border.all(
-              color: primaryColor.withOpacity(0.25),
+              color: primaryColor.withValues(alpha: 0.25),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -89,18 +89,36 @@ class DescendersFooter extends StatelessWidget {
       ),
     );
 
-    if (!showCreatedBy) return pill;
+    if (!showCreatedBy) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          pill,
+          const SizedBox(height: 8),
+          Text(
+            'Uplift Health v1.0',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: (isDark ? Colors.white : AppTheme.sapphire).withValues(alpha: 0.3),
+              letterSpacing: 1.0,
+              fontFamily: 'Outfit',
+            ),
+          ),
+        ],
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Created by',
+          'Uplift Health v1.0 • Created by',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color:
-                (isDark ? Colors.white : AppTheme.sapphire).withOpacity(0.35),
+                (isDark ? Colors.white : AppTheme.sapphire).withValues(alpha: 0.35),
             letterSpacing: 0.5,
             fontFamily: 'Outfit',
           ),

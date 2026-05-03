@@ -74,6 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
     if (error != null) {
       setState(() => _isLoading = false);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.red));
       _previousPage();
       return;
@@ -84,6 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (user != null) {
         await authService.updateUserProfile(user.copyWith(interests: _selectedTopics));
       }
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context, 
         MaterialPageRoute(builder: (_) => const DashboardScreen()), 
@@ -157,13 +159,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.person_add_rounded, size: 64, color: AppTheme.scooter),
-                    SizedBox(height: 16),
+                    Icon(Icons.person_add_rounded, size: 48, color: AppTheme.scooter),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.scooter.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(color: AppTheme.scooter.withValues(alpha: 0.2), width: 1.5),
+                      ),
+                      child: Text(
+                        'UPLIFT HEALTH',
+                        style: TextStyle(
+                          fontSize: _siSize(11),
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.scooter,
+                          letterSpacing: 2.0,
+                          fontFamily: 'Outfit',
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8),
                     Text(
                       AppLocalizations.of(context)!.titleCreateAccount, 
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: _siSize(28), 
+                        fontSize: _siSize(32), 
                         fontWeight: FontWeight.w900, 
                         color: isDark ? Colors.white : AppTheme.sapphire, 
                         letterSpacing: -1
@@ -215,7 +236,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         prefixIcon: Icon(icon, color: AppTheme.scooter),
         suffixIcon: onToggle != null ? IconButton(icon: Icon(obscure! ? Icons.visibility_off : Icons.visibility, color: AppTheme.heather), onPressed: onToggle) : null,
         filled: true,
-        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
       ),
       validator: (v) => (v == null || v.isEmpty) ? AppLocalizations.of(context)!.reqField : null,
