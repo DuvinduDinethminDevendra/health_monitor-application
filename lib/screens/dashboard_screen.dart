@@ -16,7 +16,6 @@ import '../theme/app_theme.dart';
 import '../widgets/horizontal_week_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:ui';
 import 'package:health_monitor/l10n/app_localizations.dart';
 import '../widgets/descenders_footer.dart';
 
@@ -97,10 +96,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.sapphire.withOpacity(0.9) : Colors.white,
+          color: isDark ? AppTheme.sapphire.withValues(alpha: 0.9) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           border:
-              isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+              isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -110,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 4,
               decoration: BoxDecoration(
                 color:
-                    isDark ? Colors.white.withOpacity(0.2) : Colors.grey[300],
+                    isDark ? Colors.white.withValues(alpha: 0.2) : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -171,7 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(icon, color: color, size: 28),
@@ -378,7 +377,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppTheme.emeraldGreen.withOpacity(0.1),
+                              color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(Icons.bolt_rounded,
@@ -451,11 +450,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               children: [
                                 Text(
                                   _touchedIndex == 1
-                                      ? '${_activeGoals}'
+                                      ? '$_activeGoals'
                                       : (_touchedIndex == 2
                                           ? AppLocalizations.of(context)!
                                               .optimal
-                                          : '${_totalSteps}'),
+                                          : '$_totalSteps'),
                                   style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.w900,
@@ -482,7 +481,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 Brightness.dark
                                             ? Colors.white
                                             : AppTheme.darkCharcoal)
-                                        .withOpacity(0.7),
+                                        .withValues(alpha: 0.7),
                                     letterSpacing: 1.5,
                                   ),
                                 ),
@@ -632,7 +631,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       )
@@ -658,7 +657,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         AppLocalizations.of(context)!.healthJourneyGreat,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha: 0.6),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -681,7 +680,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return MatteCard(
       borderRadius: 24,
-      color: isDark ? color.withOpacity(0.9) : color,
+      color: isDark ? color.withValues(alpha: 0.9) : color,
       padding: EdgeInsets.zero,
       child: Material(
         color: Colors.transparent,
@@ -699,7 +698,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(icon, color: Colors.white, size: 20),
@@ -750,7 +749,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       onTap: onTap,
       child: MatteCard(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        color: isDark ? AppTheme.sapphire : color.withOpacity(0.1),
+        color: isDark ? AppTheme.sapphire : color.withValues(alpha: 0.1),
         borderRadius: 16,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -786,7 +785,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -816,7 +815,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             fontWeight: FontWeight.w700,
             color: isDark
                 ? Colors.white70
-                : AppTheme.darkCharcoal.withOpacity(0.6),
+                : AppTheme.darkCharcoal.withValues(alpha: 0.6),
           ),
         ),
       ],

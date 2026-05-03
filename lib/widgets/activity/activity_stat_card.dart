@@ -24,7 +24,7 @@ class ActivityStatCard extends StatelessWidget {
     return MatteCard(
       padding: const EdgeInsets.all(16),
       borderRadius: 24,
-      color: isDark ? iconColor.withOpacity(0.9) : iconColor,
+      color: isDark ? iconColor.withValues(alpha: 0.9) : iconColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -34,7 +34,7 @@ class ActivityStatCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: Colors.white, size: 20),
@@ -66,7 +66,7 @@ class ActivityStatCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                 ]

@@ -99,7 +99,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             _loadGoals();
           } catch (e) {
             debugPrint('[GoalsScreen] Error saving goal: $e');
-            if (mounted) {
+            if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Failed to save goal: $e')),
               );
@@ -258,7 +258,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 children: [
                   Icon(Icons.flag_rounded,
                       size: 80,
-                      color: AppTheme.heather.withOpacity(0.2)),
+                      color: AppTheme.heather.withValues(alpha: 0.2)),
                   SizedBox(height: 16),
                   Text(
                     loc.noGoalsSet,
@@ -329,7 +329,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.track_changes_rounded, color: accentColor, size: 24),
@@ -453,9 +453,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
+          color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
         ),
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom + 32 + MediaQuery.of(ctx).padding.bottom,
@@ -664,9 +664,9 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
         top: 32,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
+        color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
       ),
       child: SingleChildScrollView(
         child: Form(
@@ -735,7 +735,7 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                                   leading: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
@@ -763,9 +763,9 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!),
                   ),
                   child: Row(
                     children: [

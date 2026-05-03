@@ -258,7 +258,7 @@ class RemindersScreen extends StatelessWidget {
           border: isSelected ? Border.all(color: Colors.redAccent, width: 2) : null,
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+              color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
               blurRadius: 24.0,
               offset: const Offset(0, 10.0),
             ),
@@ -346,7 +346,7 @@ class RemindersScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.amber.withOpacity(0.15),
+                                  color: Colors.amber.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
@@ -384,7 +384,7 @@ class RemindersScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Switch(
                     value: reminder.isEnabled,
-                    activeColor: primaryColor,
+                    activeThumbColor: primaryColor,
                     onChanged: (value) async {
                       await provider.toggleReminder(reminder, value);
                       if (value && context.mounted) {

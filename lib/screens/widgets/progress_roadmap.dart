@@ -88,7 +88,7 @@ class ProgressRoadmap extends StatelessWidget {
   Widget _buildMilestoneNode(BuildContext context, HealthLog log, int index, bool isRecord, bool isLatest, bool isDark) {
     final bmiColor = _getBmiColor(log.bmi);
     
-    return Container(
+    return SizedBox(
       width: 140,
       child: Column(
         children: [
@@ -102,10 +102,10 @@ class ProgressRoadmap extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
-                  border: Border.all(color: bmiColor.withOpacity(0.2), width: 4),
+                  border: Border.all(color: bmiColor.withValues(alpha: 0.2), width: 4),
                   boxShadow: [
                     BoxShadow(
-                      color: bmiColor.withOpacity(0.1),
+                      color: bmiColor.withValues(alpha: 0.1),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     )
@@ -119,7 +119,7 @@ class ProgressRoadmap extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [bmiColor, bmiColor.withOpacity(0.8)],
+                    colors: [bmiColor, bmiColor.withValues(alpha: 0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

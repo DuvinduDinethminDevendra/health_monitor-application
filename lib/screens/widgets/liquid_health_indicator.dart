@@ -94,7 +94,7 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                     border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFF1F5F9), width: 8),
                     boxShadow: [
                       BoxShadow(
-                        color: color.withOpacity(0.1),
+                        color: color.withValues(alpha: 0.1),
                         blurRadius: 30,
                         spreadRadius: 10,
                       )
@@ -130,9 +130,9 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withOpacity(0.4),
-                          Colors.white.withOpacity(0.0),
-                          Colors.white.withOpacity(0.1),
+                          Colors.white.withValues(alpha: 0.4),
+                          Colors.white.withValues(alpha: 0.0),
+                          Colors.white.withValues(alpha: 0.1),
                         ],
                         stops: const [0.1, 0.5, 0.9],
                       ),
@@ -157,7 +157,7 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white54 : const Color(0xFF1E293B).withOpacity(0.5),
+                        color: isDark ? Colors.white54 : const Color(0xFF1E293B).withValues(alpha: 0.5),
                       ),
                     ),
                     if (widget.comparisonLog != null)
@@ -165,7 +165,7 @@ class _LiquidHealthIndicatorState extends State<LiquidHealthIndicator>
                         margin: const EdgeInsets.only(top: 4),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white12 : Colors.white.withOpacity(0.8),
+                          color: isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -221,18 +221,18 @@ class _MixedWavePainter extends CustomPainter {
     // 1. Draw Comparison Wave if exists (The "Ghost" background wave)
     if (compLevel != null && compColor != null) {
       // Comparison wave is slower and has a different phase
-      _drawWave(canvas, size, compLevel!, compColor!.withOpacity(0.4), animationValue * 0.8, true);
+      _drawWave(canvas, size, compLevel!, compColor!.withValues(alpha: 0.4), animationValue * 0.8, true);
     }
 
     // 2. Draw Main Wave
     // We reduce opacity if comparison is active to allow "mixing"
     final mainOpacity = compLevel != null ? 0.6 : 0.8;
-    _drawWave(canvas, size, level, color.withOpacity(mainOpacity), animationValue, false);
+    _drawWave(canvas, size, level, color.withValues(alpha: mainOpacity), animationValue, false);
 
     // 3. Draw a very thin "Surface Gloss" for both
-    _drawWave(canvas, size, level, Colors.white.withOpacity(0.15), animationValue, true);
+    _drawWave(canvas, size, level, Colors.white.withValues(alpha: 0.15), animationValue, true);
     if (compLevel != null) {
-      _drawWave(canvas, size, compLevel!, Colors.white.withOpacity(0.1), animationValue * 0.8, true);
+      _drawWave(canvas, size, compLevel!, Colors.white.withValues(alpha: 0.1), animationValue * 0.8, true);
     }
   }
 
@@ -244,7 +244,7 @@ class _MixedWavePainter extends CustomPainter {
       paint.shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [clr.withOpacity(0.8), clr],
+        colors: [clr.withValues(alpha: 0.8), clr],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     }
 

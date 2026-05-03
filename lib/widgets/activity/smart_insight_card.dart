@@ -16,14 +16,14 @@ class SmartInsightCard extends StatelessWidget {
     return MatteCard(
       padding: const EdgeInsets.all(16),
       borderRadius: 24,
-      color: isDark ? AppTheme.darkCharcoal.withOpacity(0.9) : AppTheme.darkCharcoal,
+      color: isDark ? AppTheme.darkCharcoal.withValues(alpha: 0.9) : AppTheme.darkCharcoal,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),

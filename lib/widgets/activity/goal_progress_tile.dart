@@ -58,7 +58,7 @@ class GoalProgressTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: AppTheme.scooter.withOpacity(0.2),
+              backgroundColor: AppTheme.scooter.withValues(alpha: 0.2),
               valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.scooter),
               minHeight: 8,
             ),

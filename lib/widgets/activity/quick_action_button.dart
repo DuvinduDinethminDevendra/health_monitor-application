@@ -26,7 +26,7 @@ class QuickActionButton extends StatelessWidget {
     return MatteCard(
       padding: EdgeInsets.zero,
       borderRadius: 20,
-      color: isDark ? bgColor.withOpacity(0.15) : bgColor.withOpacity(0.05),
+      color: isDark ? bgColor.withValues(alpha: 0.15) : bgColor.withValues(alpha: 0.05),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -41,7 +41,7 @@ class QuickActionButton extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isDark ? bgColor.withOpacity(0.2) : bgColor.withOpacity(0.1),
+                    color: isDark ? bgColor.withValues(alpha: 0.2) : bgColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: isDark ? Colors.white : bgColor, size: 22),

@@ -127,7 +127,7 @@ class _ChartsScreenState extends State<ChartsScreen>
             margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0A2A3F) : Colors.black.withOpacity(0.05),
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.black.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
             ),
             child: TabBar(
@@ -139,14 +139,14 @@ class _ChartsScreenState extends State<ChartsScreen>
                 color: AppTheme.blueLagoon,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.blueLagoon.withOpacity(0.3),
+                    color: AppTheme.blueLagoon.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               labelColor: Colors.white,
-              unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withOpacity(0.4),
+              unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withValues(alpha: 0.4),
               labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
               tabs: [
                 Tab(text: AppLocalizations.of(context)!.tabActivity.toUpperCase()),
@@ -248,7 +248,7 @@ class _ChartsScreenState extends State<ChartsScreen>
             SizedBox(height: 16),
             MatteCard(
               height: 280,
-              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.warmOrange.withOpacity(0.03),
+              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.warmOrange.withValues(alpha: 0.03),
               padding: const EdgeInsets.fromLTRB(10, 24, 24, 10),
               child: BarChart(
                 BarChartData(
@@ -310,7 +310,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     drawVerticalLine: false,
                     horizontalInterval: 25,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                       strokeWidth: 1,
                     ),
                   ),
@@ -326,7 +326,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         BarChartRodData(
                           toY: percent,
                           gradient: LinearGradient(
-                            colors: [color, color.withOpacity(0.7)],
+                            colors: [color, color.withValues(alpha: 0.7)],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
@@ -335,7 +335,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: 100,
-                            color: isDark ? Colors.white.withOpacity(0.05) : AppTheme.darkCharcoal.withOpacity(0.05),
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                           ),
                         ),
                       ],
@@ -429,14 +429,14 @@ class _ChartsScreenState extends State<ChartsScreen>
                           show: true,
                           drawVerticalLine: false,
                           getDrawingHorizontalLine: (value) => FlLine(
-                              color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                              color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                               strokeWidth: 1),
                         ),
                         extraLinesData: ExtraLinesData(
                           horizontalLines: [
                             HorizontalLine(
                               y: goal.targetValue,
-                              color: Colors.redAccent.withOpacity(0.6),
+                              color: Colors.redAccent.withValues(alpha: 0.6),
                               strokeWidth: 1.5,
                               dashArray: [5, 5],
                               label: HorizontalLineLabel(
@@ -504,7 +504,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                             ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: color.withOpacity(0.1),
+                              color: color.withValues(alpha: 0.1),
                             ),
                           ),
                         ],
@@ -554,7 +554,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                       child: Icon(
                         watermarkIcon,
                         size: 100,
-                        color: accentColor.withOpacity(0.07),
+                        color: accentColor.withValues(alpha: 0.07),
                       ),
                     ),
                     Padding(
@@ -578,7 +578,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: accentColor.withOpacity(0.15),
+                                  color: accentColor.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -604,9 +604,9 @@ class _ChartsScreenState extends State<ChartsScreen>
                               return Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.white.withOpacity(0.05) : AppTheme.alabaster,
+                                  color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.alabaster,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: accentColor.withOpacity(0.2)),
+                                  border: Border.all(color: accentColor.withValues(alpha: 0.2)),
                                 ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,7 +707,7 @@ class _ChartsScreenState extends State<ChartsScreen>
             const SizedBox(height: 24),
             MatteCard(
               height: 260,
-              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.skyBlue.withOpacity(0.03),
+              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.skyBlue.withValues(alpha: 0.03),
               padding: const EdgeInsets.only(top: 24, right: 20, bottom: 10),
               child: LineChart(
                 LineChartData(
@@ -738,7 +738,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     drawVerticalLine: false,
                     horizontalInterval: 5,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                       strokeWidth: 1,
                     ),
                   ),
@@ -793,8 +793,8 @@ class _ChartsScreenState extends State<ChartsScreen>
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.scooter.withOpacity(0.2),
-                            AppTheme.scooter.withOpacity(0.0),
+                            AppTheme.scooter.withValues(alpha: 0.2),
+                            AppTheme.scooter.withValues(alpha: 0.0),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -806,7 +806,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     horizontalLines: [
                       HorizontalLine(
                         y: 18.5,
-                        color: Colors.orange.withOpacity(0.3),
+                        color: Colors.orange.withValues(alpha: 0.3),
                         strokeWidth: 1,
                         dashArray: [5, 5],
                         label: HorizontalLineLabel(
@@ -817,7 +817,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                       ),
                       HorizontalLine(
                         y: 25,
-                        color: Colors.red.withOpacity(0.3),
+                        color: Colors.red.withValues(alpha: 0.3),
                         strokeWidth: 1,
                         dashArray: [5, 5],
                         label: HorizontalLineLabel(
@@ -901,7 +901,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                   BarChartRodData(
                     toY: daySum,
                     gradient: LinearGradient(
-                      colors: [color, color.withOpacity(0.6)],
+                      colors: [color, color.withValues(alpha: 0.6)],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -910,7 +910,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: chartMaxY,
-                      color: isDark ? Colors.white.withOpacity(0.05) : AppTheme.darkCharcoal.withOpacity(0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                     ),
                   ),
                 ],
@@ -946,7 +946,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                   letterSpacing: 0.5,
                                 ),
                               ),
-                              Icon(Icons.trending_up, color: color.withOpacity(0.5), size: 18),
+                              Icon(Icons.trending_up, color: color.withValues(alpha: 0.5), size: 18),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -1022,7 +1022,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         drawVerticalLine: false,
                         horizontalInterval: chartMaxY / 5,
                         getDrawingHorizontalLine: (value) => FlLine(
-                          color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                          color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                           strokeWidth: 1,
                         ),
                       ),
@@ -1053,7 +1053,7 @@ class _ChartsScreenState extends State<ChartsScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(range,

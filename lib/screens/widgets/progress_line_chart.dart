@@ -106,7 +106,7 @@ class ProgressLineChart extends StatelessWidget {
               return spotIndexes.map((index) {
                 return TouchedSpotIndicatorData(
                   FlLine(
-                    color: const Color(0xFF0D9488).withOpacity(0.3),
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.3),
                     strokeWidth: 4,
                     dashArray: [8, 4],
                   ),
@@ -184,7 +184,7 @@ class ProgressLineChart extends StatelessWidget {
             horizontalLines: [
               HorizontalLine(
                 y: 18.5,
-                color: Colors.orange.withOpacity(0.2),
+                color: Colors.orange.withValues(alpha: 0.2),
                 strokeWidth: 2,
                 dashArray: [5, 5],
                 label: HorizontalLineLabel(
@@ -193,13 +193,13 @@ class ProgressLineChart extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
-                      color: Colors.orange.withOpacity(0.5)),
+                      color: Colors.orange.withValues(alpha: 0.5)),
                   labelResolver: (line) => 'Healthy Min',
                 ),
               ),
               HorizontalLine(
                 y: 25.0,
-                color: Colors.red.withOpacity(0.2),
+                color: Colors.red.withValues(alpha: 0.2),
                 strokeWidth: 2,
                 dashArray: [5, 5],
                 label: HorizontalLineLabel(
@@ -208,7 +208,7 @@ class ProgressLineChart extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red.withOpacity(0.5)),
+                      color: Colors.red.withValues(alpha: 0.5)),
                   labelResolver: (line) => 'Overweight',
                 ),
               ),
@@ -236,8 +236,8 @@ class ProgressLineChart extends StatelessWidget {
                 show: true,
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF0D9488).withOpacity(0.15),
-                    const Color(0xFF0D9488).withOpacity(0.0),
+                    const Color(0xFF0D9488).withValues(alpha: 0.15),
+                    const Color(0xFF0D9488).withValues(alpha: 0.0),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
