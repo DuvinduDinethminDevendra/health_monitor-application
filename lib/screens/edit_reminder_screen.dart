@@ -259,10 +259,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(16.0),
-                  border: Border.all(color: accent.withOpacity(0.3)),
+                  border: Border.all(color: accent.withValues(alpha: 0.3)),
                   boxShadow: [
                     BoxShadow(
-                      color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
+                      color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -302,10 +302,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05)),
+                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.05)),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
+                    color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -334,10 +334,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05)),
+                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.05)),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
+                    color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -381,7 +381,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                           color: _alertStyle == AlertStyle.banner ? accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(26),
                           boxShadow: _alertStyle == AlertStyle.banner ? [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
                           ] : [],
                         ),
                         child: Center(
@@ -405,7 +405,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                           color: _alertStyle == AlertStyle.alarm ? accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(26),
                           boxShadow: _alertStyle == AlertStyle.alarm ? [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
                           ] : [],
                         ),
                         child: Center(
@@ -446,10 +446,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: active ? accent.withOpacity(0.1) : Colors.transparent,
+                      color: active ? accent.withValues(alpha: 0.1) : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: active ? accent.withOpacity(0.1) : Colors.grey.withOpacity(0.3),
+                        color: active ? accent.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -493,7 +493,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                     ],
                   ),
                   selected: isActive,
-                  selectedColor: accent.withOpacity(0.1),
+                  selectedColor: accent.withValues(alpha: 0.1),
                   backgroundColor: Colors.transparent,
                   showCheckmark: false,
                   labelStyle: TextStyle(
@@ -503,7 +503,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                     side: BorderSide(
-                      color: isActive ? Colors.transparent : Colors.grey.withOpacity(0.3),
+                      color: isActive ? Colors.transparent : Colors.grey.withValues(alpha: 0.3),
                     ),
                   ),
                   onSelected: (_) => setState(() => _soundName = opt['value'] as String),
@@ -528,7 +528,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   _vibration ? Icons.vibration : Icons.phone_android,
                   color: _vibration ? accent : Colors.grey,
                 ),
-                activeColor: accent,
+                activeThumbColor: accent,
                 value: _vibration,
                 onChanged: (v) => setState(() => _vibration = v),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

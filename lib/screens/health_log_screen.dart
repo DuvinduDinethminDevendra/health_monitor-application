@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,10 +26,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
   List<HealthLog> _logs = [];
   bool _isLoading = true;
   String? _errorMessage;
-  String _selectedFilter = 'All';
+  final String _selectedFilter = 'All';
   DateTime? _selectedViewDate;
   bool _isComparisonMode = false;
-  String _systemUnit = 'metric';
+  final String _systemUnit = 'metric';
 
   final List<String> _availableTags = [
     '🏋️ Post-Workout',
@@ -349,7 +348,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Form(
                   key: formKey,
@@ -410,7 +409,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           height: 120,
                                           decoration: BoxDecoration(
                                             color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
-                                                .withOpacity(0.5),
+                                                .withValues(alpha: 0.5),
                                             borderRadius:
                                                 BorderRadius.circular(16),
                                             border: Border.all(
@@ -487,7 +486,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                           height: 120,
                                           decoration: BoxDecoration(
                                             color: (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC))
-                                                .withOpacity(0.5),
+                                                .withValues(alpha: 0.5),
                                             borderRadius:
                                                 BorderRadius.circular(16),
                                             border: Border.all(
@@ -520,10 +519,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.6) : Colors.white.withOpacity(0.6)),
+                                  color: (isDark ? const Color(0xFF0A2A3F).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.6)),
                                   border: Border.all(
                                       color: (isDark ? Colors.white12 : const Color(0xFFE2E8F0))
-                                          .withOpacity(0.5)),
+                                          .withValues(alpha: 0.5)),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Column(
@@ -582,7 +581,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                   startValue: 10,
                                                   endValue: 18.5,
                                                   color: Colors.orange
-                                                      .withOpacity(0.8),
+                                                      .withValues(alpha: 0.8),
                                                   startWidth: 0.15,
                                                   endWidth: 0.15,
                                                   sizeUnit: GaugeSizeUnit.factor),
@@ -590,7 +589,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                   startValue: 18.5,
                                                   endValue: 25,
                                                   color: const Color(0xFF0D9488)
-                                                      .withOpacity(0.8),
+                                                      .withValues(alpha: 0.8),
                                                   startWidth: 0.15,
                                                   endWidth: 0.15,
                                                   sizeUnit: GaugeSizeUnit.factor),
@@ -598,7 +597,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                   startValue: 25,
                                                   endValue: 30,
                                                   color: Colors.orange
-                                                      .withOpacity(0.8),
+                                                      .withValues(alpha: 0.8),
                                                   startWidth: 0.15,
                                                   endWidth: 0.15,
                                                   sizeUnit: GaugeSizeUnit.factor),
@@ -606,7 +605,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                                   startValue: 30,
                                                   endValue: 40,
                                                   color:
-                                                      Colors.red.withOpacity(0.8),
+                                                      Colors.red.withValues(alpha: 0.8),
                                                   startWidth: 0.15,
                                                   endWidth: 0.15,
                                                   sizeUnit: GaugeSizeUnit.factor),
@@ -990,7 +989,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
 
                                 if (ctx.mounted) Navigator.pop(ctx);
                                 _loadLogs();
-                                _showSuccessOverlay(context, _logs.length);
+                                if (context.mounted) _showSuccessOverlay(context, _logs.length);
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -1102,8 +1101,9 @@ class _HealthLogScreenState extends State<HealthLogScreen>
               if (logs.length > 1) ...[
                 Builder(builder: (context) {
                   final prevLog = logs[1];
-                  if (prevLog.unit != latestLog.unit)
+                  if (prevLog.unit != latestLog.unit) {
                     return const SizedBox.shrink();
+                  }
 
                   final diff = latestLog.weight - prevLog.weight;
                   final isGain = diff > 0;
@@ -1176,7 +1176,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   )
@@ -1255,12 +1255,12 @@ class _HealthLogScreenState extends State<HealthLogScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.9) : Colors.white.withOpacity(0.9)),
+        color: (isDark ? const Color(0xFF0A2A3F).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9)),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -1314,10 +1314,10 @@ class _HealthLogScreenState extends State<HealthLogScreen>
       right: 0,
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0A192F).withOpacity(0.98) : Colors.white.withOpacity(0.98),
+          color: isDark ? const Color(0xFF0A192F).withValues(alpha: 0.98) : Colors.white.withValues(alpha: 0.98),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -1632,7 +1632,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       left: 24,
                                       top: 75,
                                       child: _buildFloatingMetric('WAIST', 
-                                        latestWaist != null ? '${latestWaist}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
+                                        latestWaist != null ? '$latestWaist${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
                                         Icons.straighten,
                                         delta: (latestWaist != null && comparisonLog?.waist != null) 
                                             ? latestWaist - comparisonLog!.waist! : null),
@@ -1641,7 +1641,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       right: 24,
                                       top: 75,
                                       child: _buildFloatingMetric('HIPS', 
-                                        latestHip != null ? '${latestHip}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
+                                        latestHip != null ? '$latestHip${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
                                         Icons.accessibility_new,
                                         delta: (latestHip != null && comparisonLog?.hip != null) 
                                             ? latestHip - comparisonLog!.hip! : null),
@@ -1650,7 +1650,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       left: 24,
                                       bottom: 55,
                                       child: _buildFloatingMetric('CHEST', 
-                                        latestChest != null ? '${latestChest}${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
+                                        latestChest != null ? '$latestChest${displayLog.unit == 'metric' ? 'cm' : 'in'}' : '--', 
                                         Icons.fitbit,
                                         delta: (latestChest != null && comparisonLog?.chest != null) 
                                             ? latestChest - comparisonLog!.chest! : null),
@@ -1659,7 +1659,7 @@ class _HealthLogScreenState extends State<HealthLogScreen>
                                       right: 24,
                                       bottom: 55,
                                       child: _buildFloatingMetric('BODY FAT', 
-                                        latestBodyFat != null ? '${latestBodyFat}%' : '--', 
+                                        latestBodyFat != null ? '$latestBodyFat%' : '--', 
                                         Icons.percent,
                                         delta: (latestBodyFat != null && comparisonLog?.bodyFat != null) 
                                             ? latestBodyFat - comparisonLog!.bodyFat! : null),
