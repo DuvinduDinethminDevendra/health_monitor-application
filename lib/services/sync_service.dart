@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
@@ -59,9 +60,9 @@ class SyncService {
         await _healthLogRepo.updateSyncStatus(log.id!, 1);
       }
 
-      print("Sync completed successfully for user: $userId");
+      debugPrint("Sync completed successfully for user: $userId");
     } catch (e) {
-      print("Error during sync: $e");
+      debugPrint("Error during sync: $e");
     }
   }
 
@@ -107,9 +108,9 @@ class SyncService {
         await _healthLogRepo.upsertLog(log);
       }
 
-      print("Rehydration completed for user: $userId");
+      debugPrint("Rehydration completed for user: $userId");
     } catch (e) {
-      print("Error during rehydration: $e");
+      debugPrint("Error during rehydration: $e");
     }
   }
 
@@ -123,7 +124,7 @@ class SyncService {
           .set(goal.toMap());
       await _goalRepo.updateSyncStatus(goal.id!, 1);
     } catch (e) {
-      print("Error syncing goal: $e");
+      debugPrint("Error syncing goal: $e");
     }
   }
 
@@ -135,9 +136,9 @@ class SyncService {
           .collection('goals')
           .doc(goalId.toString())
           .delete();
-      print("Goal deleted from Firestore: $goalId");
+      debugPrint("Goal deleted from Firestore: $goalId");
     } catch (e) {
-      print("Error deleting goal from Firestore: $e");
+      debugPrint("Error deleting goal from Firestore: $e");
     }
   }
 
@@ -151,7 +152,7 @@ class SyncService {
           .set(activity.toMap());
       await _activityRepo.updateSyncStatus(activity.id!, 1);
     } catch (e) {
-      print("Error syncing activity: $e");
+      debugPrint("Error syncing activity: $e");
     }
   }
 
@@ -160,9 +161,9 @@ class SyncService {
     try {
       if (user.id == null) return;
       await _firestore.collection('users').doc(user.id).set(user.toMap(), SetOptions(merge: true));
-      print("User profile synced successfully: ${user.id}");
+      debugPrint("User profile synced successfully: ${user.id}");
     } catch (e) {
-      print("Error syncing user profile: $e");
+      debugPrint("Error syncing user profile: $e");
     }
   }
 }

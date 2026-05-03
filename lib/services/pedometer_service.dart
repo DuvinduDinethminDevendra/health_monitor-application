@@ -53,9 +53,7 @@ class PedometerService {
     try {
       _stepCountStream = Pedometer.stepCountStream.listen(
         (StepCount event) {
-          if (_initialStepOffset == null) {
-            _initialStepOffset = event.steps - provider.liveStepCount;
-          }
+          _initialStepOffset ??= event.steps - provider.liveStepCount;
           final int adjustedSteps = event.steps - _initialStepOffset!;
 
           if (adjustedSteps >= 0) {

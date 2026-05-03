@@ -165,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 40, height: 4,
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: AppTheme.heather.withOpacity(0.3),
+                    color: AppTheme.heather.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -194,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setState(() {}); // Update the main profile screen
                       },
                       selectedColor: AppTheme.scooter,
-                      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : (isDark ? Colors.white70 : AppTheme.sapphire),
                         fontWeight: FontWeight.w700,
@@ -251,7 +251,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
             onPressed: () async {
               await Provider.of<AuthService>(context, listen: false).logout();
-              if (mounted) {
+              if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                   (route) => false,
@@ -320,13 +320,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark 
-                              ? AppTheme.scooter.withOpacity(0.1) 
-                              : AppTheme.blueLagoon.withOpacity(0.05),
+                              ? AppTheme.scooter.withValues(alpha: 0.1) 
+                              : AppTheme.blueLagoon.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: Theme.of(context).brightness == Brightness.dark 
-                                ? AppTheme.scooter.withOpacity(0.2) 
-                                : AppTheme.blueLagoon.withOpacity(0.1),
+                                ? AppTheme.scooter.withValues(alpha: 0.2) 
+                                : AppTheme.blueLagoon.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Row(
@@ -358,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Switch.adaptive(
                               value: isDark,
                               onChanged: (_) => authService.toggleTheme(),
-                              activeColor: AppTheme.scooter,
+                              activeThumbColor: AppTheme.scooter,
                             ),
                           ],
                         ),
@@ -369,13 +369,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: Theme.of(context).brightness == Brightness.dark 
-                                ? AppTheme.scooter.withOpacity(0.1) 
-                                : AppTheme.blueLagoon.withOpacity(0.05),
+                                ? AppTheme.scooter.withValues(alpha: 0.1) 
+                                : AppTheme.blueLagoon.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: Theme.of(context).brightness == Brightness.dark 
-                                  ? AppTheme.scooter.withOpacity(0.2) 
-                                  : AppTheme.blueLagoon.withOpacity(0.1),
+                                  ? AppTheme.scooter.withValues(alpha: 0.2) 
+                                  : AppTheme.blueLagoon.withValues(alpha: 0.1),
                             ),
                           ),
                           child: Row(
@@ -423,16 +423,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ..._selectedInterests.map((topic) {
                             return Chip(
                               label: Text(_translateTopic(topic)),
-                              backgroundColor: AppTheme.scooter.withOpacity(0.1),
+                              backgroundColor: AppTheme.scooter.withValues(alpha: 0.1),
                               labelStyle: const TextStyle(
                                 color: AppTheme.scooter,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 12,
                               ),
-                              side: BorderSide(color: AppTheme.scooter.withOpacity(0.3)),
+                              side: BorderSide(color: AppTheme.scooter.withValues(alpha: 0.3)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             );
-                          }).toList(),
+                          }),
                           ActionChip(
                             avatar: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Colors.white),
                             label: Text(AppLocalizations.of(context)!.addMore),
@@ -484,7 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Expanded(
                           flex: 3,
                           child: DropdownButtonFormField<String>(
-                            value: _selectedGender,
+                            initialValue: _selectedGender,
                             isExpanded: true,
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.genderLabel,
@@ -578,7 +578,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.scooter : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? AppTheme.scooter : AppTheme.heather.withOpacity(0.3)),
+          border: Border.all(color: isSelected ? AppTheme.scooter : AppTheme.heather.withValues(alpha: 0.3)),
         ),
         child: Text(
           label,

@@ -81,7 +81,7 @@ class HealthTipsProvider with ChangeNotifier {
         _tips = results;
       }
     } catch (e, stacktrace) {
-      print("HealthTipsProvider Error: $e\\n$stacktrace");
+      debugPrint("HealthTipsProvider Error: $e\\n$stacktrace");
       _state = HealthTipsState.error;
       _errorMessage = 'Failed to load health tips. Please check your connection and try again.';
       _tips = [];
@@ -110,7 +110,7 @@ class HealthTipsProvider with ChangeNotifier {
         _tips = results;
       }
     } catch (e, stacktrace) {
-      print("HealthTipsProvider Error: $e\\n$stacktrace");
+      debugPrint("HealthTipsProvider Error: $e\\n$stacktrace");
       _state = HealthTipsState.error;
       _errorMessage = 'Failed to load health tips. Please check your connection and try again.';
       _tips = [];
