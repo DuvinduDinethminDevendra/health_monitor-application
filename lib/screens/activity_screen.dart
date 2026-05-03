@@ -825,9 +825,9 @@ class _LogActivitySheetState extends State<_LogActivitySheet> {
         left: 24, right: 24, top: 32,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.sapphire.withOpacity(0.97) : Colors.white,
+        color: isDark ? AppTheme.sapphire.withValues(alpha: 0.97) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
       ),
       child: SingleChildScrollView(
         child: Form(
@@ -877,7 +877,7 @@ class _LogActivitySheetState extends State<_LogActivitySheet> {
                               leading: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppTheme.scooter : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                                  color: isSelected ? AppTheme.scooter : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(_typeIcon(t),
@@ -891,7 +891,7 @@ class _LogActivitySheetState extends State<_LogActivitySheet> {
                               trailing: isSelected ? const Icon(Icons.check_circle_rounded, color: AppTheme.scooter) : null,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),

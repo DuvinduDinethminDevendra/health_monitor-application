@@ -236,7 +236,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
       height: 100,
       padding: const EdgeInsets.all(12),
       borderRadius: 16,
-      color: isDark ? color.withOpacity(0.85) : color,
+      color: isDark ? color.withValues(alpha: 0.85) : color,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +244,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: Colors.white, size: 16),
