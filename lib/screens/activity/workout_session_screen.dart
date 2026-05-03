@@ -11,18 +11,20 @@ import '../../repositories/goal_repository.dart';
 import '../../repositories/workout_record_repository.dart';
 import '../../services/auth_service.dart';
 import '../../theme/activity_theme.dart';
+import '../../theme/app_theme.dart';
+import '../../utils/ui_utils.dart';
 import '../../widgets/activity/activity_stat_card.dart';
 
 // ── Icon map for header card ──────────────────────────────────────────────────
-const Map<String, String> _kTypeEmoji = {
-  'Walking':  '🚶',
-  'Running':  '🏃',
-  'Cycling':  '🚴',
-  'Strength': '💪',
-  'Gym':      '💪',
-  'Yoga':     '🧘',
-  'Swimming': '🏊',
-  'Other':    '🏅',
+const Map<String, IconData> _kTypeIconsLarge = {
+  'Walking':  Icons.directions_walk_rounded,
+  'Running':  Icons.directions_run_rounded,
+  'Cycling':  Icons.directions_bike_rounded,
+  'Strength': Icons.fitness_center_rounded,
+  'Gym':      Icons.fitness_center_rounded,
+  'Yoga':     Icons.self_improvement_rounded,
+  'Swimming': Icons.pool_rounded,
+  'Other':    Icons.sports_rounded,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -216,20 +218,18 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Workout saved!'),
-          backgroundColor: ActivityTheme.success,
-        ),
+      UIUtils.showNotification(
+        context,
+        'Workout saved successfully!',
+        isError: false,
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save: $e'),
-          backgroundColor: ActivityTheme.error,
-        ),
+      UIUtils.showNotification(
+        context,
+        'Failed to save: $e',
+        isError: true,
       );
     }
   }
@@ -245,8 +245,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Keep Going'),
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: ActivityTheme.error),
+            TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppTheme.roseRed),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Discard'),
           ),
@@ -305,96 +305,121 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // ── Section builders ───────────────────────────────────────────────────────
 
   AppBar _buildAppBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppBar(
-      backgroundColor: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
+      backgroundColor: Colors.transparent,
       elevation: 0,
-      iconTheme: IconThemeData(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A))),
+      iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.sapphire),
       title: Text(
         'Workout Session',
         style: TextStyle(
-          color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
-          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : AppTheme.sapphire,
+          fontWeight: FontWeight.w900,
+          fontSize: 18,
+          letterSpacing: -0.5,
         ),
       ),
     );
   }
 
   Widget _buildTypeHeaderCard() {
-    final emoji = _kTypeEmoji[widget.workoutType] ?? '🏅';
+    final icon = _kTypeIconsLarge[widget.workoutType] ?? Icons.sports_rounded;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: ActivityTheme.primaryBlue,
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.scooter,
+            AppTheme.scooter.withValues(alpha: 0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.scooter.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 36)),
-          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: Colors.white, size: 32),
+          ),
+          const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 widget.workoutType,
                 style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
                   color: Colors.white,
+                  letterSpacing: -0.5,
                 ),
               ),
-              Text(
-                _isPaused ? 'Paused' : 'In Progress',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.white.withAlpha(200),
-                ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _isPaused ? AppTheme.warmOrange : AppTheme.emeraldGreen,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isPaused ? 'Session Paused' : 'Live Tracking',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const Spacer(),
-          // Animated live indicator dot
-          if (!_isPaused)
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: Color(0xFF4ADE80),
-                shape: BoxShape.circle,
-              ),
-            ),
         ],
       ),
     );
   }
 
   Widget _buildLiveTimer(Duration elapsed) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return MatteCard(
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
           Text(
             _formatHMS(elapsed),
             style: TextStyle(
-              fontSize: 52,
-              fontWeight: FontWeight.bold,
-              color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
-              fontFeatures: [FontFeature.tabularFigures()],
+              fontSize: 56,
+              fontWeight: FontWeight.w900,
+              color: isDark ? Colors.white : AppTheme.sapphire,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              letterSpacing: -2,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Duration',
+          Text(
+            'DURATION',
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: ActivityTheme.primaryBlue,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.scooter,
+              letterSpacing: 2,
             ),
           ),
         ],
@@ -403,85 +428,77 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   Widget _buildLiveStepArc(int steps, int dailyGoal) {
-    // Progress relative to the full day goal so the arc is meaningful
-    final progress = dailyGoal > 0
-        ? (steps / dailyGoal).clamp(0.0, 1.0)
-        : 0.0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final progress = dailyGoal > 0 ? (steps / dailyGoal).clamp(0.0, 1.0) : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
+    return MatteCard(
+      padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Stack(
-            alignment: Alignment.topRight,
+            alignment: Alignment.center,
             children: [
-              // Arc painter (same math as _SemiCircleProgressPainter)
               SizedBox(
-                height: 150,
-                width: 190,
-                child: Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    CustomPaint(
-                      size: const Size(190, 150),
-                      painter: _SessionArcPainter(
-                        progress: progress,
-                        trackColor: Colors.grey.withAlpha(30),
-                        arcColor: ActivityTheme.primaryBlue,
-                        strokeWidth: 15,
-                      ),
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          steps.toString(),
-                          style: TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.bold,
-                            color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
-                            height: 1.0,
-                          ),
-                        ),
-                        Text(
-                          'session steps',
-                          style: TextStyle(fontSize: 12, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ),
-                  ],
+                height: 160,
+                width: 200,
+                child: CustomPaint(
+                  painter: _SessionArcPainter(
+                    progress: progress,
+                    trackColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
+                    arcColor: AppTheme.scooter,
+                    strokeWidth: 16,
+                  ),
                 ),
               ),
-              // "● Live" pill badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: ActivityTheme.primaryBlue.withAlpha(22),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: ActivityTheme.primaryBlue.withAlpha(60)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.circle, size: 7, color: ActivityTheme.primaryBlue),
-                    SizedBox(width: 4),
-                    Text(
-                      'Live',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: ActivityTheme.primaryBlue,
-                      ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 20),
+                  Text(
+                    steps.toString(),
+                    style: TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : AppTheme.sapphire,
+                      letterSpacing: -1,
                     ),
-                  ],
+                  ),
+                  Text(
+                    'SESSION STEPS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.heather,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.emeraldGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.emeraldGreen.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.bolt_rounded, size: 12, color: AppTheme.emeraldGreen),
+                      const SizedBox(width: 4),
+                      Text(
+                        'LIVE',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.emeraldGreen,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -492,38 +509,41 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   Widget _buildQuickStatsRow(int steps) {
-    return Row(
-      children: [
-        Expanded(
-          child: ActivityStatCard(
-            title: 'Distance',
-            value: _distanceKm(steps).toStringAsFixed(2),
-            unit: 'km',
-            icon: Icons.map_outlined,
-            iconColor: ActivityTheme.tealAccent,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ActivityStatCard(
+              title: 'Distance',
+              value: _distanceKm(steps).toStringAsFixed(2),
+              unit: 'km',
+              icon: Icons.map_outlined,
+              iconColor: AppTheme.emeraldGreen,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ActivityStatCard(
-            title: 'Calories',
-            value: _calories(steps).toString(),
-            unit: 'kcal',
-            icon: Icons.local_fire_department_outlined,
-            iconColor: ActivityTheme.warning,
+          const SizedBox(width: 10),
+          Expanded(
+            child: ActivityStatCard(
+              title: 'Calories',
+              value: _calories(steps).toString(),
+              unit: 'kcal',
+              icon: Icons.local_fire_department_outlined,
+              iconColor: AppTheme.warmOrange,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ActivityStatCard(
-            title: 'Pace',
-            value: _paceString(steps),
-            unit: 'min/km',
-            icon: Icons.speed_outlined,
-            iconColor: ActivityTheme.primaryBlue,
+          const SizedBox(width: 10),
+          Expanded(
+            child: ActivityStatCard(
+              title: 'Pace',
+              value: _paceString(steps),
+              unit: 'min/km',
+              icon: Icons.speed_outlined,
+              iconColor: AppTheme.scooter,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -550,32 +570,43 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   Widget _buildGridCell(String label, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 6, offset: const Offset(0, 2)),
-        ],
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return MatteCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 16,
       child: Row(
         children: [
-          Icon(icon, color: color, size: 22),
-          SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(label, style: TextStyle(fontSize: 11, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)))),
-                SizedBox(height: 2),
+                Text(
+                  label.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.heather,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : AppTheme.sapphire,
+                    letterSpacing: -0.5,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -588,20 +619,21 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   Widget _buildRoutePlaceholder() {
-    return Container(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return MatteCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        border: Border.all(color: Colors.grey.withAlpha(40)),
-      ),
+      borderRadius: 16,
       child: Row(
         children: [
-          Icon(Icons.map_outlined, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)), size: 22),
-          SizedBox(width: 12),
+          Icon(Icons.map_outlined, color: AppTheme.heather, size: 22),
+          const SizedBox(width: 12),
           Text(
             'Route tracking not enabled',
-            style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B)), fontSize: 14),
+            style: TextStyle(
+              color: isDark ? Colors.white70 : AppTheme.heather,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
@@ -613,49 +645,54 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       children: [
         // Pause / Resume
         Expanded(
+          flex: 2,
           child: OutlinedButton.icon(
-            icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
+            icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
             label: Text(_isPaused ? 'Resume' : 'Pause'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: ActivityTheme.primaryBlue,
-              side: const BorderSide(color: ActivityTheme.primaryBlue),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              foregroundColor: AppTheme.scooter,
+              side: const BorderSide(color: AppTheme.scooter, width: 2),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              textStyle: const TextStyle(fontWeight: FontWeight.w900),
             ),
             onPressed: _isPaused ? _resume : _pause,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         // Stop (discard)
-        Expanded(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.stop),
-            label: const Text('Stop'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: ActivityTheme.error,
-              side: const BorderSide(color: ActivityTheme.error),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.roseRed.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.roseRed.withValues(alpha: 0.2)),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.stop_rounded, color: AppTheme.roseRed),
+            tooltip: 'Discard',
             onPressed: _handleStop,
+            padding: const EdgeInsets.all(14),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         // Finish & Save
         Expanded(
+          flex: 3,
           child: ElevatedButton.icon(
             icon: _isSaving
                 ? const SizedBox(
                     width: 16, height: 16,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                : const Icon(Icons.check),
+                : const Icon(Icons.check_circle_rounded),
             label: Text(_isSaving ? 'Saving…' : 'Finish'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: ActivityTheme.primaryBlue,
+              backgroundColor: AppTheme.scooter,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+              textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
             onPressed: _isSaving ? null : _handleFinish,
           ),
@@ -665,23 +702,21 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   Widget _buildInsightStrip() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: ActivityTheme.primaryBlue.withAlpha(18),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ActivityTheme.primaryBlue.withAlpha(40)),
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return MatteCard(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 16,
       child: Row(
         children: [
-          Icon(Icons.auto_awesome, color: ActivityTheme.primaryBlue, size: 20),
-          SizedBox(width: 10),
+          const Icon(Icons.auto_awesome_rounded, color: AppTheme.scooter, size: 22),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               _insightText,
               style: TextStyle(
                 fontSize: 13,
-                color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A)),
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppTheme.sapphire,
                 height: 1.4,
               ),
             ),
@@ -711,7 +746,6 @@ class _SessionArcPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height);
     final radius = min(size.width / 2, size.height) - strokeWidth / 2;
 
     final trackPaint = Paint()
@@ -727,13 +761,13 @@ class _SessionArcPainter extends CustomPainter {
       ..strokeCap   = StrokeCap.round;
 
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
+      Rect.fromCircle(center: Offset(size.width / 2, size.height), radius: radius),
       pi, pi, false, trackPaint,
     );
 
     if (progress > 0) {
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
+        Rect.fromCircle(center: Offset(size.width / 2, size.height), radius: radius),
         pi, pi * progress, false, arcPaint,
       );
     }

@@ -17,6 +17,7 @@ class AppTheme {
   static const Color heather = Color(0xFFBCC5CC);
   static const Color blueLagoon = Color(0xFF025F67);
   static const Color sapphire = Color(0xFF063154);
+  static const Color roseRed = Color(0xFFEF4444);
 
   // Functional aliases
   static const Color backgroundLight = alabaster;
