@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 void main() async {
@@ -7,7 +8,7 @@ void main() async {
   final resources = data['Result']?['Resources']?['Resource'] as List?;
 
   if (resources != null) {
-    print("Total resources: ${resources.length}\n");
+    debugPrint("Total resources: ${resources.length}\n");
     
     int hasImage = 0;
     int noImage = 0;
@@ -18,10 +19,10 @@ void main() async {
       final imageUrl = item['ImageUrl'] ?? 'NO IMAGE FIELD';
       final imageAlt = item['ImageAlt'] ?? 'NO ALT';
       
-      print("[$i] Title: $title");
-      print("    ImageUrl: $imageUrl");
-      print("    ImageAlt: $imageAlt");
-      print("");
+      debugPrint("[$i] Title: $title");
+      debugPrint("    ImageUrl: $imageUrl");
+      debugPrint("    ImageAlt: $imageAlt");
+      debugPrint("");
       
       if (imageUrl != null && imageUrl.toString().isNotEmpty && imageUrl != 'NO IMAGE FIELD') {
         hasImage++;
@@ -30,8 +31,8 @@ void main() async {
       }
     }
     
-    print("---");
-    print("With image: $hasImage / 15 sampled");
-    print("Without image: $noImage / 15 sampled");
+    debugPrint("---");
+    debugPrint("With image: $hasImage / 15 sampled");
+    debugPrint("Without image: $noImage / 15 sampled");
   }
 }
