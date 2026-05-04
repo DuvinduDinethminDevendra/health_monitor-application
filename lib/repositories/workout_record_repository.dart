@@ -1,3 +1,4 @@
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/workout_record.dart';
 
@@ -7,6 +8,11 @@ class WorkoutRecordRepository {
   Future<int> insertWorkout(WorkoutRecord workout) async {
     final db = await _dbHelper.database;
     return await db.insert('workout_records', workout.toMap());
+  }
+
+  Future<void> upsertWorkout(WorkoutRecord workout) async {
+    final db = await _dbHelper.database;
+    await db.insert('workout_records', workout.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<WorkoutRecord>> getWorkoutsByUser(String userId) async {
@@ -56,6 +62,26 @@ class WorkoutRecordRepository {
     final db = await _dbHelper.database;
     await db.delete(
       'workout_records',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<WorkoutRecord>> getUnsyncedWorkouts(String userId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'workout_records',
+      where: 'user_id = ? AND sync_status = 0',
+      whereArgs: [userId],
+    );
+    return maps.map((map) => WorkoutRecord.fromMap(map)).toList();
+  }
+
+  Future<void> updateSyncStatus(int id, int status) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'workout_records',
+      {'sync_status': status},
       where: 'id = ?',
       whereArgs: [id],
     );

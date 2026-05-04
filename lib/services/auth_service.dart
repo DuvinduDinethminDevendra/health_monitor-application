@@ -88,7 +88,7 @@ class AuthService with ChangeNotifier {
       }
       return isNewUser;
     } catch (e) {
-      print("Error in Google Sign In: $e");
+      debugPrint("Error in Google Sign In: $e");
       rethrow;
     }
   }
@@ -118,7 +118,7 @@ class AuthService with ChangeNotifier {
       }
       return e.message ?? 'Registration failed. Please try again.';
     } catch (e) {
-      print("Error in register: $e");
+      debugPrint("Error in register: $e");
       return 'An unexpected error occurred.';
     }
   }
@@ -142,7 +142,7 @@ class AuthService with ChangeNotifier {
       }
       return e.message ?? 'Login failed.';
     } catch (e) {
-      print("Error in sign in: $e");
+      debugPrint("Error in sign in: $e");
       return 'An unexpected error occurred.';
     }
   }
@@ -166,7 +166,7 @@ class AuthService with ChangeNotifier {
       }
       return e.message ?? 'Login failed. Please try again.';
     } catch (e) {
-      print("Error in login: $e");
+      debugPrint("Error in login: $e");
       return 'An unexpected error occurred.';
     }
   }
@@ -238,7 +238,7 @@ class AuthService with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print("Error loading theme: $e");
+      debugPrint("Error loading theme: $e");
     }
   }
 }

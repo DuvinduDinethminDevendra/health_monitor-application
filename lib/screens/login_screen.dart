@@ -6,6 +6,8 @@ import 'register_screen.dart';
 import 'dashboard_screen.dart';
 import 'profile_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/descenders_footer.dart';
+import '../utils/ui_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -49,9 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
+      UIUtils.showNotification(context, error, isError: true);
     } else {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardScreen()));
     }
@@ -75,9 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${AppLocalizations.of(context)!.errGoogleSignInFailed}: $e'), backgroundColor: Colors.red),
-      );
+      UIUtils.showNotification(context, '${AppLocalizations.of(context)!.errGoogleSignInFailed}: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -119,7 +117,10 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Center(
             child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: MatteCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                MatteCard(
               padding: EdgeInsets.all(_siSize(32)),
               color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
               child: Form(
@@ -127,18 +128,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.health_and_safety_rounded, size: 64, color: AppTheme.scooter),
-                    SizedBox(height: 16),
-                    Text(
-                      AppLocalizations.of(context)!.titleWelcomeBack,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: _siSize(28),
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : AppTheme.sapphire,
-                        letterSpacing: -1,
+                    Icon(Icons.health_and_safety_rounded, size: 48, color: AppTheme.scooter),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.scooter.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(color: AppTheme.scooter.withValues(alpha: 0.2), width: 1.5),
+                      ),
+                      child: Text(
+                        'UPLIFT HEALTH',
+                        style: TextStyle(
+                          fontSize: _siSize(11),
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.scooter,
+                          letterSpacing: 2.0,
+                          fontFamily: 'Outfit',
+                        ),
                       ),
                     ),
+                    SizedBox(height: 8),
+                      Text(
+                        AppLocalizations.of(context)!.titleWelcomeBack,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: _siSize(32),
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : AppTheme.sapphire,
+                          letterSpacing: -1,
+                        ),
+                      ),
                     Text(
                       AppLocalizations.of(context)!.descLogin,
                       textAlign: TextAlign.center,
@@ -153,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelStyle: TextStyle(color: isDark ? Colors.white38 : AppTheme.heather),
                         prefixIcon: Icon(Icons.email_outlined, color: AppTheme.scooter),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       validator: (value) => (value == null || !value.contains('@')) ? AppLocalizations.of(context)!.errInvalidEmail : null,
@@ -172,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                       ),
                       validator: (value) => (value == null || value.length < 6) ? AppLocalizations.of(context)!.errPasswordShort : null,
@@ -228,11 +248,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-              ),
+                ),
+                const SizedBox(height: 24),
+                const DescendersFooter(showCreatedBy: true),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
         ),
       ),
-    );
+    ));
   }
 }

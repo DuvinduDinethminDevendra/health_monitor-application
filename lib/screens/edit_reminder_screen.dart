@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/reminder.dart';
 import '../providers/reminders_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/ui_utils.dart';
 
 class EditReminderScreen extends StatefulWidget {
   /// Pass an existing reminder to edit, or null to create a new one.
@@ -25,7 +26,6 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool get _isCreateMode => widget.reminder == null;
-  bool get _isCustom => widget.reminder == null || widget.reminder!.id > 6;
 
   static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   static const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -141,9 +141,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     if (_selectedTimes.length > 1) {
       setState(() => _selectedTimes.removeAt(index));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must have at least one time scheduled.')),
-      );
+      UIUtils.showNotification(context, 'You must have at least one time scheduled.', isError: true);
     }
   }
 
@@ -181,15 +179,9 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isCreateMode
-              ? '"$title" scheduled'
-              : '"$title" updated'),
-          backgroundColor: const Color(0xFFAB47BC),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      UIUtils.showNotification(
+        context, 
+        _isCreateMode ? '"$title" scheduled' : '"$title" updated'
       );
       Navigator.pop(context);
     }
@@ -219,13 +211,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     if (confirmed == true && mounted) {
       await context.read<RemindersProvider>().deleteReminder(widget.reminder!);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('"${widget.reminder!.title}" deleted'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+        UIUtils.showNotification(context, '"${widget.reminder!.title}" deleted', isError: true);
         Navigator.pop(context);
       }
     }
@@ -260,10 +246,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(16.0),
-                  border: Border.all(color: accent.withOpacity(0.3)),
+                  border: Border.all(color: accent.withValues(alpha: 0.3)),
                   boxShadow: [
                     BoxShadow(
-                      color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
+                      color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -303,10 +289,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05)),
+                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.05)),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
+                    color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -335,10 +321,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05)),
+                border: Border.all(color: isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.05)),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.black.withOpacity(0.02),
+                    color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -382,7 +368,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                           color: _alertStyle == AlertStyle.banner ? accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(26),
                           boxShadow: _alertStyle == AlertStyle.banner ? [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
                           ] : [],
                         ),
                         child: Center(
@@ -406,7 +392,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                           color: _alertStyle == AlertStyle.alarm ? accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(26),
                           boxShadow: _alertStyle == AlertStyle.alarm ? [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
                           ] : [],
                         ),
                         child: Center(
@@ -447,10 +433,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: active ? accent.withOpacity(0.1) : Colors.transparent,
+                      color: active ? accent.withValues(alpha: 0.1) : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: active ? accent.withOpacity(0.1) : Colors.grey.withOpacity(0.3),
+                        color: active ? accent.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -494,7 +480,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                     ],
                   ),
                   selected: isActive,
-                  selectedColor: accent.withOpacity(0.1),
+                  selectedColor: accent.withValues(alpha: 0.1),
                   backgroundColor: Colors.transparent,
                   showCheckmark: false,
                   labelStyle: TextStyle(
@@ -504,7 +490,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                     side: BorderSide(
-                      color: isActive ? Colors.transparent : Colors.grey.withOpacity(0.3),
+                      color: isActive ? Colors.transparent : Colors.grey.withValues(alpha: 0.3),
                     ),
                   ),
                   onSelected: (_) => setState(() => _soundName = opt['value'] as String),
@@ -529,7 +515,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   _vibration ? Icons.vibration : Icons.phone_android,
                   color: _vibration ? accent : Colors.grey,
                 ),
-                activeColor: accent,
+                activeThumbColor: accent,
                 value: _vibration,
                 onChanged: (v) => setState(() => _vibration = v),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

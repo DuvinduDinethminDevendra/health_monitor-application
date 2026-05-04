@@ -71,7 +71,7 @@ class HealthMonitorApp extends StatelessWidget {
             statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
           ));
           return MaterialApp(
-            title: 'Health Monitor',
+            title: 'Uplift Health',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,

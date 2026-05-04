@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
 import '../repositories/goal_repository.dart';
+import '../repositories/step_record_repository.dart';
 import '../services/auth_service.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
@@ -14,7 +15,8 @@ import '../l10n/app_localizations.dart';
 
 class ChartsScreen extends StatefulWidget {
   final int initialIndex;
-  const ChartsScreen({super.key, this.initialIndex = 0});
+  final bool isActive;
+  const ChartsScreen({super.key, this.initialIndex = 0, this.isActive = false});
 
   @override
   State<ChartsScreen> createState() => _ChartsScreenState();
@@ -35,6 +37,14 @@ class _ChartsScreenState extends State<ChartsScreen>
     super.initState();
     _tabController = TabController(
         length: 2, vsync: this, initialIndex: widget.initialIndex > 1 ? 1 : widget.initialIndex);
+  }
+
+  @override
+  void didUpdateWidget(ChartsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _loadData();
+    }
   }
 
   @override
@@ -72,7 +82,9 @@ class _ChartsScreenState extends State<ChartsScreen>
     }
 
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    if (_activities.isEmpty && _goals.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     
     debugPrint('[ChartsScreen] Loading data for userId: $userId');
 
@@ -84,8 +96,20 @@ class _ChartsScreenState extends State<ChartsScreen>
       
       debugPrint('[ChartsScreen] Date Range: $startDate to $endDate');
 
-      final activities = await ActivityRepository()
+      final rawActivities = await ActivityRepository()
           .getActivitiesByDateRange(userId, startDate, endDate);
+      final stepRecords = await StepRecordRepository().getLast30DaysSteps(userId);
+      
+      final activities = rawActivities.where((a) => a.type.toLowerCase() != 'steps').toList();
+      for (var rec in stepRecords) {
+        activities.add(Activity(
+          userId: userId,
+          type: 'steps',
+          value: rec.stepCount.toDouble(),
+          date: rec.date,
+          duration: 0,
+        ));
+      }
       final healthLogs = await HealthLogRepository()
           .getLogsByDateRange(userId, startDate, endDate);
       final goals = await _goalRepo.getGoalsByUser(userId);
@@ -127,7 +151,7 @@ class _ChartsScreenState extends State<ChartsScreen>
             margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0A2A3F) : Colors.black.withOpacity(0.05),
+              color: isDark ? const Color(0xFF0A2A3F) : Colors.black.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
             ),
             child: TabBar(
@@ -139,14 +163,14 @@ class _ChartsScreenState extends State<ChartsScreen>
                 color: AppTheme.blueLagoon,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.blueLagoon.withOpacity(0.3),
+                    color: AppTheme.blueLagoon.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               labelColor: Colors.white,
-              unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withOpacity(0.4),
+              unselectedLabelColor: isDark ? Colors.white38 : AppTheme.sapphire.withValues(alpha: 0.4),
               labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
               tabs: [
                 Tab(text: AppLocalizations.of(context)!.tabActivity.toUpperCase()),
@@ -190,7 +214,11 @@ class _ChartsScreenState extends State<ChartsScreen>
       const Color(0xFF00ACC1), // Cyan
     ];
 
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    
     final dailyGoals = _goals.where((g) {
+      if (g.isCompleted || g.deadline.compareTo(todayStr) < 0) return false; // Filter out past goals
       final cat = g.category.toLowerCase();
       return cat == 'sleep' ||
           cat == 'water' ||
@@ -198,8 +226,8 @@ class _ChartsScreenState extends State<ChartsScreen>
           cat.contains('(daily)');
     }).toList();
 
-    final now = DateTime.now();
     final cumulativeGoals = _goals.where((g) {
+      if (g.isCompleted || g.deadline.compareTo(todayStr) < 0) return false; // Filter out past goals
       final cat = g.category.toLowerCase();
       final isCumulative = !(cat == 'sleep' ||
           cat == 'water' ||
@@ -248,19 +276,22 @@ class _ChartsScreenState extends State<ChartsScreen>
             SizedBox(height: 16),
             MatteCard(
               height: 280,
-              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.warmOrange.withOpacity(0.03),
+              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.warmOrange.withValues(alpha: 0.03),
               padding: const EdgeInsets.fromLTRB(10, 24, 24, 10),
               child: BarChart(
                 BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
+                  alignment: cumulativeGoals.length <= 1 ? BarChartAlignment.center : BarChartAlignment.spaceAround,
                   maxY: 110, // Extra space for labels
                   barTouchData: BarTouchData(
                     touchTooltipData: BarTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final goal = cumulativeGoals[groupIndex];
                         final deadlineStr = DateFormat('MMM dd').format(DateTime.parse(goal.deadline));
+                        final displayUnit = goal.category.toLowerCase().contains('step') ? 'steps' : goal.unit;
                         return BarTooltipItem(
-                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}\nDeadline: $deadlineStr\n${rod.toY.toInt()}%',
+                          '${goal.title}\n${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} $displayUnit\nDeadline: $deadlineStr\n${rod.toY.toInt()}%',
                           const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                         );
                       },
@@ -310,7 +341,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     drawVerticalLine: false,
                     horizontalInterval: 25,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                       strokeWidth: 1,
                     ),
                   ),
@@ -326,7 +357,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         BarChartRodData(
                           toY: percent,
                           gradient: LinearGradient(
-                            colors: [color, color.withOpacity(0.7)],
+                            colors: [color, color.withValues(alpha: 0.7)],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
@@ -335,7 +366,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: 100,
-                            color: isDark ? Colors.white.withOpacity(0.05) : AppTheme.darkCharcoal.withOpacity(0.05),
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                           ),
                         ),
                       ],
@@ -393,7 +424,7 @@ class _ChartsScreenState extends State<ChartsScreen>
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${goal.title} (${goal.unit})',
+                  Text('${goal.title} (${goal.category.toLowerCase().contains('step') ? 'steps' : goal.unit})',
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   GlassCard(
@@ -416,7 +447,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                 final dateStr =
                                     DateFormat('MMM dd').format(spotDate);
                                 return LineTooltipItem(
-                                  '$dateStr\n${spot.y.toStringAsFixed(1)} ${goal.unit}',
+                                  '$dateStr\n${spot.y.toStringAsFixed(1)} ${goal.category.toLowerCase().contains('step') ? 'steps' : goal.unit}',
                                   TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold),
@@ -429,14 +460,14 @@ class _ChartsScreenState extends State<ChartsScreen>
                           show: true,
                           drawVerticalLine: false,
                           getDrawingHorizontalLine: (value) => FlLine(
-                              color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                              color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                               strokeWidth: 1),
                         ),
                         extraLinesData: ExtraLinesData(
                           horizontalLines: [
                             HorizontalLine(
                               y: goal.targetValue,
-                              color: Colors.redAccent.withOpacity(0.6),
+                              color: Colors.redAccent.withValues(alpha: 0.6),
                               strokeWidth: 1.5,
                               dashArray: [5, 5],
                               label: HorizontalLineLabel(
@@ -504,7 +535,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                             ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: color.withOpacity(0.1),
+                              color: color.withValues(alpha: 0.1),
                             ),
                           ),
                         ],
@@ -554,7 +585,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                       child: Icon(
                         watermarkIcon,
                         size: 100,
-                        color: accentColor.withOpacity(0.07),
+                        color: accentColor.withValues(alpha: 0.07),
                       ),
                     ),
                     Padding(
@@ -578,7 +609,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: accentColor.withOpacity(0.15),
+                                  color: accentColor.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -604,9 +635,9 @@ class _ChartsScreenState extends State<ChartsScreen>
                               return Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: isDark ? Colors.white.withOpacity(0.05) : AppTheme.alabaster,
+                                  color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.alabaster,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: accentColor.withOpacity(0.2)),
+                                  border: Border.all(color: accentColor.withValues(alpha: 0.2)),
                                 ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -707,23 +738,29 @@ class _ChartsScreenState extends State<ChartsScreen>
             const SizedBox(height: 24),
             MatteCard(
               height: 260,
-              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.skyBlue.withOpacity(0.03),
+              color: isDark ? const Color(0xFF0A2A3F) : AppTheme.skyBlue.withValues(alpha: 0.03),
               padding: const EdgeInsets.only(top: 24, right: 20, bottom: 10),
               child: LineChart(
                 LineChartData(
+                  minX: -0.5,
+                  maxX: _healthLogs.length > 1 ? (_healthLogs.length - 0.5) : 1.0,
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
                       fitInsideHorizontally: true,
                       fitInsideVertically: true,
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((spot) {
-                          final log = _healthLogs[spot.x.toInt()];
-                          return LineTooltipItem(
-                            'BMI: ${log.bmi}\n${log.date}',
-                            const TextStyle(
-                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                          );
-                        }).toList();
+                          final int idx = spot.x.round();
+                          if (idx >= 0 && idx < _healthLogs.length) {
+                            final log = _healthLogs[idx];
+                            return LineTooltipItem(
+                              'BMI: ${log.bmi}\n${log.date}',
+                              const TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                            );
+                          }
+                          return null;
+                        }).whereType<LineTooltipItem>().toList();
                       },
                     ),
                   ),
@@ -732,7 +769,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     drawVerticalLine: false,
                     horizontalInterval: 5,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                       strokeWidth: 1,
                     ),
                   ),
@@ -778,17 +815,17 @@ class _ChartsScreenState extends State<ChartsScreen>
                       spots: _healthLogs.asMap().entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value.bmi)).toList(),
                       isCurved: true,
                       gradient: const LinearGradient(
-                        colors: [AppTheme.skyBlue, AppTheme.emeraldGreen],
+                        colors: [AppTheme.scooter, AppTheme.blueLagoon],
                       ),
                       barWidth: 4,
                       isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
+                      dotData: FlDotData(show: true),
                       belowBarData: BarAreaData(
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.skyBlue.withOpacity(0.2),
-                            AppTheme.skyBlue.withOpacity(0.0),
+                            AppTheme.scooter.withValues(alpha: 0.2),
+                            AppTheme.scooter.withValues(alpha: 0.0),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -800,7 +837,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     horizontalLines: [
                       HorizontalLine(
                         y: 18.5,
-                        color: Colors.orange.withOpacity(0.3),
+                        color: Colors.orange.withValues(alpha: 0.3),
                         strokeWidth: 1,
                         dashArray: [5, 5],
                         label: HorizontalLineLabel(
@@ -811,7 +848,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                       ),
                       HorizontalLine(
                         y: 25,
-                        color: Colors.red.withOpacity(0.3),
+                        color: Colors.red.withValues(alpha: 0.3),
                         strokeWidth: 1,
                         dashArray: [5, 5],
                         label: HorizontalLineLabel(
@@ -895,7 +932,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                   BarChartRodData(
                     toY: daySum,
                     gradient: LinearGradient(
-                      colors: [color, color.withOpacity(0.6)],
+                      colors: [color, color.withValues(alpha: 0.6)],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -904,7 +941,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: chartMaxY,
-                      color: isDark ? Colors.white.withOpacity(0.05) : AppTheme.darkCharcoal.withOpacity(0.05),
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                     ),
                   ),
                 ],
@@ -940,7 +977,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                                   letterSpacing: 0.5,
                                 ),
                               ),
-                              Icon(Icons.trending_up, color: color.withOpacity(0.5), size: 18),
+                              Icon(Icons.trending_up, color: color.withValues(alpha: 0.5), size: 18),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -1016,7 +1053,7 @@ class _ChartsScreenState extends State<ChartsScreen>
                         drawVerticalLine: false,
                         horizontalInterval: chartMaxY / 5,
                         getDrawingHorizontalLine: (value) => FlLine(
-                          color: isDark ? Colors.white.withOpacity(0.1) : AppTheme.darkCharcoal.withOpacity(0.05),
+                          color: isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.darkCharcoal.withValues(alpha: 0.05),
                           strokeWidth: 1,
                         ),
                       ),
@@ -1047,7 +1084,7 @@ class _ChartsScreenState extends State<ChartsScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(range,

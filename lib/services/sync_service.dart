@@ -1,11 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../repositories/goal_repository.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/health_log_repository.dart';
+import '../repositories/step_record_repository.dart';
 import '../models/user.dart';
 import '../models/goal.dart';
 import '../models/activity.dart';
 import '../models/health_log.dart';
+import '../models/step_record.dart';
+import '../repositories/workout_record_repository.dart';
+import '../models/workout_record.dart';
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
@@ -18,6 +23,8 @@ class SyncService {
   GoalRepository get _goalRepo => GoalRepository();
   ActivityRepository get _activityRepo => ActivityRepository();
   HealthLogRepository get _healthLogRepo => HealthLogRepository();
+  StepRecordRepository get _stepRecordRepo => StepRecordRepository();
+  WorkoutRecordRepository get _workoutRecordRepo => WorkoutRecordRepository();
 
   /// Syncs all unsynced local data to Firestore
   Future<void> syncData(String userId) async {
@@ -59,9 +66,33 @@ class SyncService {
         await _healthLogRepo.updateSyncStatus(log.id!, 1);
       }
 
-      print("Sync completed successfully for user: $userId");
+      // 4. Sync Step Records
+      final unsyncedSteps = await _stepRecordRepo.getUnsyncedRecords(userId);
+      for (var step in unsyncedSteps) {
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('step_records')
+            .doc(step.id.toString())
+            .set(step.toMap());
+        await _stepRecordRepo.updateSyncStatus(step.id!, 1);
+      }
+
+      // 5. Sync Workout Records
+      final unsyncedWorkouts = await _workoutRecordRepo.getUnsyncedWorkouts(userId);
+      for (var workout in unsyncedWorkouts) {
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('workout_records')
+            .doc(workout.id.toString())
+            .set(workout.toMap());
+        await _workoutRecordRepo.updateSyncStatus(workout.id!, 1);
+      }
+
+      debugPrint("Background sync completed for user: $userId");
     } catch (e) {
-      print("Error during sync: $e");
+      debugPrint("Error during sync: $e");
     }
   }
 
@@ -107,9 +138,35 @@ class SyncService {
         await _healthLogRepo.upsertLog(log);
       }
 
-      print("Rehydration completed for user: $userId");
+      // 4. Rehydrate Step Records
+      final stepsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('step_records')
+          .get();
+      for (var doc in stepsSnapshot.docs) {
+        final data = doc.data();
+        data['sync_status'] = 1;
+        final step = StepRecord.fromMap(data);
+        await _stepRecordRepo.upsertStepRecord(step);
+      }
+
+      // 5. Rehydrate Workout Records
+      final workoutsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('workout_records')
+          .get();
+      for (var doc in workoutsSnapshot.docs) {
+        final data = doc.data();
+        data['sync_status'] = 1;
+        final workout = WorkoutRecord.fromMap(data);
+        await _workoutRecordRepo.upsertWorkout(workout);
+      }
+
+      debugPrint("Rehydration completed for user: $userId");
     } catch (e) {
-      print("Error during rehydration: $e");
+      debugPrint("Error during rehydration: $e");
     }
   }
 
@@ -123,7 +180,7 @@ class SyncService {
           .set(goal.toMap());
       await _goalRepo.updateSyncStatus(goal.id!, 1);
     } catch (e) {
-      print("Error syncing goal: $e");
+      debugPrint("Error syncing goal: $e");
     }
   }
 
@@ -135,9 +192,9 @@ class SyncService {
           .collection('goals')
           .doc(goalId.toString())
           .delete();
-      print("Goal deleted from Firestore: $goalId");
+      debugPrint("Goal deleted from Firestore: $goalId");
     } catch (e) {
-      print("Error deleting goal from Firestore: $e");
+      debugPrint("Error deleting goal from Firestore: $e");
     }
   }
 
@@ -151,7 +208,7 @@ class SyncService {
           .set(activity.toMap());
       await _activityRepo.updateSyncStatus(activity.id!, 1);
     } catch (e) {
-      print("Error syncing activity: $e");
+      debugPrint("Error syncing activity: $e");
     }
   }
 
@@ -160,9 +217,9 @@ class SyncService {
     try {
       if (user.id == null) return;
       await _firestore.collection('users').doc(user.id).set(user.toMap(), SetOptions(merge: true));
-      print("User profile synced successfully: ${user.id}");
+      debugPrint("User profile synced successfully: ${user.id}");
     } catch (e) {
-      print("Error syncing user profile: $e");
+      debugPrint("Error syncing user profile: $e");
     }
   }
 }

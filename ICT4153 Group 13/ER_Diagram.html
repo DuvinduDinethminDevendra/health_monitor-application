@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      background-color: #080809;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    #erd {
+      width: 100%;
+      padding: 2rem;
+    }
+
+    /* THE SIMPLEST FIX: FORCE ALL TEXT INSIDE THE SVG TO BE BLACK */
+    svg text {
+      fill: #000000 !important;
+      font-weight: bold !important;
+    }
+
+    /* KEEP HEADER TITLES WHITE */
+    svg .entityLabel text,
+    svg .entityLabel tspan,
+    /* UNIVERSAL WHITE OVERRIDE FOR ALL RELATIONSHIP LABELS */
+    .edgeLabel,
+    .edgeLabel text,
+    .edgeLabel tspan,
+    .edgeLabel span,
+    .relationshipLabel,
+    .relationshipLabel text {
+      fill: #FFFFFF !important;
+      color: #FFFFFF !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="erd"></div>
+
+  <script type="module">
+    import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        darkMode: false,
+        primaryColor: '#000000',
+        entityBkg: '#FFFFFF',
+        entityBorder: '#000000',
+        lineColor: '#38BDF8',
+      }
+    });
+
+    const diagram = `erDiagram
+    USERS {
+        TEXT id PK "Firebase UID"
+        TEXT name
+        TEXT email
+        TEXT password "SHA-256 hashed"
+        TEXT created_at "ISO-8601"
+        INTEGER age
+        TEXT gender
+        REAL height "cm or in"
+        REAL weight "kg or lbs"
+        TEXT profile_picture "Base64"
+        TEXT interests "JSON array"
+        INTEGER is_dark_mode "0=Light 1=Dark"
+        INTEGER sync_status "0=unsynced 1=synced"
+    }
+    GOALS {
+        INTEGER id PK "AUTOINCREMENT"
+        TEXT user_id FK "CASCADE"
+        TEXT title
+        TEXT category "Running Dist Water Steps"
+        REAL target_value
+        REAL current_value
+        TEXT unit "km ml steps"
+        TEXT deadline "ISO-8601"
+        TEXT reminder_time "nullable"
+        INTEGER is_completed "0=active 1=done"
+        INTEGER sync_status
+    }
+    ACTIVITIES {
+        INTEGER id PK "AUTOINCREMENT"
+        TEXT user_id FK "CASCADE"
+        TEXT type "steps walking running cycling"
+        REAL value "steps km etc"
+        TEXT date "yyyy-MM-dd"
+        INTEGER duration "minutes"
+        INTEGER sync_status
+    }
+    HEALTH_LOGS {
+        INTEGER id PK "AUTOINCREMENT"
+        TEXT user_id FK "CASCADE"
+        REAL weight "kg or lbs"
+        REAL height "cm or in"
+        REAL bmi "auto-calculated"
+        TEXT date "yyyy-MM-dd"
+        TEXT tags "CSV string"
+        TEXT notes "nullable"
+        TEXT unit "metric or imperial"
+        REAL waist "nullable"
+        REAL hip "nullable"
+        REAL chest "nullable"
+        REAL body_fat "nullable"
+        INTEGER sync_status
+    }
+    REMINDERS {
+        INTEGER id PK
+        TEXT title
+        TEXT body
+        TEXT times "JSON array"
+        INTEGER is_enabled
+        TEXT alert_style "banner or alarm"
+        TEXT repeat_days "7-char bitmask"
+        INTEGER vibration
+        TEXT sound_name
+    }
+    STEP_RECORDS {
+        INTEGER id PK "AUTOINCREMENT"
+        TEXT user_id FK "CASCADE"
+        TEXT date "yyyy-MM-dd"
+        INTEGER step_count "daily total"
+        INTEGER goal "daily target"
+    }
+    WORKOUT_RECORDS {
+        INTEGER id PK "AUTOINCREMENT"
+        TEXT user_id FK "CASCADE"
+        TEXT workout_type "Walking Running Cycling"
+        INTEGER duration_mins
+        INTEGER calories_burned "kcal"
+        TEXT logged_at "ISO-8601"
+        TEXT notes "nullable"
+    }
+    FAVORITE_TIPS {
+        TEXT topic_id PK "health.gov API id"
+        TEXT title
+        TEXT description
+        TEXT content "raw HTML"
+        TEXT url
+        TEXT image_url "nullable"
+    }
+    RECENT_TIPS {
+        TEXT topic_id PK "health.gov API id"
+        TEXT title
+        TEXT description
+        TEXT content "raw HTML"
+        TEXT url
+        INTEGER visited_at "epoch ms"
+        TEXT image_url "nullable"
+    }
+
+    USERS ||--o{ GOALS : "sets"
+    USERS ||--o{ ACTIVITIES : "logs"
+    USERS ||--o{ HEALTH_LOGS : "records"
+    USERS ||--o{ STEP_RECORDS : "tracks daily"
+    USERS ||--o{ WORKOUT_RECORDS : "sessions"
+`;
+
+    const { svg } = await mermaid.render('erd-svg', diagram);
+    document.getElementById('erd').innerHTML = svg;
+  </script>
+</body>
+
+</html>

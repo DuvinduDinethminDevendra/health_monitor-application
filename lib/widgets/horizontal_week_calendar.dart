@@ -114,7 +114,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
     final primaryColor = isDark ? AppTheme.scooter : AppTheme.blueLagoon;
     final headerBg = isDark ? AppTheme.sapphire : AppTheme.alabaster;
     final textColor = isDark ? Colors.white : AppTheme.sapphire;
-    final subTextColor = isDark ? Colors.white70 : AppTheme.sapphire.withOpacity(0.6);
+    final subTextColor = isDark ? Colors.white70 : AppTheme.sapphire.withValues(alpha: 0.6);
 
     return Container(
       decoration: BoxDecoration(
@@ -126,7 +126,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
         boxShadow: [
           if (!isDark) 
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -226,11 +226,11 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                           duration: const Duration(milliseconds: 250),
                           width: 50,
                           decoration: BoxDecoration(
-                            color: isSelected ? primaryColor : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03)),
+                            color: isSelected ? primaryColor : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: isSelected ? [
                               BoxShadow(
-                                color: primaryColor.withOpacity(0.3),
+                                color: primaryColor.withValues(alpha: 0.3),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               )
@@ -242,7 +242,7 @@ class _HorizontalWeekCalendarState extends State<HorizontalWeekCalendar> {
                               Text(
                                 DateFormat('E').format(date).substring(0, 1),
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : (isDark ? Colors.white60 : AppTheme.sapphire.withOpacity(0.5)),
+                                  color: isSelected ? Colors.white : (isDark ? Colors.white60 : AppTheme.sapphire.withValues(alpha: 0.5)),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w900,
                                 ),

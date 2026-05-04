@@ -6,6 +6,7 @@ class WorkoutRecord {
   final int? caloriesBurned;
   final String loggedAt;
   final String? notes;
+  final int syncStatus;
 
   WorkoutRecord({
     this.id,
@@ -15,6 +16,7 @@ class WorkoutRecord {
     this.caloriesBurned,
     required this.loggedAt,
     this.notes,
+    this.syncStatus = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +28,7 @@ class WorkoutRecord {
       'calories_burned': caloriesBurned,
       'logged_at': loggedAt,
       'notes': notes,
+      'sync_status': syncStatus,
     };
   }
 
@@ -38,6 +41,7 @@ class WorkoutRecord {
       caloriesBurned: map['calories_burned'] as int?,
       loggedAt: map['logged_at'] as String,
       notes: map['notes'] as String?,
+      syncStatus: map['sync_status'] as int? ?? 0,
     );
   }
 
@@ -49,6 +53,7 @@ class WorkoutRecord {
     int? caloriesBurned,
     String? loggedAt,
     String? notes,
+    int? syncStatus,
   }) {
     return WorkoutRecord(
       id: id ?? this.id,
@@ -58,6 +63,7 @@ class WorkoutRecord {
       caloriesBurned: caloriesBurned ?? this.caloriesBurned,
       loggedAt: loggedAt ?? this.loggedAt,
       notes: notes ?? this.notes,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 }

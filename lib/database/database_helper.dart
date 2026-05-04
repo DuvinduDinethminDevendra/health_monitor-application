@@ -32,9 +32,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-
-      version: 13,
-
+      version: 15,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -104,6 +102,12 @@ class DatabaseHelper {
     if (oldVersion < 13) {
       await db.execute('ALTER TABLE reminders ADD COLUMN one_time_date TEXT');
     }
+    if (oldVersion < 14) {
+      await _ensureColumnExists(db, 'step_records', 'sync_status', "ALTER TABLE step_records ADD COLUMN sync_status INTEGER DEFAULT 0");
+    }
+    if (oldVersion < 15) {
+      await _ensureColumnExists(db, 'workout_records', 'sync_status', "ALTER TABLE workout_records ADD COLUMN sync_status INTEGER DEFAULT 0");
+    }
 
     // ENSURE 'is_dark_mode' EXISTS IN 'users' TABLE
     await _ensureColumnExists(db, 'users', 'is_dark_mode', "ALTER TABLE users ADD COLUMN is_dark_mode INTEGER DEFAULT 0");
@@ -166,6 +170,7 @@ class DatabaseHelper {
         date TEXT,
         step_count INTEGER,
         goal INTEGER,
+        sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
@@ -314,6 +319,7 @@ class DatabaseHelper {
         date TEXT,
         step_count INTEGER,
         goal INTEGER,
+        sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
@@ -327,6 +333,7 @@ class DatabaseHelper {
         calories_burned INTEGER,
         logged_at TEXT,
         notes TEXT,
+        sync_status INTEGER DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');

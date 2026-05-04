@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 
 class AppTheme {
+  // Global helper for Sinhala text scaling to maintain premium aesthetics
+  static double siSize(BuildContext context, double base) {
+    try {
+      final isSi = Localizations.localeOf(context).languageCode == 'si';
+      return isSi ? base * 0.85 : base;
+    } catch (_) {
+      return base;
+    }
+  }
+
   // Pallet 2 - Exact Hex Codes from User Image
   static const Color scooter = Color(0xFF2F9D94);
   static const Color alabaster = Color(0xFFF7F6F2); 
   static const Color heather = Color(0xFFBCC5CC);
   static const Color blueLagoon = Color(0xFF025F67);
   static const Color sapphire = Color(0xFF063154);
+  static const Color roseRed = Color(0xFFEF4444);
 
   // Functional aliases
   static const Color backgroundLight = alabaster;
@@ -111,7 +121,7 @@ class MatteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = color ?? (isDark ? Colors.white.withOpacity(0.08) : Colors.white);
+    final cardColor = color ?? (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white);
     
     return Container(
       width: width,
@@ -121,7 +131,7 @@ class MatteCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -135,7 +145,7 @@ class MatteCard extends StatelessWidget {
             color: cardColor,
             borderRadius: BorderRadius.circular(borderRadius),
             border: border ?? Border.all(
-              color: isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.05),
+              color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.05),
               width: 1.5,
             ),
           ),

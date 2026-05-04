@@ -241,11 +241,55 @@ class ActivityProvider extends ChangeNotifier {
 
   Future<void> logManualActivity(String userId, String type, double value, int duration, DateTime date) async {
     try {
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final todayStr = _todayString();
+      
+      // Update StepRecord and liveStepCount if it's "steps"
+      if (type.toLowerCase() == 'steps') {
+        int stepsToAdd = value.toInt();
+        if (dateStr == todayStr) {
+          liveStepCount += stepsToAdd;
+          _pedometerService.addManualSteps(stepsToAdd);
+          
+          if (todayStepRecord != null) {
+            todayStepRecord = todayStepRecord!.copyWith(stepCount: todayStepRecord!.stepCount + stepsToAdd);
+            await _stepRepo.upsertStepRecord(todayStepRecord!);
+          } else {
+            todayStepRecord = StepRecord(userId: userId, date: dateStr, stepCount: stepsToAdd);
+            await _stepRepo.upsertStepRecord(todayStepRecord!);
+          }
+        } else {
+           // update past day record
+           var oldRecord = await _stepRepo.getStepRecordByDate(userId, dateStr);
+           if (oldRecord != null) {
+             oldRecord = oldRecord.copyWith(stepCount: oldRecord.stepCount + stepsToAdd);
+             await _stepRepo.upsertStepRecord(oldRecord);
+           } else {
+             await _stepRepo.upsertStepRecord(StepRecord(userId: userId, date: dateStr, stepCount: stepsToAdd));
+           }
+        }
+      } else {
+        // Record as workout if it's not steps
+        final newWorkout = WorkoutRecord(
+          userId: userId,
+          workoutType: type,
+          durationMins: duration,
+          caloriesBurned: (duration * 5),
+          loggedAt: dateStr,
+        );
+        await _workoutRepo.insertWorkout(newWorkout);
+        if (dateStr == todayStr) {
+          todaysWorkouts.add(newWorkout);
+        }
+        allWorkouts.add(newWorkout);
+      }
+
+      // Keep original Activity as well for general timeline
       final activity = Activity(
         userId: userId,
         type: type,
         value: value,
-        date: DateFormat('yyyy-MM-dd').format(date),
+        date: dateStr,
         duration: duration,
       );
       
@@ -259,8 +303,7 @@ class ActivityProvider extends ChangeNotifier {
            bool isDaily = goal.category.contains('(Daily)');
            double newProgress;
            if (isDaily) {
-              final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-              final acts = await _activityRepo.getActivitiesByDateRange(userId, dateStr, dateStr);
+              final acts = await _activityRepo.getActivitiesByDateRange(userId, todayStr, todayStr);
               newProgress = acts.where((a) => a.type.toLowerCase() == goal.baseType).fold(0.0, (sum, a) => sum + a.value);
            } else {
               newProgress = goal.currentValue + activity.value;
@@ -274,6 +317,7 @@ class ActivityProvider extends ChangeNotifier {
       
       // Reload recent
       recentActivities = await _activityRepo.getActivitiesByUser(userId);
+      weeklySteps = await _stepRepo.getLast7DaysSteps(userId);
       notifyListeners();
     } catch (e) {
       errorMessage = 'Failed to log activity: ${e.toString()}';
