@@ -5,9 +5,11 @@ import '../models/goal.dart';
 import 'activity_repository.dart';
 import '../services/sync_service.dart';
 import '../services/notification_service.dart';
+import 'reminder_repository.dart';
 
 class GoalRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  final ReminderRepository _reminderRepo = ReminderRepository();
 
   // Use a lazy getter to break the circular dependency loop
   SyncService get _syncService => SyncService();
@@ -60,6 +62,15 @@ class GoalRepository {
       whereArgs: [userId],
     );
     return maps.map((map) => Goal.fromMap(map)).toList();
+  }
+
+  Future<Goal?> getGoalById(int id) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query('goals', where: 'id = ?', whereArgs: [id]);
+    if (maps.isNotEmpty) {
+      return Goal.fromMap(maps.first);
+    }
+    return null;
   }
 
   Future<int> updateGoal(Goal goal) async {
@@ -213,6 +224,29 @@ class GoalRepository {
 
   Future<int> deleteGoal(int id) async {
     final db = await _dbHelper.database;
+
+    // Fetch goal first to get userId for sync
+    final maps = await db.query('goals', where: 'id = ?', whereArgs: [id]);
+    if (maps.isNotEmpty) {
+      final goal = Goal.fromMap(maps.first);
+      
+      // Phase 2: Cascading Delete for Linked Reminders
+      final linkedReminders = await _reminderRepo.getRemindersByGoalId(id.toString());
+      final notificationService = NotificationService();
+
+      for (var reminder in linkedReminders) {
+        // 1. Cancel all sub-ID notifications
+        for (var i = 0; i < 20; i++) {
+          await notificationService.cancelNotification((reminder.id * 100) + i);
+        }
+        // 2. Delete from database
+        await _reminderRepo.deleteReminder(reminder.id);
+      }
+
+      // Sync deletion to Firestore
+      await _syncService.deleteGoal(id, goal.userId);
+    }
+
     return await db.delete(
       'goals',
       where: 'id = ?',

@@ -8,11 +8,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/ui_utils.dart';
 import '../providers/health_tips_provider.dart';
 import '../services/health_tips_service.dart';
 import '../services/auth_service.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'dart:ui';
 import 'package:health_monitor/l10n/app_localizations.dart';
 
 class HealthTipsScreen extends StatefulWidget {
@@ -153,7 +153,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                       onRefresh: _onRefresh,
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.only(top: 230, left: 16, right: 16, bottom: 16),
+                        padding: EdgeInsets.only(
+                          top: 230, 
+                          left: 16, 
+                          right: 16, 
+                          bottom: 16 + MediaQuery.of(context).padding.bottom
+                        ),
                         child: Column(
                           children: [
                             StaggeredGrid.count(
@@ -219,7 +224,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
             left: 0,
             right: 0,
             child: Container(
-              color: isDark ? const Color(0xFF0A192F).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+              color: isDark ? const Color(0xFF0A192F).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
               child: SafeArea(
                     bottom: false,
                     child: Column(
@@ -446,7 +451,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
                           height: 240,
-                          color: color.withOpacity(0.1),
+                          color: color.withValues(alpha: 0.1),
                           child: Center(
                             child: SizedBox(
                               width: 30,
@@ -468,12 +473,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.15),
+                              color: color.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(50),
                             ),
                             child: Text(
                               tip.description.toUpperCase(),
-                              style: TextStyle(color: color.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0),
+                              style: TextStyle(color: color.withValues(alpha: 0.9), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -533,7 +538,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                               ],
                             ),
                           ),
-                          SizedBox(height: 40),
+                          SizedBox(height: 100 + MediaQuery.of(context).padding.bottom),
                         ],
                       ),
                     ),
@@ -543,12 +548,15 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
             ),
             SafeArea(
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.only(
+                  top: 8,
+                  bottom: 8 + (MediaQuery.of(context).padding.bottom > 0 ? 0 : 8),
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       offset: const Offset(0, -4),
                       blurRadius: 8,
                     ),
@@ -575,9 +583,10 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                             iconSize: 28,
                             onPressed: () {
                               provider.toggleFavorite(tip);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(isFav ? AppLocalizations.of(context)!.removedFav : AppLocalizations.of(context)!.savedFav)),
-                              );
+                                UIUtils.showNotification(
+                                  context, 
+                                  isFav ? AppLocalizations.of(context)!.removedFav : AppLocalizations.of(context)!.savedFav
+                                );
                             },
                           ),
                         );
@@ -622,12 +631,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     height: 5,
                     decoration: BoxDecoration(
                       color: (tip.imageUrl != null && tip.imageUrl!.isNotEmpty) 
-                          ? Colors.white.withOpacity(0.8) 
+                          ? Colors.white.withValues(alpha: 0.8) 
                           : Colors.grey[300],
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),
@@ -650,7 +659,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20.0,
             offset: const Offset(0, 8.0),
           ),
@@ -670,7 +679,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
               CachedNetworkImage(
                 imageUrl: tip.imageUrl!,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: color.withOpacity(0.1)),
+                placeholder: (context, url) => Container(color: color.withValues(alpha: 0.1)),
                 errorWidget: (context, url, error) => _buildImageFallback(color),
               )
             else
@@ -684,7 +693,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.9)],
                   ),
                 ),
                 child: Column(
@@ -694,12 +703,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.9) : Colors.white.withOpacity(0.9)),
+                        color: (isDark ? const Color(0xFF0A2A3F).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9)),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text(
                         tip.description,
-                        style: TextStyle(color: color.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: color.withValues(alpha: 0.9), fontSize: 11, fontWeight: FontWeight.w700),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -735,7 +744,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20.0,
             offset: const Offset(0, 8.0),
           ),
@@ -755,7 +764,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
               CachedNetworkImage(
                 imageUrl: tip.imageUrl!,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: color.withOpacity(0.1)),
+                placeholder: (context, url) => Container(color: color.withValues(alpha: 0.1)),
                 errorWidget: (context, url, error) => _buildImageFallback(color),
               )
             else
@@ -769,7 +778,7 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.9)],
                   ),
                 ),
                 child: Column(
@@ -779,12 +788,12 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: (isDark ? const Color(0xFF0A2A3F).withOpacity(0.9) : Colors.white.withOpacity(0.9)),
+                        color: (isDark ? const Color(0xFF0A2A3F).withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9)),
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Text(
                         tip.description,
-                        style: TextStyle(color: color.withOpacity(0.9), fontSize: 10, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: color.withValues(alpha: 0.9), fontSize: 10, fontWeight: FontWeight.w700),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -822,15 +831,15 @@ class _HealthTipsScreenState extends State<HealthTipsScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.2),
-            color.withOpacity(0.05),
+            color.withValues(alpha: 0.2),
+            color.withValues(alpha: 0.05),
           ],
         ),
       ),
       child: Center(
         child: Icon(
           Icons.health_and_safety_outlined,
-          color: color.withOpacity(0.5),
+          color: color.withValues(alpha: 0.5),
           size: 40,
         ),
       ),

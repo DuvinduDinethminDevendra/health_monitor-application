@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../providers/reminders_provider.dart';
+import '../models/reminder.dart';
 import 'package:intl/intl.dart';
 import '../models/goal.dart';
 import '../models/activity.dart';
@@ -56,17 +58,55 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final goals = await _goalRepo.getGoalsByUser(userId);
+      final allGoals = await _goalRepo.getGoalsByUser(userId);
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      
+      // Filter out past goals (completed or deadline passed)
+      final activeGoals = allGoals.where((g) {
+        return !g.isCompleted && g.deadline.compareTo(todayStr) >= 0;
+      }).toList();
+
+      final activityRepo = ActivityRepository();
+      List<Goal> dynamicGoals = [];
+      
+      // Dynamically calculate today's progress for Daily goals
+      for (var g in activeGoals) {
+        // -------------------------------------------------------------
+        // AUTO-SANITIZE LEGACY GOALS WITH INCORRECT UNITS
+        // -------------------------------------------------------------
+        bool needsDbUpdate = false;
+        String correctedUnit = g.unit;
+        if (g.category.contains('Steps') && g.unit != 'steps') { correctedUnit = 'steps'; needsDbUpdate = true; }
+        else if (g.category.contains('Running') && g.unit != 'm') { correctedUnit = 'm'; needsDbUpdate = true; }
+        else if (g.category.contains('Sleep') && g.unit != 'hrs') { correctedUnit = 'hrs'; needsDbUpdate = true; }
+        else if (g.category.contains('Water') && g.unit != 'ml') { correctedUnit = 'ml'; needsDbUpdate = true; }
+        else if (g.category.contains('Diet') && g.unit != 'kcal') { correctedUnit = 'kcal'; needsDbUpdate = true; }
+        
+        if (needsDbUpdate) {
+          g = g.copyWith(unit: correctedUnit);
+          // Fire-and-forget background DB update to permanently fix legacy goals
+          _goalRepo.updateGoal(g); 
+        }
+        // -------------------------------------------------------------
+
+        if (g.category.contains('(Daily)')) {
+          final acts = await activityRepo.getActivitiesByDateRange(userId, todayStr, todayStr);
+          final typeMatch = _getBaseType(g);
+          double todaySum = acts.where((a) => a.type.toLowerCase() == typeMatch).fold(0.0, (s, a) => s + a.value);
+          dynamicGoals.add(g.copyWith(currentValue: todaySum));
+        } else {
+          dynamicGoals.add(g);
+        }
+      }
+
       if (!mounted) return;
       setState(() {
-        _goals = goals;
+        _goals = dynamicGoals;
       });
     } catch (e) {
-      debugPrint('Error loading goals: $e');
+      debugPrint("Error loading goals: $e");
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -86,16 +126,18 @@ class _GoalsScreenState extends State<GoalsScreen> {
           debugPrint('[GoalsScreen] Received goal to save: ${goal.title}');
           try {
             if (existingGoal == null) {
-              await _goalRepo.insertGoal(goal);
-              debugPrint('[GoalsScreen] Goal inserted successfully.');
+              final id = await _goalRepo.insertGoal(goal);
+              debugPrint('[GoalsScreen] Goal inserted successfully (ID: $id).');
+              if (mounted) await _syncGoalReminder(goal.copyWith(id: id));
             } else {
               await _goalRepo.updateGoal(goal);
               debugPrint('[GoalsScreen] Goal updated successfully.');
+              if (mounted) await _syncGoalReminder(goal);
             }
             _loadGoals();
           } catch (e) {
             debugPrint('[GoalsScreen] Error saving goal: $e');
-            if (mounted) {
+            if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Failed to save goal: $e')),
               );
@@ -104,6 +146,65 @@ class _GoalsScreenState extends State<GoalsScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _syncGoalReminder(Goal goal) async {
+    if (!mounted || goal.id == null) return;
+    
+    final remindersProvider = Provider.of<RemindersProvider>(context, listen: false);
+    final goalIdStr = goal.id.toString();
+    
+    // Find any existing reminder linked to this goal
+    final existingReminders = remindersProvider.reminders.where((r) => r.linkedGoalId == goalIdStr).toList();
+    
+    if (goal.reminderTime != null) {
+      try {
+        // Parse time (e.g., "08:00 AM")
+        final timeParts = goal.reminderTime!.split(' ');
+        final hm = timeParts[0].split(':');
+        int hour = int.parse(hm[0]);
+        final minute = int.parse(hm[1]);
+        if (timeParts.length > 1 && timeParts[1].toUpperCase() == 'PM' && hour < 12) hour += 12;
+        if (timeParts.length > 1 && timeParts[1].toUpperCase() == 'AM' && hour == 12) hour = 0;
+        final newTime = {'hour': hour, 'minute': minute};
+
+
+        if (existingReminders.isNotEmpty) {
+          // Update the first one found
+          final r = existingReminders.first;
+          final updated = r.copyWith(
+            title: 'Goal: ${goal.title}',
+            body: 'Time to work on your ${goal.category} goal!',
+            times: [newTime],
+            alertStyle: AlertStyle.alarm,
+            oneTimeDate: goal.deadline,
+            repeatDays: '0000000',
+          );
+          await remindersProvider.updateReminder(updated);
+          debugPrint('[GoalsScreen] Linked reminder updated for ${goal.deadline}.');
+        } else {
+          // Create new if none exists
+          await remindersProvider.addReminder(
+            title: 'Goal: ${goal.title}',
+            body: 'Time to work on your ${goal.category} goal!',
+            times: [newTime],
+            linkedGoalId: goalIdStr,
+            alertStyle: AlertStyle.alarm,
+            oneTimeDate: goal.deadline,
+            repeatDays: '0000000',
+          );
+          debugPrint('[GoalsScreen] Linked reminder created for ${goal.deadline}.');
+        }
+      } catch (e) {
+        debugPrint('[GoalsScreen] Error syncing goal reminder: $e');
+      }
+    } else {
+      // No reminder time set in goal - delete any orphaned linked reminders
+      for (var r in existingReminders) {
+        await remindersProvider.deleteReminder(r);
+        debugPrint('[GoalsScreen] Orphaned linked reminder deleted.');
+      }
+    }
   }
 
   String _getBaseType(Goal goal) {
@@ -116,11 +217,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
         .toLowerCase();
   }
 
-  Future<void> _updateProgress(Goal goal, double newProgress) async {
+  Future<void> _updateProgress(Goal goal, double newProgress, DateTime targetDate) async {
     // Determine the exact date to permanently anchor this manual progress
     final userId =
         Provider.of<AuthService>(context, listen: false).currentUser!.id!;
-    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
     final activityRepo = ActivityRepository();
 
     // Auto-Merge: Universally anchor manual progress to the Activity timeline
@@ -133,15 +234,15 @@ class _GoalsScreenState extends State<GoalsScreen> {
           await activityRepo.getActivitiesByDateRange(userId, dateStr, dateStr);
       final goalActivities =
           activities.where((a) => a.type.toLowerCase() == typeMatch).toList();
-      double currentDaySum =
+      double targetDaySum =
           goalActivities.fold(0.0, (sum, a) => sum + a.value);
-      diff = newProgress - currentDaySum;
+      diff = newProgress - targetDaySum;
     } else {
       diff = newProgress - goal.currentValue;
     }
 
-    if (diff > 0) {
-      // Insert the missing difference so the true historical Activity matches the manual input
+    if (diff != 0) {
+      // Insert the exact difference (positive or negative) so the true historical Activity matches the manual input
       await activityRepo.insertActivity(Activity(
         userId: userId,
         type: typeMatch,
@@ -151,10 +252,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
       ));
     }
 
-    await _goalRepo.updateProgress(goal.id!, newProgress);
-    if (newProgress >= goal.targetValue) {
-      await _goalRepo.markCompleted(goal.id!);
+    // ONLY OVERWRITE THE GLOBAL `currentValue` IF WE ARE LOGGING FOR TODAY.
+    // Past log modifications correctly adjusted the `Activity` log, but shouldn't necessarily
+    // advance a daily goal's global limit today (so users can track past missed entries without jumping today's).
+    if (!isDaily || dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now())) {
+      await _goalRepo.updateProgress(goal.id!, newProgress);
+      if (newProgress >= goal.targetValue) {
+        await _goalRepo.markCompleted(goal.id!);
+      }
     }
+    
     _loadGoals();
   }
 
@@ -179,6 +286,18 @@ class _GoalsScreenState extends State<GoalsScreen> {
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.sapphire),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.history_edu_rounded),
+            tooltip: 'Goal History',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const _GoalHistoryScreen()),
+              );
+            },
+          ),
+        ],
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 40),
@@ -195,7 +314,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 children: [
                   Icon(Icons.flag_rounded,
                       size: 80,
-                      color: AppTheme.heather.withOpacity(0.2)),
+                      color: AppTheme.heather.withValues(alpha: 0.2)),
                   SizedBox(height: 16),
                   Text(
                     loc.noGoalsSet,
@@ -213,7 +332,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 100 + MediaQuery.of(context).padding.bottom),
               itemCount: _goals.length,
               itemBuilder: (context, index) {
                 return _buildGoalCard(
@@ -224,7 +343,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     await _goalRepo.deleteGoal(_goals[index].id!);
                     _loadGoals();
                   },
-                  onUpdateProgress: (val) => _updateProgress(_goals[index], val),
+                  onUpdateProgress: (val) => _updateProgress(_goals[index], val, DateTime.now()),
                 );
               },
             ),
@@ -255,56 +374,71 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
     return MatteCard(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
+      color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: accentColor,
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  goal.category.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
-                  ),
+                child: Icon(Icons.track_changes_rounded, color: accentColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      goal.category.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: accentColor,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      goal.title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : AppTheme.sapphire,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.edit_rounded, size: 20),
+                    icon: Icon(Icons.edit_rounded, size: 18),
                     onPressed: onEdit,
                     color: isDark ? Colors.white60 : AppTheme.heather,
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
                   ),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Icons.delete_outline_rounded, size: 20),
+                    icon: Icon(Icons.delete_outline_rounded, size: 18),
                     onPressed: onDelete,
                     color: Colors.redAccent,
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
                   ),
                 ],
               ),
             ],
           ),
-          SizedBox(height: 12),
-          Text(
-            goal.title,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : AppTheme.sapphire,
-              letterSpacing: -0.5,
-            ),
-          ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -326,38 +460,40 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: isDark ? Colors.white12 : Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-              minHeight: 12,
+              minHeight: 8,
             ),
           ),
-          const SizedBox(height: 20),
-          if (!isCompleted)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
+          if (!isCompleted) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton.icon(
                 onPressed: () => _showProgressDialog(goal),
-                icon: Icon(Icons.add_circle_outline, size: 18, color: accentColor),
+                icon: Icon(Icons.add_circle_outline, size: 18, color: Colors.white),
                 label: Text(
                   AppLocalizations.of(context)!.btnLogProgress,
                   style: TextStyle(
-                    color: accentColor,
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
                   ),
                 ),
-                style: TextButton.styleFrom(
-                  backgroundColor: accentColor.withOpacity(0.08),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  elevation: 0,
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -366,74 +502,118 @@ class _GoalsScreenState extends State<GoalsScreen> {
   void _showProgressDialog(Goal goal) {
     final controller = TextEditingController(text: goal.currentValue.toString());
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    DateTime selectedDate = DateTime.now();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
-        ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
-          left: 24,
-          right: 24,
-          top: 32,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
             ),
-            SizedBox(height: 24),
-            Text('${AppLocalizations.of(context)!.titleUpdateGoal} ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
-            SizedBox(height: 12),
-            Text('${AppLocalizations.of(context)!.lblCurrentValue}: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
-              style: TextStyle(color: AppTheme.heather, fontSize: 14, fontWeight: FontWeight.w600)),
-            SizedBox(height: 24),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
-              decoration: InputDecoration(
-                labelText: '${AppLocalizations.of(context)!.lblNewCurrentValue} (${goal.unit})',
-                labelStyle: TextStyle(color: AppTheme.heather),
-                prefixIcon: Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.scooter)),
-              ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 32 + MediaQuery.of(ctx).padding.bottom,
+              left: 24,
+              right: 24,
+              top: 32,
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                final val = double.tryParse(controller.text) ?? goal.currentValue;
-                _updateProgress(goal, val);
-                Navigator.pop(ctx);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.blueLagoon,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-              ),
-              child: Text(AppLocalizations.of(context)!.btnSaveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text('${AppLocalizations.of(context)!.titleUpdateGoal} ${goal.title}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppTheme.sapphire)),
+                SizedBox(height: 12),
+                Text('${AppLocalizations.of(context)!.lblCurrentValue}: ${goal.currentValue.toInt()} / ${goal.targetValue.toInt()} ${goal.unit}', 
+                  style: TextStyle(color: AppTheme.heather, fontSize: 14, fontWeight: FontWeight.w600)),
+                SizedBox(height: 24),
+                
+                // Allow passing historical logs
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setModalState(() => selectedDate = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: isDark ? Colors.white12 : Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today_rounded, color: AppTheme.scooter, size: 20),
+                        const SizedBox(width: 12),
+                        Text(
+                          DateFormat('MMM dd, yyyy').format(selectedDate),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : AppTheme.sapphire,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(Icons.arrow_drop_down, color: AppTheme.heather),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                  decoration: InputDecoration(
+                    labelText: '${AppLocalizations.of(context)!.lblNewCurrentValue} (${goal.unit})',
+                    labelStyle: TextStyle(color: AppTheme.heather),
+                    prefixIcon: Icon(Icons.edit_road_rounded, color: AppTheme.scooter),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppTheme.scooter)),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () {
+                    final val = double.tryParse(controller.text) ?? goal.currentValue;
+                    _updateProgress(goal, val, selectedDate);
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.blueLagoon,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  child: Text(AppLocalizations.of(context)!.btnSaveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -491,6 +671,19 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
       final existingCat = widget.existingGoal!.category;
       if (_categories.contains(existingCat)) {
         _selectedCategory = existingCat;
+        
+        // Auto-fix the unit for existing goals to prevent old invalid data (e.g. 'km' for steps) from persisting
+        if (existingCat.contains('Steps')) {
+          _unitController.text = 'steps';
+        } else if (existingCat.contains('Running')) {
+          _unitController.text = 'm';
+        } else if (existingCat.contains('Sleep')) {
+          _unitController.text = 'hrs';
+        } else if (existingCat.contains('Water')) {
+          _unitController.text = 'ml';
+        } else if (existingCat.contains('Diet')) {
+          _unitController.text = 'kcal';
+        }
       }
     }
   }
@@ -578,15 +771,15 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
 
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32 + MediaQuery.of(context).padding.bottom,
         left: 24,
         right: 24,
         top: 32,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.sapphire.withOpacity(0.95) : Colors.white,
+        color: isDark ? AppTheme.sapphire.withValues(alpha: 0.95) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: isDark ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.1)) : null,
       ),
       child: SingleChildScrollView(
         child: Form(
@@ -649,13 +842,32 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                                 final isSelected = _selectedCategory == cat;
                                 return ListTile(
                                   onTap: () {
-                                    setState(() => _selectedCategory = cat);
+                                    setState(() {
+                                      _selectedCategory = cat;
+                                      if (cat.contains('Steps')) {
+                                        _unitController.text = 'steps';
+                                      } else if (cat.contains('Running')) {
+                                        _unitController.text = 'm';
+                                      } else if (cat.contains('Sleep')) {
+                                        _unitController.text = 'hrs';
+                                      } else if (cat.contains('Water')) {
+                                        _unitController.text = 'ml';
+                                      } else if (cat.contains('Diet')) {
+                                        _unitController.text = 'kcal';
+                                      } else if (cat.contains('Custom')) {
+                                        if (!['steps', 'km', 'hrs', 'ml', 'kcal'].contains(_unitController.text)) {
+                                            // keep user's custom text if they typed something, otherwise clear it
+                                        } else {
+                                            _unitController.text = '';
+                                        }
+                                      }
+                                    });
                                     Navigator.pop(ctx);
                                   },
                                   leading: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100]),
+                                      color: isSelected ? AppTheme.blueLagoon : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Icon(
@@ -683,9 +895,9 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!),
                   ),
                   child: Row(
                     children: [
@@ -733,10 +945,15 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
                     flex: 1,
                     child: TextFormField(
                       controller: _unitController,
-                      style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire),
+                      readOnly: !_selectedCategory.contains('Custom'),
+                      style: TextStyle(
+                        color: !_selectedCategory.contains('Custom') ? AppTheme.heather : (isDark ? Colors.white : AppTheme.sapphire)
+                      ),
                       decoration: InputDecoration(
                         labelText: AppLocalizations.of(context)!.lblUnit,
                         labelStyle: TextStyle(color: AppTheme.heather),
+                        filled: !_selectedCategory.contains('Custom'),
+                        fillColor: !_selectedCategory.contains('Custom') ? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100]) : null,
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey[300]!)),
@@ -802,6 +1019,95 @@ class _GoalBottomSheetState extends State<_GoalBottomSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _GoalHistoryScreen extends StatefulWidget {
+  const _GoalHistoryScreen();
+
+  @override
+  State<_GoalHistoryScreen> createState() => _GoalHistoryScreenState();
+}
+
+class _GoalHistoryScreenState extends State<_GoalHistoryScreen> {
+  final GoalRepository _repo = GoalRepository();
+  List<Goal> _pastGoals = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final userId = Provider.of<AuthService>(context, listen: false).currentUser?.id;
+    if (userId == null) return;
+    
+    final all = await _repo.getGoalsByUser(userId);
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    
+    // Past goals are completed OR their deadline has passed
+    var past = all.where((g) => g.isCompleted || g.deadline.compareTo(todayStr) < 0).toList();
+    
+    // Sort by deadline descending
+    past.sort((a, b) => b.deadline.compareTo(a.deadline));
+    
+    // Limit to last 100 for a compact history
+    if (past.length > 100) past = past.take(100).toList();
+
+    if (mounted) {
+      setState(() {
+        _pastGoals = past;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Past Goals History', style: TextStyle(color: isDark ? Colors.white : AppTheme.sapphire, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : AppTheme.sapphire),
+      ),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : _pastGoals.isEmpty 
+          ? Center(child: Text('No past goals found.', style: TextStyle(color: AppTheme.heather)))
+          : ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: _pastGoals.length,
+              separatorBuilder: (context, index) => Divider(color: AppTheme.heather.withValues(alpha: 0.2), height: 1),
+              itemBuilder: (context, index) {
+                final goal = _pastGoals[index];
+                final isSuccess = goal.currentValue >= goal.targetValue;
+                final double percentage = (goal.currentValue / goal.targetValue * 100);
+                final perc = percentage.isNaN || percentage.isInfinite ? "0" : percentage.toStringAsFixed(0);
+                
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  leading: CircleAvatar(
+                    backgroundColor: isSuccess ? AppTheme.blueLagoon.withValues(alpha: 0.1) : AppTheme.warmOrange.withValues(alpha: 0.1),
+                    child: Icon(isSuccess ? Icons.emoji_events : Icons.flag, 
+                      color: isSuccess ? AppTheme.blueLagoon : AppTheme.warmOrange, size: 20),
+                  ),
+                  title: Text(goal.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  subtitle: Text('Ended: ${goal.deadline} • Target: ${goal.targetValue}', style: TextStyle(fontSize: 12)),
+                  trailing: Text(isSuccess ? 'Completed' : '$perc% Reached', 
+                    style: TextStyle(
+                      color: isSuccess ? AppTheme.emeraldGreen : AppTheme.warmOrange,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12
+                    )
+                  ),
+                );
+              },
+            ),
     );
   }
 }

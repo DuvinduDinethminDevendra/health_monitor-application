@@ -18,6 +18,7 @@ class AuthService with ChangeNotifier {
   fb.User? _firebaseUser;
   model.User? _currentLocalUser;
   bool _isFirstTimeLogin = false;
+  final Set<String> _syncingUserIds = {};
 
   model.User? get currentUser => _currentLocalUser;
   bool get isLoggedIn => _firebaseUser != null;
@@ -77,7 +78,6 @@ class AuthService with ChangeNotifier {
       }
       
       if (credential.user != null) {
-        await _syncLocalUser(credential.user!);
         _currentLocalUser = await _userRepository.getUserById(credential.user!.uid);
         notifyListeners();
       }
@@ -88,7 +88,7 @@ class AuthService with ChangeNotifier {
       }
       return isNewUser;
     } catch (e) {
-      print("Error in Google Sign In: $e");
+      debugPrint("Error in Google Sign In: $e");
       rethrow;
     }
   }
@@ -102,8 +102,6 @@ class AuthService with ChangeNotifier {
       
       if (result.user != null) {
         await result.user?.updateDisplayName(name);
-        // Force sync local user immediately instead of waiting for listener
-        await _syncLocalUser(result.user!);
         _currentLocalUser = await _userRepository.getUserById(result.user!.uid);
         notifyListeners();
       }
@@ -120,7 +118,7 @@ class AuthService with ChangeNotifier {
       }
       return e.message ?? 'Registration failed. Please try again.';
     } catch (e) {
-      print("Error in register: $e");
+      debugPrint("Error in register: $e");
       return 'An unexpected error occurred.';
     }
   }
@@ -133,7 +131,6 @@ class AuthService with ChangeNotifier {
       );
       
       if (result.user != null) {
-        await _syncLocalUser(result.user!);
         _currentLocalUser = await _userRepository.getUserById(result.user!.uid);
         notifyListeners();
       }
@@ -145,7 +142,7 @@ class AuthService with ChangeNotifier {
       }
       return e.message ?? 'Login failed.';
     } catch (e) {
-      print("Error in sign in: $e");
+      debugPrint("Error in sign in: $e");
       return 'An unexpected error occurred.';
     }
   }
@@ -158,7 +155,6 @@ class AuthService with ChangeNotifier {
       );
       
       if (result.user != null) {
-        await _syncLocalUser(result.user!);
         _currentLocalUser = await _userRepository.getUserById(result.user!.uid);
         notifyListeners();
       }
@@ -170,7 +166,7 @@ class AuthService with ChangeNotifier {
       }
       return e.message ?? 'Login failed. Please try again.';
     } catch (e) {
-      print("Error in login: $e");
+      debugPrint("Error in login: $e");
       return 'An unexpected error occurred.';
     }
   }
@@ -183,26 +179,33 @@ class AuthService with ChangeNotifier {
   }
 
   Future<void> _syncLocalUser(fb.User firebaseUser) async {
-    final localUser = await _userRepository.getUserById(firebaseUser.uid);
-    if (localUser == null) {
-      // Check if profile exists in Firestore FIRST
-      final doc = await FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).get();
-      if (doc.exists && doc.data() != null) {
-        // Restore from Cloud!
-        final cloudUser = model.User.fromMap(doc.data()!);
-        await _userRepository.insertUser(cloudUser);
-      } else {
-        // Brand new user
-        final newUser = model.User(
-          id: firebaseUser.uid,
-          name: firebaseUser.displayName ?? 'User',
-          email: firebaseUser.email ?? '',
-          password: '',
-          createdAt: DateTime.now().toIso8601String(),
-        );
-        await _userRepository.insertUser(newUser);
-        await _syncService.syncUserProfile(newUser);
+    if (_syncingUserIds.contains(firebaseUser.uid)) return;
+    _syncingUserIds.add(firebaseUser.uid);
+    
+    try {
+      final localUser = await _userRepository.getUserById(firebaseUser.uid);
+      if (localUser == null) {
+        // Check if profile exists in Firestore FIRST
+        final doc = await FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).get();
+        if (doc.exists && doc.data() != null) {
+          // Restore from Cloud!
+          final cloudUser = model.User.fromMap(doc.data()!);
+          await _userRepository.insertUser(cloudUser);
+        } else {
+          // Brand new user
+          final newUser = model.User(
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName ?? 'User',
+            email: firebaseUser.email ?? '',
+            password: '',
+            createdAt: DateTime.now().toIso8601String(),
+          );
+          await _userRepository.insertUser(newUser);
+          await _syncService.syncUserProfile(newUser);
+        }
       }
+    } finally {
+      _syncingUserIds.remove(firebaseUser.uid);
     }
   }
 
@@ -235,7 +238,7 @@ class AuthService with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print("Error loading theme: $e");
+      debugPrint("Error loading theme: $e");
     }
   }
 }

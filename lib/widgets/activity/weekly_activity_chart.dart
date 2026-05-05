@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../theme/activity_theme.dart';
 import '../../models/step_record.dart';
+import '../../theme/app_theme.dart';
 
 class WeeklyActivityChart extends StatelessWidget {
   final List<StepRecord> weeklySteps;
@@ -16,17 +17,17 @@ class WeeklyActivityChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (weeklySteps.isEmpty) {
-      return Container(
+      return MatteCard(
         height: 200,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-          borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        ),
-        child: Text(
-          'No activity data for the last 7 days.',
-          style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
+        color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
+        child: Center(
+          child: Text(
+            'No activity data for the last 7 days.',
+            style: TextStyle(color: (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B))),
+          ),
         ),
       );
     }
@@ -60,7 +61,7 @@ class WeeklyActivityChart extends StatelessWidget {
           barRods: [
             BarChartRodData(
               toY: steps.toDouble(),
-              color: isBest ? ActivityTheme.tealAccent : ActivityTheme.primaryBlue,
+              color: isBest ? AppTheme.scooter : AppTheme.sapphire,
               width: 16,
               borderRadius: BorderRadius.circular(4),
               backDrawRodData: BackgroundBarChartRodData(
@@ -74,20 +75,10 @@ class WeeklyActivityChart extends StatelessWidget {
       );
     }
 
-    return Container(
+    return MatteCard(
       height: 240,
       padding: const EdgeInsets.only(top: 24, right: 16, left: 0, bottom: 16),
-      decoration: BoxDecoration(
-        color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF)),
-        borderRadius: BorderRadius.circular(ActivityTheme.cardRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      color: isDark ? const Color(0xFF0A2A3F) : Colors.white,
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,

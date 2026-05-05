@@ -4,6 +4,7 @@ class StepRecord {
   final String date;
   final int stepCount;
   final int goal;
+  final int syncStatus;
 
   StepRecord({
     this.id,
@@ -11,6 +12,7 @@ class StepRecord {
     required this.date,
     required this.stepCount,
     this.goal = 10000,
+    this.syncStatus = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class StepRecord {
       'date': date,
       'step_count': stepCount,
       'goal': goal,
+      'sync_status': syncStatus,
     };
   }
 
@@ -30,6 +33,7 @@ class StepRecord {
       date: map['date'] as String,
       stepCount: map['step_count'] as int,
       goal: map['goal'] as int? ?? 10000,
+      syncStatus: map['sync_status'] as int? ?? 0,
     );
   }
 
@@ -39,6 +43,7 @@ class StepRecord {
     String? date,
     int? stepCount,
     int? goal,
+    int? syncStatus,
   }) {
     return StepRecord(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class StepRecord {
       date: date ?? this.date,
       stepCount: stepCount ?? this.stepCount,
       goal: goal ?? this.goal,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 }

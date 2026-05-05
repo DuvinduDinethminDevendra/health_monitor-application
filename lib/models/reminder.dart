@@ -13,6 +13,8 @@ class Reminder {
   final String repeatDays; // 7-char bitmask Mon→Sun, e.g. '1111111'
   final bool vibration;
   final String soundName; // 'default', 'gentle', 'urgent', 'silent'
+  final String? linkedGoalId;
+  final String? oneTimeDate; // Phase 5: Specific date for one-time reminders
 
   Reminder({
     required this.id,
@@ -24,6 +26,8 @@ class Reminder {
     this.repeatDays = '1111111',
     this.vibration = true,
     this.soundName = 'default',
+    this.linkedGoalId,
+    this.oneTimeDate,
   });
 
   Map<String, dynamic> toMap() {
@@ -37,6 +41,8 @@ class Reminder {
       'repeat_days': repeatDays,
       'vibration': vibration ? 1 : 0,
       'sound_name': soundName,
+      'linked_goal_id': linkedGoalId,
+      'one_time_date': oneTimeDate,
     };
   }
 
@@ -66,6 +72,8 @@ class Reminder {
       repeatDays: (map['repeat_days'] as String?) ?? '1111111',
       vibration: (map['vibration'] as int?) != 0,
       soundName: (map['sound_name'] as String?) ?? 'default',
+      linkedGoalId: map['linked_goal_id'] as String?,
+      oneTimeDate: map['one_time_date'] as String?,
     );
   }
 
@@ -79,6 +87,8 @@ class Reminder {
     String? repeatDays,
     bool? vibration,
     String? soundName,
+    String? linkedGoalId,
+    String? oneTimeDate,
   }) {
     return Reminder(
       id: id ?? this.id,
@@ -90,6 +100,8 @@ class Reminder {
       repeatDays: repeatDays ?? this.repeatDays,
       vibration: vibration ?? this.vibration,
       soundName: soundName ?? this.soundName,
+      linkedGoalId: linkedGoalId ?? this.linkedGoalId,
+      oneTimeDate: oneTimeDate ?? this.oneTimeDate,
     );
   }
 }
